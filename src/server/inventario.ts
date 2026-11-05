@@ -5,14 +5,22 @@ import { prisma } from "@/lib/prisma";
 export { COMODOS };
 
 export async function garantirCatalogo() {
-  const total = await prisma.itemCatalogo.count();
-  if (total >= CATALOGO_MUDANCA.length) return;
+  const existentes = await prisma.itemCatalogo.findMany({ orderBy: { ordem: "asc" } });
+  const vistos = new Set<string>();
+  for (const item of existentes) {
+    if (!vistos.has(item.nome)) {
+      vistos.add(item.nome);
+      continue;
+    }
+    const usado = await prisma.itemInventario.count({ where: { catalogoId: item.id } });
+    if (usado === 0) await prisma.itemCatalogo.deleteMany({ where: { id: item.id } });
+  }
   for (const [indice, item] of CATALOGO_MUDANCA.entries()) {
-    const existente = await prisma.itemCatalogo.findFirst({ where: { nome: item.nome } });
-    if (existente) continue;
+    if (vistos.has(item.nome)) continue;
     await prisma.itemCatalogo.create({
       data: { nome: item.nome, categoria: item.categoria, volumeM3: item.volume, ordem: indice },
     });
+    vistos.add(item.nome);
   }
 }
 
