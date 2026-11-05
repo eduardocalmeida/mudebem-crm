@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DndContext, PointerSensor, KeyboardSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { validarTransicao, type Etapa, type Papel } from "@/lib/domain";
+import { validarTransicao, type EtapaConfig, type Papel } from "@/lib/domain";
 import { moverEtapaAction } from "@/server/actions";
 import { SeloExemplo } from "@/components/selos";
 
@@ -21,9 +21,17 @@ export type CartaoKanban = {
   exemplo: boolean;
 };
 
-type Coluna = { id: Etapa; rotulo: string; cor: string; cartoes: CartaoKanban[] };
+type Coluna = { id: string; rotulo: string; cor: string; cartoes: CartaoKanban[] };
 
-export function QuadroKanban({ colunas, papel }: { colunas: Coluna[]; papel: Papel }) {
+export function QuadroKanban({
+  colunas,
+  papel,
+  etapas,
+}: {
+  colunas: Coluna[];
+  papel: Papel;
+  etapas: EtapaConfig[];
+}) {
   const [itens, setItens] = useState(colunas);
   const [erro, setErro] = useState<string | null>(null);
   const [movendo, setMovendo] = useState<string | null>(null);
@@ -35,7 +43,7 @@ export function QuadroKanban({ colunas, papel }: { colunas: Coluna[]; papel: Pap
 
   useEffect(() => setItens(colunas), [colunas]);
 
-  function etapaDo(id: string): Etapa | null {
+  function etapaDo(id: string): string | null {
     return itens.find((coluna) => coluna.id === id || coluna.cartoes.some((cartao) => cartao.id === id))?.id ?? null;
   }
 
@@ -46,7 +54,7 @@ export function QuadroKanban({ colunas, papel }: { colunas: Coluna[]; papel: Pap
     const destino = etapaDo(sobre);
     const origem = etapaDo(processoId);
     if (!destino || !origem || destino === origem) return;
-    const motivo = validarTransicao(papel, origem, destino);
+    const motivo = validarTransicao(papel, origem, destino, etapas);
     if (motivo) {
       setErro(motivo);
       return;

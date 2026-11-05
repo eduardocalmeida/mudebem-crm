@@ -13,19 +13,24 @@ CRM interno da **Mude Bem Mudanças e Logística** para acompanhar cada processo
 - Caixa de entrada de WhatsApp na API oficial da Meta (Cloud API), com mais de um número, webhook assinado e abertura automática de lead.
 - Seed com processos realistas marcados como **Exemplo**.
 
-A pipeline, nesta ordem:
+O funil segue o da Kommo e pode ser reordenado em **Etapas** por um administrador. A semente traz, nesta ordem:
 
-1. Cotação recebida
-2. Precificação
-3. Proposta enviada
-4. Negociação
-5. Fechado / Contrato
-6. Em execução
-7. Finalizado
-8. Contas a receber
-9. Recebido
+1. Leads de entrada
+2. Contato inicial
+3. Precificação
+4. Proposta
+5. Negociação
+6. Prioridade
+7. Contrato
+8. A executar
+9. Em execução
+10. Faturado/Haver
+11. Contas a receber
+12. Recebido
 
-`Perdido/Declinado` é um estado terminal, fora da sequência.
+Ganho e Perdido fecham o processo fora dessa sequência. O time de demonstração tem oito usuários (comercial, operação, financeiro e administração), a mesma ordem de grandeza da operação atual. Não há teto de usuários: o administrador cria quantos precisar em Equipe.
+
+A migração dos leads ativos está em **Importar**. Exporte o CSV de leads, contatos e empresas na Kommo (vence em 13/11/2026) e envie cada arquivo. O importador reconhece as colunas do funil — origem e destino com andar, elevador, imóvel e ponto de referência, modalidade, coleta, entrega, embalagem, volume, inventário, itens especiais, datas, dias para coletar e viajar, motorista, valores de frete, seguro, transporte e total, forma de pagamento, validade, links e atribuição de marketing (fonte, utm, fbclid, gclid, campanha e anúncio da Meta). Coluna que não tiver campo próprio vira campo personalizado. Importar de novo o mesmo ID da Kommo atualiza o registro.
 
 ## Stack
 

@@ -1,20 +1,26 @@
 import { NextResponse } from "next/server";
 import { atorDaRequisicao, responderErro } from "@/lib/api";
-import { CANAIS, ETAPAS, FLUXO } from "@/lib/domain";
+import { CANAIS, fluxoEtapas } from "@/lib/domain";
+import { carregarEtapas } from "@/server/etapas";
 
 export async function GET(req: Request) {
   try {
     await atorDaRequisicao(req);
+    const etapas = await carregarEtapas();
+    const fluxo = fluxoEtapas(etapas);
     return NextResponse.json({
-      fluxo: FLUXO.map((id, ordem) => {
-        const etapa = ETAPAS.find((item) => item.id === id)!;
-        return { id, ordem: ordem + 1, rotulo: etapa.rotulo, resumo: etapa.resumo };
-      }),
-      terminal: ETAPAS.filter((etapa) => etapa.id === "PERDIDO_DECLINADO").map((etapa) => ({
-        id: etapa.id,
+      fluxo: fluxo.map((etapa, indice) => ({
+        id: etapa.slug,
+        ordem: indice + 1,
         rotulo: etapa.rotulo,
         resumo: etapa.resumo,
-      }))[0],
+        grupo: etapa.grupo,
+      })),
+      terminais: etapas.filter((etapa) => etapa.grupo === "terminal").map((etapa) => ({
+        id: etapa.slug,
+        rotulo: etapa.rotulo,
+        resumo: etapa.resumo,
+      })),
       canais: CANAIS,
     });
   } catch (erro) {

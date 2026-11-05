@@ -1,4 +1,4 @@
-import { PrismaClient, type Etapa, type CanalOrigem } from "@prisma/client";
+import { PrismaClient, type CanalOrigem } from "@prisma/client";
 import { CHAVE_API_EXEMPLO, hashChave } from "../src/lib/api-key";
 import { adicionarDias, digitosCnpjValidos, hojeSaoPaulo, paraDataBanco } from "../src/lib/format";
 import { hashSenha } from "../src/lib/password";
@@ -51,6 +51,10 @@ async function main() {
       ["Bruno Lima", "bruno.lima@mudebem.com.br", "COMERCIAL"],
       ["Carla Nunes", "carla.nunes@mudebem.com.br", "OPERACAO"],
       ["Diego Ramos", "diego.ramos@mudebem.com.br", "FINANCEIRO"],
+      ["Elena Martins", "elena.martins@mudebem.com.br", "COMERCIAL"],
+      ["Felipe Rocha", "felipe.rocha@mudebem.com.br", "COMERCIAL"],
+      ["Gabriela Souza", "gabriela.souza@mudebem.com.br", "OPERACAO"],
+      ["Henrique Dias", "henrique.dias@mudebem.com.br", "FINANCEIRO"],
     ].map(([nome, email, papel]) =>
       prisma.usuario.upsert({
         where: { email },
@@ -108,7 +112,7 @@ async function main() {
   type Item = {
     codigo: string;
     titulo: string;
-    etapa: Etapa;
+    etapa: string;
     canal: CanalOrigem;
     cliente: string;
     contatoId: string;
@@ -138,7 +142,7 @@ async function main() {
     {
       codigo: "MB-EX-0001",
       titulo: "Mudança residencial da analista Marina Alves",
-      etapa: "COTACAO_RECEBIDA",
+      etapa: "LEADS_DE_ENTRADA",
       canal: "WHATSAPP",
       cliente: "TechNova Sistemas Ltda",
       contatoId: marina.id,
@@ -178,7 +182,7 @@ async function main() {
     {
       codigo: "MB-EX-0003",
       titulo: "Abertura do escritório regional Sul",
-      etapa: "PROPOSTA_ENVIADA",
+      etapa: "PROPOSTA",
       canal: "EMAIL",
       cliente: "Grupo Aurora Alimentos",
       contatoId: helena.id,
@@ -222,7 +226,7 @@ async function main() {
     {
       codigo: "MB-EX-0005",
       titulo: "Transferência de laboratório Santos–Cubatão",
-      etapa: "FECHADO_CONTRATO",
+      etapa: "CONTRATO",
       canal: "EMAIL",
       cliente: "Química Sul do Brasil Ltda",
       contatoId: lucia.id,
@@ -271,7 +275,7 @@ async function main() {
     {
       codigo: "MB-EX-0007",
       titulo: "Mobiliário da nova unidade Sorocaba",
-      etapa: "FINALIZADO",
+      etapa: "FATURADO_HAVER",
       canal: "EMAIL",
       cliente: "Rede Clínica Aurora",
       contatoId: renata.id,
@@ -350,7 +354,7 @@ async function main() {
     {
       codigo: "MB-EX-0010",
       titulo: "Cotação Rio–Niterói recusada",
-      etapa: "PERDIDO_DECLINADO",
+      etapa: "PERDIDO",
       canal: "SITE",
       cliente: "Banco Horizonte S.A.",
       contatoId: ricardo.id,
@@ -406,18 +410,18 @@ async function main() {
         processoId: processo.id,
         tipo: "CRIACAO",
         mensagem: "Processo de exemplo criado pelo seed na etapa Cotação recebida.",
-        etapaPara: "COTACAO_RECEBIDA",
+        etapaPara: "LEADS_DE_ENTRADA",
         usuarioId: bruno.id,
         origem: bruno.nome,
         criadoEm,
       },
     });
-    if (item.etapa !== "COTACAO_RECEBIDA") {
+    if (item.etapa !== "LEADS_DE_ENTRADA") {
       await prisma.evento.create({
         data: {
           processoId: processo.id,
           tipo: "MUDANCA_ETAPA",
-          etapaDe: "COTACAO_RECEBIDA",
+          etapaDe: "LEADS_DE_ENTRADA",
           etapaPara: item.etapa,
           mensagem: `Etapa alterada de Cotação recebida para ${rotulo(item.etapa)}.`,
           usuarioId: item.responsavelId,
@@ -511,20 +515,20 @@ async function main() {
   console.log("Chave de API de demonstração:", CHAVE_API_EXEMPLO);
 }
 
-function rotulo(etapa: Etapa) {
-  const mapa: Record<Etapa, string> = {
-    COTACAO_RECEBIDA: "Cotação recebida",
+function rotulo(etapa: string) {
+  const mapa: Record<string, string> = {
+    LEADS_DE_ENTRADA: "Leads de entrada",
     PRECIFICACAO: "Precificação",
-    PROPOSTA_ENVIADA: "Proposta enviada",
+    PROPOSTA: "Proposta",
     NEGOCIACAO: "Negociação",
-    FECHADO_CONTRATO: "Fechado / Contrato",
+    CONTRATO: "Contrato",
     EM_EXECUCAO: "Em execução",
-    FINALIZADO: "Finalizado",
+    FATURADO_HAVER: "Faturado/Haver",
     CONTAS_A_RECEBER: "Contas a receber",
     RECEBIDO: "Recebido",
-    PERDIDO_DECLINADO: "Perdido/Declinado",
+    PERDIDO: "Perdido",
   };
-  return mapa[etapa];
+  return mapa[etapa] ?? etapa;
 }
 
 main()

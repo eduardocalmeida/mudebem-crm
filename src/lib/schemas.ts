@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CANAL_IDS, ETAPA_IDS, PAPEL_IDS, type Canal, type Etapa, type Papel } from "@/lib/domain";
+import { CANAL_IDS, PAPEL_IDS, type Canal, type Papel } from "@/lib/domain";
 import { digitosCnpjValidos, interpretarData, UFS } from "@/lib/format";
 
 function textoOpcional(max: number) {
@@ -89,13 +89,30 @@ const canal = z.string({ required_error: "Informe o canal." }).transform((valor,
   return valor as Canal;
 });
 
-const etapaOpcional = z.union([z.string(), z.undefined()]).transform((valor, ctx) => {
+const etapaOpcional = z.union([z.string(), z.undefined()]).transform((valor) => {
   if (valor === undefined || valor.trim() === "") return undefined;
-  if (!(ETAPA_IDS as readonly string[]).includes(valor)) {
-    ctx.addIssue({ code: "custom", message: "Etapa inválida." });
+  return valor.trim();
+});
+
+const inteiroOpcional = z.union([z.number(), z.string(), z.null(), z.undefined()]).transform((valor, ctx) => {
+  if (valor === undefined) return undefined;
+  if (valor === null || valor === "") return null;
+  const numero = Number(String(valor).trim());
+  if (!Number.isInteger(numero) || numero < 0 || numero > 3650) {
+    ctx.addIssue({ code: "custom", message: "Informe um número de dias válido." });
     return z.NEVER;
   }
-  return valor as Etapa;
+  return numero;
+});
+
+const booleanoOpcional = z.union([z.boolean(), z.string(), z.null(), z.undefined()]).transform((valor) => {
+  if (valor === undefined) return undefined;
+  if (valor === null || valor === "") return null;
+  if (typeof valor === "boolean") return valor;
+  const texto = valor.trim().toLowerCase();
+  if (["sim", "true", "1", "yes", "necessário", "necessario"].includes(texto)) return true;
+  if (["nao", "não", "false", "0", "no"].includes(texto)) return false;
+  return null;
 });
 
 const contatoNovo = z
@@ -104,6 +121,8 @@ const contatoNovo = z
     email: emailOpcional.optional(),
     telefone: textoOpcional(40).optional(),
     cargo: textoOpcional(80).optional(),
+    cpf: textoOpcional(14).optional(),
+    documento: textoOpcional(40).optional(),
   })
   .nullish();
 
@@ -116,6 +135,8 @@ const clienteNovo = z
     endereco: textoOpcional(180).optional(),
     cidade: textoOpcional(80).optional(),
     uf: ufOpcional.optional(),
+    inscricaoEstadual: textoOpcional(30).optional(),
+    site: textoOpcional(180).optional(),
   })
   .nullish();
 
@@ -124,14 +145,61 @@ const camposProcesso = {
   origemEndereco: textoOpcional(180),
   origemCidade: textoOpcional(80),
   origemUf: ufOpcional,
+  origemReferencia: textoOpcional(180),
+  origemAndar: textoOpcional(40),
+  origemElevador: textoOpcional(40),
+  origemImovel: textoOpcional(80),
   destinoEndereco: textoOpcional(180),
   destinoCidade: textoOpcional(80),
   destinoUf: ufOpcional,
+  destinoReferencia: textoOpcional(180),
+  destinoAndar: textoOpcional(40),
+  destinoElevador: textoOpcional(40),
+  destinoImovel: textoOpcional(80),
+  modalidade: textoOpcional(80),
+  descricaoColeta: textoOpcional(500),
+  descricaoEntrega: textoOpcional(500),
+  embalagemNecessaria: booleanoOpcional,
+  volume: textoOpcional(80),
+  itensEspeciais: textoOpcional(4000),
+  dataPretendida: dataOpcional,
   dataColeta: dataOpcional,
   dataEntrega: dataOpcional,
+  dataPrevista: dataOpcional,
+  dataEmissao: dataOpcional,
+  diasParaColetar: inteiroOpcional,
+  diasParaViagem: inteiroOpcional,
+  motoristaNome: textoOpcional(120),
+  motoristaPlaca: textoOpcional(12),
+  motoristaAntt: textoOpcional(40),
+  motoristaCnh: textoOpcional(20),
+  motoristaCpf: textoOpcional(14),
   inventario: textoOpcional(8000),
   valorCotado: dinheiro,
   valorAprovado: dinheiro,
+  valorFrete: dinheiro,
+  valorSeguro: dinheiro,
+  valorTransporte: dinheiro,
+  valorTotal: dinheiro,
+  formaPagamento: textoOpcional(80),
+  validadeProposta: dataOpcional,
+  linkProposta: textoOpcional(500),
+  linkContrato: textoOpcional(500),
+  linkContratoCarreteiro: textoOpcional(500),
+  linkOs: textoOpcional(500),
+  linkRecibo: textoOpcional(500),
+  fonte: textoOpcional(80),
+  utmSource: textoOpcional(120),
+  utmMedium: textoOpcional(120),
+  utmCampaign: textoOpcional(180),
+  utmTerm: textoOpcional(180),
+  utmContent: textoOpcional(180),
+  fbclid: textoOpcional(180),
+  gclid: textoOpcional(180),
+  metaCampaignId: textoOpcional(80),
+  metaAdId: textoOpcional(80),
+  referrer: textoOpcional(500),
+  formulario: textoOpcional(120),
   numeroOc: textoOpcional(40),
   numeroCte: textoOpcional(60),
   numeroNf: textoOpcional(40),
@@ -177,6 +245,8 @@ export const esquemaCliente = z
     endereco: textoOpcional(180).optional(),
     cidade: textoOpcional(80).optional(),
     uf: ufOpcional.optional(),
+    inscricaoEstadual: textoOpcional(30).optional(),
+    site: textoOpcional(180).optional(),
     observacoes: textoOpcional(2000).optional(),
   })
   .strict();
@@ -189,6 +259,8 @@ export const esquemaContato = z
     email: emailOpcional.optional(),
     telefone: textoOpcional(40).optional(),
     cargo: textoOpcional(80).optional(),
+    cpf: textoOpcional(14).optional(),
+    documento: textoOpcional(40).optional(),
     principal: z.union([z.boolean(), z.string(), z.undefined()]).transform((valor) => {
       if (valor === undefined) return undefined;
       if (typeof valor === "boolean") return valor;
@@ -205,13 +277,7 @@ export const esquemaNota = z
 
 export const esquemaEtapa = z
   .object({
-    etapa: z.string().transform((valor, ctx) => {
-      if (!(ETAPA_IDS as readonly string[]).includes(valor)) {
-        ctx.addIssue({ code: "custom", message: "Etapa inválida." });
-        return z.NEVER;
-      }
-      return valor as Etapa;
-    }),
+    etapa: z.string().trim().min(1, "Informe a etapa."),
     observacao: textoOpcional(2000).optional(),
   })
   .strict();

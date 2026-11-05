@@ -23,6 +23,8 @@ function dtoCliente(
     cidade: string | null;
     uf: string | null;
     observacoes: string | null;
+    inscricaoEstadual?: string | null;
+    site?: string | null;
     exemplo: boolean;
     criadoEm: Date;
     contatos?: {
@@ -46,6 +48,8 @@ function dtoCliente(
     cidade: cliente.cidade,
     uf: cliente.uf,
     observacoes: cliente.observacoes,
+    inscricaoEstadual: cliente.inscricaoEstadual ?? null,
+    site: cliente.site ?? null,
     exemplo: cliente.exemplo,
     criadoEm: cliente.criadoEm.toISOString(),
     contatos: cliente.contatos,
@@ -112,6 +116,8 @@ export async function criarCliente(ator: Ator, dados: DadosCliente) {
         cidade: dados.cidade ?? null,
         uf: dados.uf ?? null,
         observacoes: dados.observacoes ?? null,
+        inscricaoEstadual: dados.inscricaoEstadual ?? null,
+        site: dados.site ?? null,
       },
       include: includeContatos,
     });
@@ -140,6 +146,8 @@ export async function atualizarCliente(ator: Ator, id: string, dados: Partial<Da
         cidade: dados.cidade === undefined ? undefined : dados.cidade,
         uf: dados.uf === undefined ? undefined : dados.uf,
         observacoes: dados.observacoes === undefined ? undefined : dados.observacoes,
+        inscricaoEstadual: dados.inscricaoEstadual === undefined ? undefined : dados.inscricaoEstadual,
+        site: dados.site === undefined ? undefined : dados.site,
       },
       include: includeContatos,
     });
@@ -168,6 +176,8 @@ export async function criarContato(ator: Ator, clienteId: string, dados: DadosCo
         email: dados.email ?? null,
         telefone: dados.telefone ?? null,
         cargo: dados.cargo ?? null,
+        cpf: dados.cpf ?? null,
+        documento: dados.documento ?? null,
         principal,
       },
     });

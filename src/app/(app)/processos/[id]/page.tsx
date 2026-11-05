@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { FormAnexo, FormEtapa, FormNota, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
 import { SeloCanal, SeloEtapa, SeloExemplo } from "@/components/selos";
 import { camposDoPapel, destinosPossiveis, etapaPorId, rotuloEtapa } from "@/lib/domain";
+import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, formatarDataHora, formatarNumero, localidade } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -49,9 +50,10 @@ export default async function ProcessoPage({ params }: { params: Promise<{ id: s
     }),
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
   ]);
-  const destinos = destinosPossiveis(usuario.papel, processo.etapa).map((etapa) => ({
+  const etapas = await carregarEtapas();
+  const destinos = destinosPossiveis(usuario.papel, processo.etapa, etapas).map((etapa) => ({
     id: etapa,
-    rotulo: rotuloEtapa(etapa),
+    rotulo: rotuloEtapa(etapa, etapas),
   }));
 
   return (
@@ -75,7 +77,7 @@ export default async function ProcessoPage({ params }: { params: Promise<{ id: s
         <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
       ) : null}
       <ConversasDoProcesso processoId={processo.id} />
-      <p className="muted">{etapaPorId(processo.etapa).resumo}</p>
+      <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>
       <section className="rota-grande">
         <div>
           <span className="muted">Origem</span>
@@ -153,14 +155,50 @@ export default async function ProcessoPage({ params }: { params: Promise<{ id: s
                 origemEndereco: processo.origem.endereco ?? "",
                 origemCidade: processo.origem.cidade ?? "",
                 origemUf: processo.origem.uf ?? "",
+                origemReferencia: processo.origem.referencia ?? "",
+                origemAndar: processo.origem.andar ?? "",
+                origemElevador: processo.origem.elevador ?? "",
+                origemImovel: processo.origem.imovel ?? "",
                 destinoEndereco: processo.destino.endereco ?? "",
                 destinoCidade: processo.destino.cidade ?? "",
                 destinoUf: processo.destino.uf ?? "",
+                destinoReferencia: processo.destino.referencia ?? "",
+                destinoAndar: processo.destino.andar ?? "",
+                destinoElevador: processo.destino.elevador ?? "",
+                destinoImovel: processo.destino.imovel ?? "",
+                modalidade: processo.modalidade ?? "",
+                descricaoColeta: processo.descricaoColeta ?? "",
+                descricaoEntrega: processo.descricaoEntrega ?? "",
+                embalagemNecessaria: processo.embalagemNecessaria == null ? "" : processo.embalagemNecessaria ? "sim" : "nao",
+                volume: processo.volume ?? "",
+                itensEspeciais: processo.itensEspeciais ?? "",
+                dataPretendida: processo.dataPretendida ? formatarData(processo.dataPretendida) : "",
                 dataColeta: processo.dataColeta ? formatarData(processo.dataColeta) : "",
                 dataEntrega: processo.dataEntrega ? formatarData(processo.dataEntrega) : "",
+                dataPrevista: processo.dataPrevista ? formatarData(processo.dataPrevista) : "",
+                dataEmissao: processo.dataEmissao ? formatarData(processo.dataEmissao) : "",
+                diasParaColetar: processo.diasParaColetar == null ? "" : String(processo.diasParaColetar),
+                diasParaViagem: processo.diasParaViagem == null ? "" : String(processo.diasParaViagem),
+                motoristaNome: processo.motorista.nome ?? "",
+                motoristaPlaca: processo.motorista.placa ?? "",
+                motoristaAntt: processo.motorista.antt ?? "",
+                motoristaCnh: processo.motorista.cnh ?? "",
+                motoristaCpf: processo.motorista.cpf ?? "",
                 inventario: processo.inventario ?? "",
                 valorCotado: formatarNumero(processo.valorCotado),
                 valorAprovado: formatarNumero(processo.valorAprovado),
+                valorFrete: formatarNumero(processo.valorFrete),
+                valorSeguro: formatarNumero(processo.valorSeguro),
+                valorTransporte: formatarNumero(processo.valorTransporte),
+                valorTotal: formatarNumero(processo.valorTotal),
+                formaPagamento: processo.formaPagamento ?? "",
+                validadeProposta: processo.validadeProposta ? formatarData(processo.validadeProposta) : "",
+                linkProposta: processo.links.proposta ?? "",
+                linkContrato: processo.links.contrato ?? "",
+                linkContratoCarreteiro: processo.links.contratoCarreteiro ?? "",
+                linkOs: processo.links.os ?? "",
+                linkRecibo: processo.links.recibo ?? "",
+                fonte: processo.marketing.fonte ?? "",
                 numeroOc: processo.numeroOc ?? "",
                 numeroCte: processo.numeroCte ?? "",
                 numeroNf: processo.numeroNf ?? "",

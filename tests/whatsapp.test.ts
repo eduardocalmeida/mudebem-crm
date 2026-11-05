@@ -112,7 +112,7 @@ describe("webhook do WhatsApp", () => {
     expect(primeira.status).toBe(200);
 
     const processo = await prisma.processo.findFirst({ include: { contato: true, cliente: true } });
-    expect(processo?.etapa).toBe("COTACAO_RECEBIDA");
+    expect(processo?.etapa).toBe("LEADS_DE_ENTRADA");
     expect(processo?.canal).toBe("WHATSAPP");
     expect(processo?.contato?.telefone).toContain("98821");
     expect(processo?.cliente.nome).toBe("Marina Alves");

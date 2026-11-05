@@ -1,4 +1,4 @@
-import { ehCanal, ehEtapa, type Canal, type Etapa } from "@/lib/domain";
+import { ehCanal, type Canal, type Etapa } from "@/lib/domain";
 import { AppError } from "@/lib/errors";
 import { interpretarData } from "@/lib/format";
 
@@ -26,7 +26,7 @@ function dataParam(params: URLSearchParams, nome: string) {
 export function lerFiltro(params: URLSearchParams): FiltroLista {
   const etapa = params.get("etapa")?.trim() || undefined;
   const canal = params.get("canal")?.trim() || undefined;
-  if (etapa && !ehEtapa(etapa)) throw new AppError("Etapa inválida.", 400, "DADOS_INVALIDOS");
+  if (etapa && !/^[A-Za-z0-9_-]{1,40}$/.test(etapa)) throw new AppError("Etapa inválida.", 400, "DADOS_INVALIDOS");
   if (canal && !ehCanal(canal)) throw new AppError("Canal inválido.", 400, "DADOS_INVALIDOS");
   const paginaBruta = Number(params.get("pagina") ?? "1");
   const tamanhoBruto = Number(params.get("porPagina") ?? "50");

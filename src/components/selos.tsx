@@ -1,7 +1,8 @@
-import { etapaPorId, rotuloCanal, type Canal, type Etapa } from "@/lib/domain";
+import { etapaPorId, rotuloCanal, type Canal } from "@/lib/domain";
+import { carregarEtapas } from "@/server/etapas";
 
-export function SeloEtapa({ etapa }: { etapa: Etapa }) {
-  const meta = etapaPorId(etapa);
+export async function SeloEtapa({ etapa }: { etapa: string }) {
+  const meta = etapaPorId(etapa, await carregarEtapas());
   return (
     <span className="selo" style={{ color: meta.cor, borderColor: meta.cor }}>
       {meta.rotulo}

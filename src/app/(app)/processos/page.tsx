@@ -2,7 +2,8 @@ import Link from "next/link";
 import { QuadroKanban } from "@/components/kanban";
 import { SeloEtapa, SeloExemplo } from "@/components/selos";
 import { lerFiltro, parametrosDe, type FiltroLista } from "@/lib/consulta";
-import { CANAIS, ETAPAS, podeCriarProcesso, rotuloCanal } from "@/lib/domain";
+import { CANAIS, podeCriarProcesso, rotuloCanal } from "@/lib/domain";
+import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, localidade } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -31,21 +32,23 @@ export default async function ProcessosPage({
     erro = falha instanceof AppError ? falha.message : "Filtro inválido.";
   }
 
-  const [clientes, responsaveis, lista] = await Promise.all([
+  const [clientes, responsaveis, lista, etapas] = await Promise.all([
     prisma.cliente.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
     listarProcessos({
       ...filtro,
       limite: filtro.visao === "kanban" ? 300 : undefined,
     }),
+    carregarEtapas(),
   ]);
+  const etapasVisiveis = etapas.filter((etapa) => etapa.ativa);
 
-  const colunas = ETAPAS.map((etapa) => ({
-    id: etapa.id,
+  const colunas = etapasVisiveis.map((etapa) => ({
+    id: etapa.slug,
     rotulo: etapa.rotulo,
     cor: etapa.cor,
     cartoes: lista.dados
-      .filter((processo) => processo.etapa === etapa.id)
+      .filter((processo) => processo.etapa === etapa.slug)
       .map((processo) => ({
         id: processo.id,
         codigo: processo.codigo,
@@ -97,8 +100,8 @@ export default async function ProcessosPage({
           <span>Etapa</span>
           <select name="etapa" defaultValue={filtro.etapa ?? ""}>
             <option value="">Todas</option>
-            {ETAPAS.map((etapa) => (
-              <option key={etapa.id} value={etapa.id}>
+            {etapasVisiveis.map((etapa) => (
+              <option key={etapa.slug} value={etapa.slug}>
                 {etapa.rotulo}
               </option>
             ))}
@@ -155,7 +158,7 @@ export default async function ProcessosPage({
       {filtro.visao === "kanban" ? (
         <>
           {lista.total > 300 ? <p className="alerta">O quadro mostra os 300 processos mais recentes deste filtro.</p> : null}
-          <QuadroKanban colunas={colunas} papel={usuario.papel} />
+          <QuadroKanban colunas={colunas} papel={usuario.papel} etapas={etapas} />
         </>
       ) : (
         <div className="tabela-wrap">

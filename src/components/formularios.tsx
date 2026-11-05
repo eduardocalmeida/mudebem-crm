@@ -105,11 +105,44 @@ export function FormProcesso({
       {mostra("origemEndereco") ? <Campo nome="origemEndereco" rotulo="Endereço de origem" valor={valores?.origemEndereco} className="largo" /> : null}
       {mostra("origemCidade") ? <Campo nome="origemCidade" rotulo="Cidade de origem" valor={valores?.origemCidade} /> : null}
       {mostra("origemUf") ? <Uf nome="origemUf" rotulo="UF de origem" valor={valores?.origemUf} /> : null}
+      {mostra("origemReferencia") ? <Campo nome="origemReferencia" rotulo="Ponto de referência de origem" valor={valores?.origemReferencia} /> : null}
+      {mostra("origemAndar") ? <Campo nome="origemAndar" rotulo="Andar de origem" valor={valores?.origemAndar} /> : null}
+      {mostra("origemElevador") ? <Campo nome="origemElevador" rotulo="Elevador de origem" valor={valores?.origemElevador} /> : null}
+      {mostra("origemImovel") ? <Campo nome="origemImovel" rotulo="Imóvel de origem" valor={valores?.origemImovel} /> : null}
       {mostra("destinoEndereco") ? <Campo nome="destinoEndereco" rotulo="Endereço de destino" valor={valores?.destinoEndereco} className="largo" /> : null}
       {mostra("destinoCidade") ? <Campo nome="destinoCidade" rotulo="Cidade de destino" valor={valores?.destinoCidade} /> : null}
       {mostra("destinoUf") ? <Uf nome="destinoUf" rotulo="UF de destino" valor={valores?.destinoUf} /> : null}
-      {mostra("dataColeta") ? <Campo nome="dataColeta" rotulo="Data de coleta" tipo="date" valor={valores?.dataColeta} /> : null}
-      {mostra("dataEntrega") ? <Campo nome="dataEntrega" rotulo="Data de entrega" tipo="date" valor={valores?.dataEntrega} /> : null}
+      {mostra("destinoReferencia") ? <Campo nome="destinoReferencia" rotulo="Ponto de referência de destino" valor={valores?.destinoReferencia} /> : null}
+      {mostra("destinoAndar") ? <Campo nome="destinoAndar" rotulo="Andar de destino" valor={valores?.destinoAndar} /> : null}
+      {mostra("destinoElevador") ? <Campo nome="destinoElevador" rotulo="Elevador de destino" valor={valores?.destinoElevador} /> : null}
+      {mostra("destinoImovel") ? <Campo nome="destinoImovel" rotulo="Imóvel de destino" valor={valores?.destinoImovel} /> : null}
+      {mostra("modalidade") ? <Campo nome="modalidade" rotulo="Modalidade" valor={valores?.modalidade} /> : null}
+      {mostra("descricaoColeta") ? <Campo nome="descricaoColeta" rotulo="Coleta" valor={valores?.descricaoColeta} /> : null}
+      {mostra("descricaoEntrega") ? <Campo nome="descricaoEntrega" rotulo="Entrega" valor={valores?.descricaoEntrega} /> : null}
+      {mostra("embalagemNecessaria") ? (
+        <label className="campo">
+          <span>Embalagem necessária</span>
+          <select name="embalagemNecessaria" defaultValue={valores?.embalagemNecessaria || ""}>
+            <option value="">—</option>
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
+          </select>
+        </label>
+      ) : null}
+      {mostra("volume") ? <Campo nome="volume" rotulo="Volume" valor={valores?.volume} /> : null}
+      {mostra("itensEspeciais") ? <Campo nome="itensEspeciais" rotulo="Itens especiais" valor={valores?.itensEspeciais} className="largo" /> : null}
+      {mostra("dataPretendida") ? <Campo nome="dataPretendida" rotulo="Data pretendida" tipo="date" valor={valores?.dataPretendida} /> : null}
+      {mostra("dataColeta") ? <Campo nome="dataColeta" rotulo="Data da coleta" tipo="date" valor={valores?.dataColeta} /> : null}
+      {mostra("dataEntrega") ? <Campo nome="dataEntrega" rotulo="Data da entrega" tipo="date" valor={valores?.dataEntrega} /> : null}
+      {mostra("dataPrevista") ? <Campo nome="dataPrevista" rotulo="Data prevista" tipo="date" valor={valores?.dataPrevista} /> : null}
+      {mostra("dataEmissao") ? <Campo nome="dataEmissao" rotulo="Data de emissão" tipo="date" valor={valores?.dataEmissao} /> : null}
+      {mostra("diasParaColetar") ? <Campo nome="diasParaColetar" rotulo="Dias para coletar" valor={valores?.diasParaColetar} /> : null}
+      {mostra("diasParaViagem") ? <Campo nome="diasParaViagem" rotulo="Dias para viagem" valor={valores?.diasParaViagem} /> : null}
+      {mostra("motoristaNome") ? <Campo nome="motoristaNome" rotulo="Motorista" valor={valores?.motoristaNome} /> : null}
+      {mostra("motoristaPlaca") ? <Campo nome="motoristaPlaca" rotulo="Placa" valor={valores?.motoristaPlaca} /> : null}
+      {mostra("motoristaAntt") ? <Campo nome="motoristaAntt" rotulo="ANTT" valor={valores?.motoristaAntt} /> : null}
+      {mostra("motoristaCnh") ? <Campo nome="motoristaCnh" rotulo="CNH" valor={valores?.motoristaCnh} /> : null}
+      {mostra("motoristaCpf") ? <Campo nome="motoristaCpf" rotulo="CPF do motorista" valor={valores?.motoristaCpf} /> : null}
       {mostra("inventario") ? (
         <label className="campo largo">
           <span>Inventário e observações</span>
@@ -118,6 +151,18 @@ export function FormProcesso({
       ) : null}
       {mostra("valorCotado") ? <Campo nome="valorCotado" rotulo="Valor cotado (R$)" valor={valores?.valorCotado} /> : null}
       {mostra("valorAprovado") ? <Campo nome="valorAprovado" rotulo="Valor aprovado (R$)" valor={valores?.valorAprovado} /> : null}
+      {mostra("valorFrete") ? <Campo nome="valorFrete" rotulo="Valor do frete (R$)" valor={valores?.valorFrete} /> : null}
+      {mostra("valorSeguro") ? <Campo nome="valorSeguro" rotulo="Valor do seguro (R$)" valor={valores?.valorSeguro} /> : null}
+      {mostra("valorTransporte") ? <Campo nome="valorTransporte" rotulo="Valor do transporte (R$)" valor={valores?.valorTransporte} /> : null}
+      {mostra("valorTotal") ? <Campo nome="valorTotal" rotulo="Valor total (R$)" valor={valores?.valorTotal} /> : null}
+      {mostra("formaPagamento") ? <Campo nome="formaPagamento" rotulo="Forma de pagamento" valor={valores?.formaPagamento} /> : null}
+      {mostra("validadeProposta") ? <Campo nome="validadeProposta" rotulo="Validade da proposta" tipo="date" valor={valores?.validadeProposta} /> : null}
+      {mostra("linkProposta") ? <Campo nome="linkProposta" rotulo="Link da proposta" valor={valores?.linkProposta} /> : null}
+      {mostra("linkContrato") ? <Campo nome="linkContrato" rotulo="Link do contrato" valor={valores?.linkContrato} /> : null}
+      {mostra("linkContratoCarreteiro") ? <Campo nome="linkContratoCarreteiro" rotulo="Link do contrato do carreteiro" valor={valores?.linkContratoCarreteiro} /> : null}
+      {mostra("linkOs") ? <Campo nome="linkOs" rotulo="Link da O.S." valor={valores?.linkOs} /> : null}
+      {mostra("linkRecibo") ? <Campo nome="linkRecibo" rotulo="Link do recibo" valor={valores?.linkRecibo} /> : null}
+      {mostra("fonte") ? <Campo nome="fonte" rotulo="Fonte" valor={valores?.fonte} /> : null}
       {mostra("numeroOc") ? <Campo nome="numeroOc" rotulo="Ordem de compra (OC)" valor={valores?.numeroOc} /> : null}
       {mostra("numeroCte") ? <Campo nome="numeroCte" rotulo="CT-e" valor={valores?.numeroCte} /> : null}
       {mostra("numeroNf") ? <Campo nome="numeroNf" rotulo="NF / fatura" valor={valores?.numeroNf} /> : null}
@@ -260,6 +305,8 @@ export function FormCliente({ valores, clienteId }: { valores?: Record<string, s
       <Campo nome="email" rotulo="E-mail" tipo="email" valor={valores?.email} />
       <Campo nome="telefone" rotulo="Telefone" valor={valores?.telefone} />
       <Campo nome="endereco" rotulo="Endereço" valor={valores?.endereco} className="largo" />
+      <Campo nome="inscricaoEstadual" rotulo="Inscrição estadual" valor={valores?.inscricaoEstadual} />
+      <Campo nome="site" rotulo="Site" valor={valores?.site} />
       <Campo nome="cidade" rotulo="Cidade" valor={valores?.cidade} />
       <Uf nome="uf" rotulo="UF" valor={valores?.uf} />
       <label className="campo largo">
@@ -281,6 +328,8 @@ export function FormContato({ clienteId }: { clienteId: string }) {
       <input type="hidden" name="clienteId" value={clienteId} />
       <Campo nome="nome" rotulo="Nome" obrigatorio />
       <Campo nome="cargo" rotulo="Cargo" />
+      <Campo nome="cpf" rotulo="CPF" />
+      <Campo nome="documento" rotulo="Documento" />
       <Campo nome="email" rotulo="E-mail" tipo="email" />
       <Campo nome="telefone" rotulo="Telefone" />
       <label className="campo">

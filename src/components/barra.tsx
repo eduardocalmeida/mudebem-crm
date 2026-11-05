@@ -20,7 +20,11 @@ export function BarraLateral({
   naoLidas?: number;
 }) {
   const caminho = usePathname();
-  const itens = usuario.papel === "ADMIN" ? [...LINKS, { href: "/equipe", rotulo: "Equipe" }, { href: "/integracoes", rotulo: "Integrações" }] : LINKS;
+  const itens = usuario.papel === "ADMIN" ? [...LINKS, { href: "/equipe", rotulo: "Equipe" },
+    { href: "/etapas", rotulo: "Etapas" },
+    { href: "/importar", rotulo: "Importar" },
+    { href: "/integracoes", rotulo: "Integrações" },
+  ] : LINKS;
   const inicial = usuario.nome.trim().charAt(0).toUpperCase();
 
   return (

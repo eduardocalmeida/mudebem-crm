@@ -109,7 +109,7 @@ describe("API de processos", () => {
     expect(processo.contato.email).toBe("helena@atlas.example");
     expect(processo.valorCotado).toBe(8500);
     expect(processo.dataColeta).toBe("2026-12-02");
-    expect(processo.etapa).toBe("COTACAO_RECEBIDA");
+    expect(processo.etapa).toBe("LEADS_DE_ENTRADA");
     expect(processo.eventos[0].tipo).toBe("CRIACAO");
 
     const contexto = { params: Promise.resolve({ id: processo.id as string }) };
@@ -152,7 +152,7 @@ describe("API de processos", () => {
     );
     expect(movimento.status).toBe(200);
     const movido = await movimento.json();
-    expect(movido.etapaAnterior).toBe("COTACAO_RECEBIDA");
+    expect(movido.etapaAnterior).toBe("LEADS_DE_ENTRADA");
     expect(movido.processo.etapa).toBe("PRECIFICACAO");
 
     const detalhe = await obterProcesso(pedido(`/api/v1/processos/${processo.id}`, "GET"), contexto);
@@ -170,7 +170,7 @@ describe("API de processos", () => {
     const catalogo = await etapas(pedido("/api/v1/etapas", "GET"));
     const fluxo = await catalogo.json();
     expect(fluxo.fluxo.map((item: { id: string }) => item.id)).toContain("CONTAS_A_RECEBER");
-    expect(fluxo.terminal.id).toBe("PERDIDO_DECLINADO");
+    expect(fluxo.terminais.map((item: { id: string }) => item.id)).toContain("PERDIDO");
   });
 
   it("cadastra cliente e contato", async () => {

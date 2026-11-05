@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { autoridadeDo, nomeAtor, semIndefinidos, type Ator } from "@/lib/ator";
 import {
   camposDoPapel,
+  etapaInicial,
   podeCriarProcesso,
   rotuloCampo,
   rotuloEtapa,
@@ -9,6 +10,7 @@ import {
   type Campo,
   type Etapa,
 } from "@/lib/domain";
+import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
 import { anoSaoPaulo, dataParaIso, paraDataBanco } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -71,6 +73,8 @@ async function resolverCliente(
       endereco: cliente.endereco ?? null,
       cidade: cliente.cidade ?? null,
       uf: cliente.uf ?? null,
+      inscricaoEstadual: cliente.inscricaoEstadual ?? null,
+      site: cliente.site ?? null,
     },
   });
   return criado.id;
@@ -102,6 +106,8 @@ async function resolverContato(
       email: contato.email ?? null,
       telefone: contato.telefone ?? null,
       cargo: contato.cargo ?? null,
+      cpf: contato.cpf ?? null,
+      documento: contato.documento ?? null,
       principal: total === 0,
     },
   });
@@ -225,9 +231,14 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
     throw new AppError("Seu papel não pode abrir processos.", 403, "PROIBIDO");
   }
   const dados = semIndefinidos(entrada as unknown as Record<string, unknown>) as DadosCriarProcesso;
-  const etapa: Etapa = dados.etapa ?? "COTACAO_RECEBIDA";
-  if (etapa !== "COTACAO_RECEBIDA") {
-    const motivo = validarTransicao(autoridadeDo(ator), "COTACAO_RECEBIDA", etapa);
+  const etapas = await carregarEtapas();
+  const inicial = etapaInicial(etapas);
+  const etapa: Etapa = dados.etapa ?? inicial;
+  if (!etapas.some((item) => item.slug === etapa && item.ativa)) {
+    throw new AppError("Etapa inválida.", 400, "DADOS_INVALIDOS");
+  }
+  if (etapa !== inicial) {
+    const motivo = validarTransicao(autoridadeDo(ator), inicial, etapa, etapas);
     if (motivo) throw new AppError(motivo, 403, "PROIBIDO");
   }
 
@@ -247,14 +258,61 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
         origemEndereco: dados.origemEndereco ?? null,
         origemCidade: dados.origemCidade ?? null,
         origemUf: dados.origemUf ?? null,
+        origemReferencia: dados.origemReferencia ?? null,
+        origemAndar: dados.origemAndar ?? null,
+        origemElevador: dados.origemElevador ?? null,
+        origemImovel: dados.origemImovel ?? null,
         destinoEndereco: dados.destinoEndereco ?? null,
         destinoCidade: dados.destinoCidade ?? null,
         destinoUf: dados.destinoUf ?? null,
+        destinoReferencia: dados.destinoReferencia ?? null,
+        destinoAndar: dados.destinoAndar ?? null,
+        destinoElevador: dados.destinoElevador ?? null,
+        destinoImovel: dados.destinoImovel ?? null,
+        modalidade: dados.modalidade ?? null,
+        descricaoColeta: dados.descricaoColeta ?? null,
+        descricaoEntrega: dados.descricaoEntrega ?? null,
+        embalagemNecessaria: dados.embalagemNecessaria ?? null,
+        volume: dados.volume ?? null,
+        itensEspeciais: dados.itensEspeciais ?? null,
+        dataPretendida: paraDataBanco(dados.dataPretendida),
         dataColeta: paraDataBanco(dados.dataColeta),
         dataEntrega: paraDataBanco(dados.dataEntrega),
+        dataPrevista: paraDataBanco(dados.dataPrevista),
+        dataEmissao: paraDataBanco(dados.dataEmissao),
+        diasParaColetar: dados.diasParaColetar ?? null,
+        diasParaViagem: dados.diasParaViagem ?? null,
+        motoristaNome: dados.motoristaNome ?? null,
+        motoristaPlaca: dados.motoristaPlaca ?? null,
+        motoristaAntt: dados.motoristaAntt ?? null,
+        motoristaCnh: dados.motoristaCnh ?? null,
+        motoristaCpf: dados.motoristaCpf ?? null,
         inventario: dados.inventario ?? null,
         valorCotado: dados.valorCotado ?? null,
         valorAprovado: dados.valorAprovado ?? null,
+        valorFrete: dados.valorFrete ?? null,
+        valorSeguro: dados.valorSeguro ?? null,
+        valorTransporte: dados.valorTransporte ?? null,
+        valorTotal: dados.valorTotal ?? null,
+        formaPagamento: dados.formaPagamento ?? null,
+        validadeProposta: paraDataBanco(dados.validadeProposta),
+        linkProposta: dados.linkProposta ?? null,
+        linkContrato: dados.linkContrato ?? null,
+        linkContratoCarreteiro: dados.linkContratoCarreteiro ?? null,
+        linkOs: dados.linkOs ?? null,
+        linkRecibo: dados.linkRecibo ?? null,
+        fonte: dados.fonte ?? null,
+        utmSource: dados.utmSource ?? null,
+        utmMedium: dados.utmMedium ?? null,
+        utmCampaign: dados.utmCampaign ?? null,
+        utmTerm: dados.utmTerm ?? null,
+        utmContent: dados.utmContent ?? null,
+        fbclid: dados.fbclid ?? null,
+        gclid: dados.gclid ?? null,
+        metaCampaignId: dados.metaCampaignId ?? null,
+        metaAdId: dados.metaAdId ?? null,
+        referrer: dados.referrer ?? null,
+        formulario: dados.formulario ?? null,
         numeroOc: dados.numeroOc ?? null,
         numeroCte: dados.numeroCte ?? null,
         numeroNf: dados.numeroNf ?? null,
@@ -338,15 +396,65 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
     texto("origemEndereco", atual.origemEndereco, patch.origemEndereco);
     texto("origemCidade", atual.origemCidade, patch.origemCidade);
     texto("origemUf", atual.origemUf, patch.origemUf);
+    texto("origemReferencia", atual.origemReferencia, patch.origemReferencia);
+    texto("origemAndar", atual.origemAndar, patch.origemAndar);
+    texto("origemElevador", atual.origemElevador, patch.origemElevador);
+    texto("origemImovel", atual.origemImovel, patch.origemImovel);
     texto("destinoEndereco", atual.destinoEndereco, patch.destinoEndereco);
     texto("destinoCidade", atual.destinoCidade, patch.destinoCidade);
     texto("destinoUf", atual.destinoUf, patch.destinoUf);
+    texto("destinoReferencia", atual.destinoReferencia, patch.destinoReferencia);
+    texto("destinoAndar", atual.destinoAndar, patch.destinoAndar);
+    texto("destinoElevador", atual.destinoElevador, patch.destinoElevador);
+    texto("destinoImovel", atual.destinoImovel, patch.destinoImovel);
+    texto("modalidade", atual.modalidade, patch.modalidade);
+    texto("descricaoColeta", atual.descricaoColeta, patch.descricaoColeta);
+    texto("descricaoEntrega", atual.descricaoEntrega, patch.descricaoEntrega);
+    texto("volume", atual.volume, patch.volume);
+    texto("itensEspeciais", atual.itensEspeciais, patch.itensEspeciais);
+    texto("motoristaNome", atual.motoristaNome, patch.motoristaNome);
+    texto("motoristaPlaca", atual.motoristaPlaca, patch.motoristaPlaca);
+    texto("motoristaAntt", atual.motoristaAntt, patch.motoristaAntt);
+    texto("motoristaCnh", atual.motoristaCnh, patch.motoristaCnh);
+    texto("motoristaCpf", atual.motoristaCpf, patch.motoristaCpf);
+    texto("formaPagamento", atual.formaPagamento, patch.formaPagamento);
+    texto("linkProposta", atual.linkProposta, patch.linkProposta);
+    texto("linkContrato", atual.linkContrato, patch.linkContrato);
+    texto("linkContratoCarreteiro", atual.linkContratoCarreteiro, patch.linkContratoCarreteiro);
+    texto("linkOs", atual.linkOs, patch.linkOs);
+    texto("linkRecibo", atual.linkRecibo, patch.linkRecibo);
+    texto("fonte", atual.fonte, patch.fonte);
+    texto("utmSource", atual.utmSource, patch.utmSource);
+    texto("utmMedium", atual.utmMedium, patch.utmMedium);
+    texto("utmCampaign", atual.utmCampaign, patch.utmCampaign);
+    texto("utmTerm", atual.utmTerm, patch.utmTerm);
+    texto("utmContent", atual.utmContent, patch.utmContent);
+    texto("fbclid", atual.fbclid, patch.fbclid);
+    texto("gclid", atual.gclid, patch.gclid);
+    texto("metaCampaignId", atual.metaCampaignId, patch.metaCampaignId);
+    texto("metaAdId", atual.metaAdId, patch.metaAdId);
+    texto("referrer", atual.referrer, patch.referrer);
+    texto("formulario", atual.formulario, patch.formulario);
     texto("inventario", atual.inventario, patch.inventario);
+    if (patch.embalagemNecessaria !== undefined && patch.embalagemNecessaria !== atual.embalagemNecessaria) {
+      data.embalagemNecessaria = patch.embalagemNecessaria;
+      alterados.push("embalagemNecessaria");
+    }
+    if (patch.diasParaColetar !== undefined && patch.diasParaColetar !== atual.diasParaColetar) {
+      data.diasParaColetar = patch.diasParaColetar;
+      alterados.push("diasParaColetar");
+    }
+    if (patch.diasParaViagem !== undefined && patch.diasParaViagem !== atual.diasParaViagem) {
+      data.diasParaViagem = patch.diasParaViagem;
+      alterados.push("diasParaViagem");
+    }
     texto("numeroOc", atual.numeroOc, patch.numeroOc);
     texto("numeroCte", atual.numeroCte, patch.numeroCte);
     texto("numeroNf", atual.numeroNf, patch.numeroNf);
 
-    const dataCampo = (campo: "dataColeta" | "dataEntrega" | "dataVencimento" | "dataRecebimento") => {
+    const dataCampo = (
+      campo: "dataColeta" | "dataEntrega" | "dataPretendida" | "dataPrevista" | "dataEmissao" | "validadeProposta" | "dataVencimento" | "dataRecebimento",
+    ) => {
       const valor = patch[campo];
       if (valor === undefined) return;
       if (dataParaIso(atual[campo]) === valor) return;
@@ -355,10 +463,14 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
     };
     dataCampo("dataColeta");
     dataCampo("dataEntrega");
+    dataCampo("dataPretendida");
+    dataCampo("dataPrevista");
+    dataCampo("dataEmissao");
+    dataCampo("validadeProposta");
     dataCampo("dataVencimento");
     dataCampo("dataRecebimento");
 
-    const dinheiro = (campo: "valorCotado" | "valorAprovado") => {
+    const dinheiro = (campo: "valorCotado" | "valorAprovado" | "valorFrete" | "valorSeguro" | "valorTransporte" | "valorTotal") => {
       const valor = patch[campo];
       if (valor === undefined) return;
       const atualNumero = atual[campo] == null ? null : atual[campo]!.toNumber();
@@ -368,6 +480,10 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
     };
     dinheiro("valorCotado");
     dinheiro("valorAprovado");
+    dinheiro("valorFrete");
+    dinheiro("valorSeguro");
+    dinheiro("valorTransporte");
+    dinheiro("valorTotal");
 
     if (patch.responsavelId !== undefined && patch.responsavelId !== atual.responsavelId) {
       await exigirResponsavel(tx, patch.responsavelId);
@@ -395,7 +511,11 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
 export async function moverEtapa(ator: Ator, id: string, etapa: Etapa, observacao?: string | null) {
   const processo = await prisma.processo.findUnique({ where: { id } });
   if (!processo) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
-  const motivo = validarTransicao(autoridadeDo(ator), processo.etapa, etapa);
+  const etapas = await carregarEtapas();
+  if (!etapas.some((item) => item.slug === etapa && item.ativa)) {
+    throw new AppError("Etapa inválida.", 400, "DADOS_INVALIDOS");
+  }
+  const motivo = validarTransicao(autoridadeDo(ator), processo.etapa, etapa, etapas);
   if (motivo) {
     const mesma = motivo.includes("já está");
     throw new AppError(motivo, mesma ? 400 : 403, mesma ? "DADOS_INVALIDOS" : "PROIBIDO");

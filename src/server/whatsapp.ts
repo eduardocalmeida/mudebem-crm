@@ -85,7 +85,7 @@ async function garantirConversa(numeroId: string, waId: string, nome: string | n
     const processo = await criarProcesso(atorWhatsapp, {
       titulo: `Lead WhatsApp — ${nomeLead}`.slice(0, 180),
       canal: "WHATSAPP",
-      etapa: "COTACAO_RECEBIDA",
+      etapa: "LEADS_DE_ENTRADA",
       cliente: { nome: nomeLead, telefone: formatarWaId(waId) },
       contato: { nome: nomeLead, telefone: formatarWaId(waId) },
     });
@@ -95,7 +95,7 @@ async function garantirConversa(numeroId: string, waId: string, nome: string | n
     const aberto = await prisma.processo.findFirst({
       where: {
         clienteId: contato.clienteId,
-        etapa: { notIn: ["RECEBIDO", "PERDIDO_DECLINADO"] },
+        etapa: { notIn: ["RECEBIDO", "PERDIDO", "GANHO"] },
       },
       orderBy: { atualizadoEm: "desc" },
       select: { id: true },
@@ -135,7 +135,7 @@ async function abrirLead(conversaId: string, waId: string, nome: string | null) 
     const processo = await criarProcesso(atorWhatsapp, {
       titulo: `Lead WhatsApp — ${nomeLead}`.slice(0, 180),
       canal: "WHATSAPP",
-      etapa: "COTACAO_RECEBIDA",
+      etapa: "LEADS_DE_ENTRADA",
       cliente: { nome: nomeLead, telefone: formatarWaId(waId) },
       contato: { nome: nomeLead, telefone: formatarWaId(waId) },
     });
@@ -143,7 +143,7 @@ async function abrirLead(conversaId: string, waId: string, nome: string | null) 
     processoId = processo.id;
   } else {
     const aberto = await prisma.processo.findFirst({
-      where: { clienteId: contato.clienteId, etapa: { notIn: ["RECEBIDO", "PERDIDO_DECLINADO"] } },
+      where: { clienteId: contato.clienteId, etapa: { notIn: ["RECEBIDO", "PERDIDO", "GANHO"] } },
       orderBy: { atualizadoEm: "desc" },
       select: { id: true },
     });

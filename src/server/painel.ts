@@ -1,6 +1,6 @@
-import { ETAPAS, type Etapa } from "@/lib/domain";
 import { adicionarDias, hojeSaoPaulo, paraDataBanco } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { carregarEtapas } from "@/server/etapas";
 
 function valorDe(valorAprovado: { toNumber(): number } | null, valorCotado: { toNumber(): number } | null) {
   if (valorAprovado != null) return valorAprovado.toNumber();
@@ -13,7 +13,7 @@ export async function carregarPainel() {
   const limite = adicionarDias(hoje, 7);
   const inicio = paraDataBanco(hoje)!;
   const fim = paraDataBanco(limite)!;
-  const foraDaColeta: Etapa[] = ["PERDIDO_DECLINADO", "RECEBIDO", "FINALIZADO", "CONTAS_A_RECEBER"];
+  const foraDaColeta = ["PERDIDO", "GANHO", "RECEBIDO", "FATURADO_HAVER", "CONTAS_A_RECEBER"];
 
   const [processos, coletas, vencidos] = await Promise.all([
     prisma.processo.findMany({
@@ -34,8 +34,9 @@ export async function carregarPainel() {
     }),
   ]);
 
-  const porEtapa = ETAPAS.map((etapa) => {
-    const itens = processos.filter((processo) => processo.etapa === etapa.id);
+  const etapas = await carregarEtapas();
+  const porEtapa = etapas.filter((etapa) => etapa.ativa).map((etapa) => {
+    const itens = processos.filter((processo) => processo.etapa === etapa.slug);
     return {
       ...etapa,
       quantidade: itens.length,
@@ -43,7 +44,8 @@ export async function carregarPainel() {
     };
   });
 
-  const abertos = processos.filter((processo) => processo.etapa !== "RECEBIDO" && processo.etapa !== "PERDIDO_DECLINADO");
+  const encerrados = new Set(["RECEBIDO", "PERDIDO", "GANHO"]);
+  const abertos = processos.filter((processo) => !encerrados.has(processo.etapa));
 
   return {
     hoje,
@@ -69,6 +71,7 @@ export async function carregarPainel() {
       titulo: processo.titulo,
       cliente: processo.cliente.nome,
       numeroNf: processo.numeroNf,
+      etapa: processo.etapa,
       dataVencimento: processo.dataVencimento!.toISOString().slice(0, 10),
       valor: valorDe(processo.valorAprovado, processo.valorCotado),
     })),

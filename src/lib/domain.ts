@@ -1,56 +1,55 @@
 export const PAPEL_IDS = ["ADMIN", "COMERCIAL", "OPERACAO", "FINANCEIRO"] as const;
 export type Papel = (typeof PAPEL_IDS)[number];
 
-export const ETAPA_IDS = [
-  "COTACAO_RECEBIDA",
-  "PRECIFICACAO",
-  "PROPOSTA_ENVIADA",
-  "NEGOCIACAO",
-  "FECHADO_CONTRATO",
-  "EM_EXECUCAO",
-  "FINALIZADO",
-  "CONTAS_A_RECEBER",
-  "RECEBIDO",
-  "PERDIDO_DECLINADO",
-] as const;
-export type Etapa = (typeof ETAPA_IDS)[number];
+export type GrupoEtapa = "comercial" | "operacao" | "financeiro" | "terminal";
+
+export type EtapaConfig = {
+  slug: string;
+  rotulo: string;
+  resumo: string;
+  cor: string;
+  ordem: number;
+  grupo: GrupoEtapa;
+  terminal: boolean;
+};
+
+export const ETAPAS_PADRAO: EtapaConfig[] = [
+  { slug: "LEADS_DE_ENTRADA", rotulo: "Leads de entrada", resumo: "Lead recém-chegado, ainda sem contato qualificado.", cor: "#3d6b8c", ordem: 10, grupo: "comercial", terminal: false },
+  { slug: "CONTATO_INICIAL", rotulo: "Contato inicial", resumo: "Primeiro retorno feito ao cliente.", cor: "#4d7ea8", ordem: 20, grupo: "comercial", terminal: false },
+  { slug: "PRECIFICACAO", rotulo: "Precificação", resumo: "Montagem do preço de frete, seguro e transporte.", cor: "#2f6f6a", ordem: 30, grupo: "comercial", terminal: false },
+  { slug: "PROPOSTA", rotulo: "Proposta", resumo: "Proposta enviada ao cliente.", cor: "#1e4d3a", ordem: 40, grupo: "comercial", terminal: false },
+  { slug: "NEGOCIACAO", rotulo: "Negociação", resumo: "Ajustes de escopo, data ou valor.", cor: "#b5842f", ordem: 50, grupo: "comercial", terminal: false },
+  { slug: "PRIORIDADE", rotulo: "Prioridade", resumo: "Oportunidade quente, com decisão próxima.", cor: "#c47b2a", ordem: 60, grupo: "comercial", terminal: false },
+  { slug: "CONTRATO", rotulo: "Contrato", resumo: "Fechado, com contrato ou OC.", cor: "#c45c26", ordem: 70, grupo: "comercial", terminal: false },
+  { slug: "A_EXECUTAR", rotulo: "A executar", resumo: "Na fila da operação, aguardando a coleta.", cor: "#a3472c", ordem: 80, grupo: "operacao", terminal: false },
+  { slug: "EM_EXECUCAO", rotulo: "Em execução", resumo: "Coleta, trânsito ou entrega em curso.", cor: "#8a3b28", ordem: 90, grupo: "operacao", terminal: false },
+  { slug: "FATURADO_HAVER", rotulo: "Faturado/Haver", resumo: "Serviço faturado ou com haver a conciliar.", cor: "#6e4c7a", ordem: 100, grupo: "financeiro", terminal: false },
+  { slug: "CONTAS_A_RECEBER", rotulo: "Contas a receber", resumo: "Título em aberto no financeiro.", cor: "#5c3d78", ordem: 110, grupo: "financeiro", terminal: false },
+  { slug: "RECEBIDO", rotulo: "Recebido", resumo: "Valor entrou no caixa.", cor: "#1f6b45", ordem: 120, grupo: "financeiro", terminal: true },
+  { slug: "GANHO", rotulo: "Ganho", resumo: "Oportunidade ganha.", cor: "#2e7d4f", ordem: 130, grupo: "terminal", terminal: true },
+  { slug: "PERDIDO", rotulo: "Perdido", resumo: "Cliente desistiu ou a proposta foi recusada.", cor: "#8a8175", ordem: 140, grupo: "terminal", terminal: true },
+];
+
+export type Etapa = string;
 
 export const CANAL_IDS = ["EMAIL", "SITE", "WHATSAPP", "INDICACAO"] as const;
 export type Canal = (typeof CANAL_IDS)[number];
 
-export const FLUXO: Etapa[] = [
-  "COTACAO_RECEBIDA",
-  "PRECIFICACAO",
-  "PROPOSTA_ENVIADA",
-  "NEGOCIACAO",
-  "FECHADO_CONTRATO",
-  "EM_EXECUCAO",
-  "FINALIZADO",
-  "CONTAS_A_RECEBER",
-  "RECEBIDO",
-];
+export const ETAPAS = ETAPAS_PADRAO.map((etapa) => ({
+  id: etapa.slug,
+  rotulo: etapa.rotulo,
+  resumo: etapa.resumo,
+  cor: etapa.cor,
+}));
 
 export type Autoridade = Papel | "API";
 
 export type MetaEtapa = {
-  id: Etapa;
+  id: string;
   rotulo: string;
   resumo: string;
   cor: string;
 };
-
-export const ETAPAS: MetaEtapa[] = [
-  { id: "COTACAO_RECEBIDA", rotulo: "Cotação recebida", resumo: "Lead entrou e ainda vai ser avaliado.", cor: "#3d6b8c" },
-  { id: "PRECIFICACAO", rotulo: "Precificação", resumo: "Operação e comercial montam o preço.", cor: "#2f6f6a" },
-  { id: "PROPOSTA_ENVIADA", rotulo: "Proposta enviada", resumo: "A proposta já está com o cliente.", cor: "#1e4d3a" },
-  { id: "NEGOCIACAO", rotulo: "Negociação", resumo: "Ajustes de escopo, data ou valor.", cor: "#b5842f" },
-  { id: "FECHADO_CONTRATO", rotulo: "Fechado / Contrato", resumo: "Valor aprovado e OC em mãos.", cor: "#c45c26" },
-  { id: "EM_EXECUCAO", rotulo: "Em execução", resumo: "Coleta, trânsito ou entrega em curso.", cor: "#a3472c" },
-  { id: "FINALIZADO", rotulo: "Finalizado", resumo: "Serviço concluído, aguardando faturamento.", cor: "#3e7a5e" },
-  { id: "CONTAS_A_RECEBER", rotulo: "Contas a receber", resumo: "NF emitida e ainda não recebida.", cor: "#6e4c7a" },
-  { id: "RECEBIDO", rotulo: "Recebido", resumo: "Valor entrou no caixa.", cor: "#1f6b45" },
-  { id: "PERDIDO_DECLINADO", rotulo: "Perdido/Declinado", resumo: "Cliente desistiu ou a proposta foi recusada.", cor: "#8a8175" },
-];
 
 export const CANAIS: { id: Canal; rotulo: string }[] = [
   { id: "EMAIL", rotulo: "E-mail" },
@@ -89,6 +88,53 @@ export const CAMPOS = [
   "dataVencimento",
   "dataRecebimento",
   "responsavelId",
+  "origemReferencia",
+  "origemAndar",
+  "origemElevador",
+  "origemImovel",
+  "destinoReferencia",
+  "destinoAndar",
+  "destinoElevador",
+  "destinoImovel",
+  "modalidade",
+  "descricaoColeta",
+  "descricaoEntrega",
+  "embalagemNecessaria",
+  "volume",
+  "itensEspeciais",
+  "dataPretendida",
+  "dataPrevista",
+  "dataEmissao",
+  "diasParaColetar",
+  "diasParaViagem",
+  "motoristaNome",
+  "motoristaPlaca",
+  "motoristaAntt",
+  "motoristaCnh",
+  "motoristaCpf",
+  "valorFrete",
+  "valorSeguro",
+  "valorTransporte",
+  "valorTotal",
+  "formaPagamento",
+  "validadeProposta",
+  "linkProposta",
+  "linkContrato",
+  "linkContratoCarreteiro",
+  "linkOs",
+  "linkRecibo",
+  "fonte",
+  "utmSource",
+  "utmMedium",
+  "utmCampaign",
+  "utmTerm",
+  "utmContent",
+  "fbclid",
+  "gclid",
+  "metaCampaignId",
+  "metaAdId",
+  "referrer",
+  "formulario",
 ] as const;
 export type Campo = (typeof CAMPOS)[number];
 
@@ -111,6 +157,44 @@ const CAMPOS_COMERCIAL: Campo[] = [
   "valorAprovado",
   "numeroOc",
   "responsavelId",
+  "origemReferencia",
+  "origemAndar",
+  "origemElevador",
+  "origemImovel",
+  "destinoReferencia",
+  "destinoAndar",
+  "destinoElevador",
+  "destinoImovel",
+  "modalidade",
+  "descricaoColeta",
+  "descricaoEntrega",
+  "embalagemNecessaria",
+  "volume",
+  "itensEspeciais",
+  "dataPretendida",
+  "dataPrevista",
+  "diasParaColetar",
+  "diasParaViagem",
+  "valorFrete",
+  "valorSeguro",
+  "valorTransporte",
+  "valorTotal",
+  "formaPagamento",
+  "validadeProposta",
+  "linkProposta",
+  "linkContrato",
+  "fonte",
+  "utmSource",
+  "utmMedium",
+  "utmCampaign",
+  "utmTerm",
+  "utmContent",
+  "fbclid",
+  "gclid",
+  "metaCampaignId",
+  "metaAdId",
+  "referrer",
+  "formulario",
 ];
 
 const CAMPOS_OPERACAO: Campo[] = [
@@ -125,9 +209,44 @@ const CAMPOS_OPERACAO: Campo[] = [
   "dataEntrega",
   "inventario",
   "numeroCte",
+  "origemReferencia",
+  "origemAndar",
+  "origemElevador",
+  "origemImovel",
+  "destinoReferencia",
+  "destinoAndar",
+  "destinoElevador",
+  "destinoImovel",
+  "descricaoColeta",
+  "descricaoEntrega",
+  "embalagemNecessaria",
+  "volume",
+  "itensEspeciais",
+  "dataPrevista",
+  "diasParaColetar",
+  "diasParaViagem",
+  "motoristaNome",
+  "motoristaPlaca",
+  "motoristaAntt",
+  "motoristaCnh",
+  "motoristaCpf",
 ];
 
-const CAMPOS_FINANCEIRO: Campo[] = ["valorAprovado", "numeroOc", "numeroNf", "dataVencimento", "dataRecebimento"];
+const CAMPOS_FINANCEIRO: Campo[] = [
+  "valorAprovado",
+  "numeroOc",
+  "numeroNf",
+  "dataVencimento",
+  "dataRecebimento",
+  "valorFrete",
+  "valorSeguro",
+  "valorTransporte",
+  "valorTotal",
+  "formaPagamento",
+  "dataEmissao",
+  "linkOs",
+  "linkRecibo",
+];
 
 const ROTULO_CAMPO: Record<Campo, string> = {
   titulo: "título",
@@ -152,10 +271,65 @@ const ROTULO_CAMPO: Record<Campo, string> = {
   dataVencimento: "vencimento",
   dataRecebimento: "recebimento",
   responsavelId: "responsável",
+  origemReferencia: "ponto de referência de origem",
+  origemAndar: "andar de origem",
+  origemElevador: "elevador de origem",
+  origemImovel: "imóvel de origem",
+  destinoReferencia: "ponto de referência de destino",
+  destinoAndar: "andar de destino",
+  destinoElevador: "elevador de destino",
+  destinoImovel: "imóvel de destino",
+  modalidade: "modalidade",
+  descricaoColeta: "coleta",
+  descricaoEntrega: "entrega",
+  embalagemNecessaria: "embalagem",
+  volume: "volume",
+  itensEspeciais: "itens especiais",
+  dataPretendida: "data pretendida",
+  dataPrevista: "data prevista",
+  dataEmissao: "data de emissão",
+  diasParaColetar: "dias para coletar",
+  diasParaViagem: "dias para viagem",
+  motoristaNome: "motorista",
+  motoristaPlaca: "placa",
+  motoristaAntt: "ANTT",
+  motoristaCnh: "CNH",
+  motoristaCpf: "CPF do motorista",
+  valorFrete: "valor do frete",
+  valorSeguro: "valor do seguro",
+  valorTransporte: "valor do transporte",
+  valorTotal: "valor total",
+  formaPagamento: "forma de pagamento",
+  validadeProposta: "validade da proposta",
+  linkProposta: "link da proposta",
+  linkContrato: "link do contrato",
+  linkContratoCarreteiro: "link do contrato do carreteiro",
+  linkOs: "link da O.S.",
+  linkRecibo: "link do recibo",
+  fonte: "fonte",
+  utmSource: "utm_source",
+  utmMedium: "utm_medium",
+  utmCampaign: "utm_campaign",
+  utmTerm: "utm_term",
+  utmContent: "utm_content",
+  fbclid: "fbclid",
+  gclid: "gclid",
+  metaCampaignId: "campanha Meta",
+  metaAdId: "anúncio Meta",
+  referrer: "referrer",
+  formulario: "formulário",
 };
 
-export function ehEtapa(valor: string): valor is Etapa {
-  return (ETAPA_IDS as readonly string[]).includes(valor);
+export function ehEtapa(valor: string, catalogo: EtapaConfig[] = ETAPAS_PADRAO): valor is string {
+  return catalogo.some((etapa) => etapa.slug === valor);
+}
+
+export function fluxoEtapas(catalogo: EtapaConfig[] = ETAPAS_PADRAO) {
+  return catalogo.filter((etapa) => etapa.grupo !== "terminal").sort((a, b) => a.ordem - b.ordem);
+}
+
+export function etapaInicial(catalogo: EtapaConfig[] = ETAPAS_PADRAO) {
+  return fluxoEtapas(catalogo)[0]?.slug ?? "LEADS_DE_ENTRADA";
 }
 
 export function ehCanal(valor: string): valor is Canal {
@@ -166,12 +340,14 @@ export function ehPapel(valor: string): valor is Papel {
   return (PAPEL_IDS as readonly string[]).includes(valor);
 }
 
-export function etapaPorId(id: Etapa): MetaEtapa {
-  return ETAPAS.find((etapa) => etapa.id === id) ?? ETAPAS[0];
+export function etapaPorId(id: string, catalogo: EtapaConfig[] = ETAPAS_PADRAO): MetaEtapa {
+  const etapa = catalogo.find((item) => item.slug === id);
+  if (!etapa) return { id, rotulo: id, resumo: "", cor: "#8a8175" };
+  return { id: etapa.slug, rotulo: etapa.rotulo, resumo: etapa.resumo, cor: etapa.cor };
 }
 
-export function rotuloEtapa(id: Etapa): string {
-  return etapaPorId(id).rotulo;
+export function rotuloEtapa(id: string, catalogo: EtapaConfig[] = ETAPAS_PADRAO): string {
+  return etapaPorId(id, catalogo).rotulo;
 }
 
 export function rotuloCanal(id: Canal): string {
@@ -201,45 +377,62 @@ export function podeGerirClientes(autoridade: Autoridade): boolean {
   return autoridade === "API" || autoridade === "ADMIN" || autoridade === "COMERCIAL";
 }
 
-export function validarTransicao(autoridade: Autoridade, de: Etapa, para: Etapa): string | null {
-  if (de === para) return "O processo já está nesta etapa.";
+export function validarTransicao(
+  autoridade: Autoridade,
+  deSlug: string,
+  paraSlug: string,
+  catalogo: EtapaConfig[] = ETAPAS_PADRAO,
+): string | null {
+  const de = catalogo.find((etapa) => etapa.slug === deSlug);
+  const para = catalogo.find((etapa) => etapa.slug === paraSlug);
+  if (!de || !para) return "Etapa inválida.";
+  if (de.slug === para.slug) return "O processo já está nesta etapa.";
   if (autoridade === "API" || autoridade === "ADMIN") return null;
+  if (de.terminal) return "Só um administrador pode reabrir um processo encerrado.";
 
-  if (de === "RECEBIDO" || de === "PERDIDO_DECLINADO") {
-    return "Só um administrador pode reabrir um processo encerrado.";
-  }
-
-  if (para === "PERDIDO_DECLINADO") {
-    const ateFechamento = FLUXO.indexOf(de) <= FLUXO.indexOf("FECHADO_CONTRATO");
-    if (autoridade === "COMERCIAL" && ateFechamento) return null;
+  if (para.slug === "PERDIDO") {
+    if (autoridade === "COMERCIAL" && de.grupo === "comercial") return null;
     return "Seu papel não pode marcar este processo como perdido.";
   }
-
-  if (FLUXO.indexOf(para) < FLUXO.indexOf(de)) {
-    return "Seu papel só pode avançar o processo na pipeline.";
+  if (para.slug === "GANHO") {
+    if (autoridade === "COMERCIAL") return null;
+    return "Só o comercial marca o processo como ganho.";
   }
 
+  const linha = fluxoEtapas(catalogo);
+  const indiceDe = linha.findIndex((etapa) => etapa.slug === de.slug);
+  const indicePara = linha.findIndex((etapa) => etapa.slug === para.slug);
+  if (indiceDe < 0 || indicePara < 0) return "Etapa inválida.";
+  if (indicePara < indiceDe) return "Seu papel só pode avançar o processo na pipeline.";
+
   if (autoridade === "COMERCIAL") {
-    const teto = FLUXO.indexOf("FECHADO_CONTRATO");
-    if (FLUXO.indexOf(para) > teto) return "O comercial move o processo até Fechado / Contrato.";
+    if (para.grupo !== "comercial") return "O comercial move o processo até Contrato.";
     return null;
   }
 
   if (autoridade === "OPERACAO") {
-    if (de === "FECHADO_CONTRATO" && para === "EM_EXECUCAO") return null;
-    if (de === "EM_EXECUCAO" && para === "FINALIZADO") return null;
-    return "A operação avança de Fechado / Contrato para Em execução e depois para Finalizado.";
+    const proxima = linha[indiceDe + 1];
+    if (!proxima || proxima.slug !== para.slug || para.grupo !== "operacao") {
+      return "A operação avança uma etapa por vez, de Contrato até Em execução.";
+    }
+    if (de.grupo !== "operacao" && de.slug !== "CONTRATO") return "A operação recebe processos a partir de Contrato.";
+    return null;
   }
 
   if (autoridade === "FINANCEIRO") {
-    if (de === "FINALIZADO" && para === "CONTAS_A_RECEBER") return null;
-    if (de === "CONTAS_A_RECEBER" && para === "RECEBIDO") return null;
-    return "O financeiro avança de Finalizado para Contas a receber e depois para Recebido.";
+    const proxima = linha[indiceDe + 1];
+    if (!proxima || proxima.slug !== para.slug || para.grupo !== "financeiro") {
+      return "O financeiro avança uma etapa por vez, de Faturado/Haver até Recebido.";
+    }
+    if (de.grupo !== "financeiro" && de.slug !== "EM_EXECUCAO") {
+      return "O financeiro recebe processos a partir de Em execução.";
+    }
+    return null;
   }
 
   return "Transição não permitida.";
 }
 
-export function destinosPossiveis(autoridade: Autoridade, de: Etapa): Etapa[] {
-  return ETAPA_IDS.filter((etapa) => validarTransicao(autoridade, de, etapa) === null);
+export function destinosPossiveis(autoridade: Autoridade, de: string, catalogo: EtapaConfig[] = ETAPAS_PADRAO): string[] {
+  return catalogo.filter((etapa) => validarTransicao(autoridade, de, etapa.slug, catalogo) === null).map((etapa) => etapa.slug);
 }

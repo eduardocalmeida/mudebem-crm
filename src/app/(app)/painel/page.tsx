@@ -55,8 +55,8 @@ export default async function PainelPage() {
           <h2>Por etapa</h2>
           <div>
             {painel.porEtapa.map((etapa) => (
-              <div className="etapa-linha" key={etapa.id}>
-                <Link href={`/processos?visao=kanban&etapa=${etapa.id}`}>{etapa.rotulo}</Link>
+              <div className="etapa-linha" key={etapa.slug}>
+                <Link href={`/processos?visao=kanban&etapa=${etapa.slug}`}>{etapa.rotulo}</Link>
                 <strong>{etapa.quantidade}</strong>
                 <span>{formatarBRL(etapa.valor)}</span>
                 <div className="trilho" aria-hidden>
@@ -103,7 +103,7 @@ export default async function PainelPage() {
                   <span>
                     {formatarBRL(item.valor)}
                     <br />
-                    <SeloEtapa etapa="CONTAS_A_RECEBER" />
+                    <SeloEtapa etapa={item.etapa} />
                     <br />
                     <span className="muted">venceu {textoQuando(item.dataVencimento, painel.hoje)}</span>
                   </span>
