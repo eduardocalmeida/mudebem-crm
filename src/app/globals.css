@@ -195,6 +195,18 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .calendario section { background: #fff; border-radius: 12px; padding: 8px; min-height: 120px; }
 .calendario .chip { display: block; margin-top: 6px; font-size: 0.85rem; text-decoration: none; }
 .check { display: flex; align-items: center; gap: 8px; }
+.orcamento { max-width: 980px; margin: 0 auto; padding: 32px 18px 64px; }
+.orcamento.embed { padding-top: 12px; }
+.orcamento header h1 { font-family: var(--display); font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; margin: 0 0 8px; }
+.orcamento-form { display: flex; flex-direction: column; gap: 12px; }
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.catalogo-lista { max-height: 320px; overflow: auto; margin-top: 8px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+.catalogo-lista button { width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+.catalogo-lista button span, .linha-item .muted { color: var(--muted); font-size: 0.85rem; }
+.linhas-inventario { display: flex; flex-direction: column; gap: 8px; }
+.linha-item { display: grid; grid-template-columns: minmax(0, 1fr) 140px 72px auto; gap: 8px; align-items: center; background: white; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+.grade-form.uma { grid-template-columns: 1fr 1fr; }
 .tabela { width: 100%; border-collapse: collapse; }
 .tabela th, .tabela td { text-align: left; padding: 8px; border-bottom: 1px solid #eadfce; vertical-align: top; }
 
@@ -203,7 +215,7 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   .barra { position: relative; height: auto; }
   .menu { flex-direction: row; overflow-x: auto; }
   .barra-rodape { margin-top: 0; }
-  .grade-stats, .layout-painel, .ficha, .fatos, .login, .grade-form, .rota-grande { grid-template-columns: 1fr; }
+  .grade-stats, .layout-painel, .ficha, .fatos, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item { grid-template-columns: 1fr; }
   .conteudo { padding: 18px 14px 32px; }
   .login-hero { padding: 28px 20px; }
   .login-hero h1 { font-size: 2.4rem; }

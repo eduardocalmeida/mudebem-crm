@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { FormChave, FormRevogarChave } from "@/components/formularios";
 import { SeloExemplo } from "@/components/selos";
 import { CHAVE_API_EXEMPLO } from "@/lib/api-key";
@@ -10,6 +11,10 @@ export const metadata = { title: "Integrações" };
 export default async function IntegracoesPage() {
   const usuario = await exigirUsuario();
   if (usuario.papel !== "ADMIN") return <p className="alerta">Só um administrador gerencia chaves de API.</p>;
+  const cabecalhos = await headers();
+  const host = cabecalhos.get("x-forwarded-host") || cabecalhos.get("host") || "";
+  const protocolo = cabecalhos.get("x-forwarded-proto") || "https";
+  const base = host ? `${protocolo}://${host}` : "";
   const chaves = await prisma.chaveApi.findMany({
     orderBy: { criadaEm: "desc" },
     include: { criadaPor: { select: { nome: true } } },
@@ -29,6 +34,14 @@ export default async function IntegracoesPage() {
           Chave de demonstração do seed, só neste ambiente: <code className="chave">{CHAVE_API_EXEMPLO}</code>
         </p>
       ) : null}
+      <section className="cartao bloco">
+        <h2>Formulário do site</h2>
+        <p className="muted">Página pública e script para incorporar no site novo. O envio abre o lead em Leads de entrada.</p>
+        <p>
+          <a href="/orcamento">{base}/orcamento</a>
+        </p>
+        <pre className="chave-nova">{`<div id="mudebem-orcamento"></div>\n<script src="${base}/formulario.js" async></script>`}</pre>
+      </section>
       <section className="ficha">
         <article className="cartao bloco">
           <h2>Nova chave</h2>

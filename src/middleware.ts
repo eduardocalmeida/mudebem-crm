@@ -3,7 +3,11 @@ import { COOKIE_SESSAO, lerSessao } from "@/lib/token";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const publico = pathname === "/login";
+  const publico =
+    pathname === "/login" ||
+    pathname === "/orcamento" ||
+    pathname === "/formulario.js" ||
+    pathname.startsWith("/api/publico/");
   const sessao = await lerSessao(req.cookies.get(COOKIE_SESSAO)?.value);
 
   if (!sessao && !publico) {

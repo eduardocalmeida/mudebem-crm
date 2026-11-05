@@ -34,6 +34,57 @@ Cada processo tem abas: resumo, inventário, tarefas e CT-e. Em **Tarefas** há 
 
 A API também lê o catálogo em `GET /api/v1/inventario/catalogo` e lê ou acrescenta itens em `GET` e `POST /api/v1/processos/{id}/inventario`.
 
+O site novo pode usar o formulário público em `/orcamento` ou incorporar `/formulario.js`. O envio não exige chave.
+
+## Formulário público de orçamento
+
+Página hospedada: `/orcamento`. Ela lê `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `fbclid`, `gclid` e `referrer` da query. Sem `referrer` na query, usa o cabeçalho `Referer` quando ele aponta para outro site.
+
+Para incorporar:
+
+```html
+<div id="mudebem-orcamento"></div>
+<script src="https://SEU-CRM/formulario.js" async></script>
+```
+
+O script abre um iframe em `/orcamento?embed=1` e copia os parâmetros de campanha e o `document.referrer` da página em que está. O administrador também vê esse trecho em **Integrações**.
+
+`POST /api/publico/orcamento` é público, aceita JSON e responde com CORS liberado. Não envia chave de API. Um campo `website` preenchido é tratado como robô: a resposta é `{ "recebido": true }` e nada é gravado. Cada endereço IP pode enviar 5 vezes por hora; o excesso responde `429` com `codigo: "LIMITE"`.
+
+O contato é criado ou atualizado pelo e-mail ou pelos últimos 8 dígitos do telefone. Se essa pessoa já tem um processo em **Leads de entrada**, o mesmo processo é atualizado e o inventário é substituído. Caso contrário, abre um processo novo nessa etapa, no canal `SITE`, com o volume calculado.
+
+```bash
+curl -s -X POST http://localhost:3000/api/publico/orcamento \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Marina Alves",
+    "email": "marina.alves@example.com",
+    "telefone": "(41) 98888-1212",
+    "origemCidade": "Curitiba",
+    "origemUf": "PR",
+    "origemImovel": "Apartamento",
+    "origemAndar": "7",
+    "origemElevador": "Sim",
+    "destinoCidade": "São Paulo",
+    "destinoUf": "SP",
+    "destinoImovel": "Casa",
+    "dataPretendida": "2026-12-10",
+    "dataColeta": "15/12/2026",
+    "utmSource": "google",
+    "utmMedium": "cpc",
+    "utmCampaign": "mudanca-novembro",
+    "gclid": "EAIa-exemplo",
+    "fbclid": "IwAR-exemplo",
+    "referrer": "https://www.google.com/",
+    "website": "",
+    "itens": [
+      { "catalogoId": "ID-DO-CATALOGO", "comodo": "SALA", "quantidade": 1 }
+    ]
+  }'
+```
+
+`catalogoId` vem do catálogo interno (o mesmo da aba Inventário). `comodo` aceita `SALA`, `QUARTO`, `COZINHA`, `BANHEIRO`, `AREA_SERVICO`, `ESCRITORIO`, `VARANDA` ou `OUTROS`. A resposta `201` traz `codigo`, `volume`, `quantidade` e `atualizado`. Datas aceitam `aaaa-mm-dd` ou `dd/mm/aaaa`. Informe e-mail ou telefone.
+
 A migração dos leads ativos está em **Importar**. Exporte o CSV de leads, contatos e empresas na Kommo (vence em 13/11/2026) e envie cada arquivo. O importador reconhece as colunas do funil — origem e destino com andar, elevador, imóvel e ponto de referência, modalidade, coleta, entrega, embalagem, volume, inventário, itens especiais, datas, dias para coletar e viajar, motorista, valores de frete, seguro, transporte e total, forma de pagamento, validade, links e atribuição de marketing (fonte, utm, fbclid, gclid, campanha e anúncio da Meta). Coluna que não tiver campo próprio vira campo personalizado. Importar de novo o mesmo ID da Kommo atualiza o registro.
 
 ## Stack
