@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Papel {
+  ADMIN
+  COMERCIAL
+  OPERACAO
+  FINANCEIRO
+}
+
+enum Etapa {
+  COTACAO_RECEBIDA
+  PRECIFICACAO
+  PROPOSTA_ENVIADA
+  NEGOCIACAO
+  FECHADO_CONTRATO
+  EM_EXECUCAO
+  FINALIZADO
+  CONTAS_A_RECEBER
+  RECEBIDO
+  PERDIDO_DECLINADO
+}
+
+enum CanalOrigem {
+  EMAIL
+  SITE
+  WHATSAPP
+  INDICACAO
+}
+
+enum TipoEvento {
+  CRIACAO
+  MUDANCA_ETAPA
+  NOTA
+  ATUALIZACAO
+  ANEXO
+}
+
+model Usuario {
+  id           String     @id @default(cuid())
+  nome         String
+  email        String     @unique
+  senhaHash    String
+  papel        Papel
+  ativo        Boolean    @default(true)
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+  processos    Processo[] @relation("Responsavel")
+  eventos      Evento[]
+  anexos       Anexo[]
+  chaves       ChaveApi[]
+}
+
+model ChaveApi {
+  id          String    @id @default(cuid())
+  nome        String
+  prefixo     String
+  hash        String    @unique
+  exemplo     Boolean   @default(false)
+  criadaEm    DateTime  @default(now())
+  revogadaEm  DateTime?
+  ultimoUsoEm DateTime?
+  criadaPorId String
+  criadaPor   Usuario   @relation(fields: [criadaPorId], references: [id])
+}
+
+model Cliente {
+  id           String     @id @default(cuid())
+  nome         String
+  cnpj         String?    @unique
+  email        String?
+  telefone     String?
+  endereco     String?
+  cidade       String?
+  uf           String?
+  observacoes  String?
+  exemplo      Boolean    @default(false)
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+  contatos     Contato[]
+  processos    Processo[]
+}
+
+model Contato {
+  id        String     @id @default(cuid())
+  clienteId String
+  cliente   Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  nome      String
+  email     String?
+  telefone  String?
+  cargo     String?
+  principal Boolean    @default(false)
+  criadoEm  DateTime   @default(now())
+  processos Processo[]
+}
+
+model Processo {
+  id              String       @id @default(cuid())
+  codigo          String       @unique
+  titulo          String
+  etapa           Etapa        @default(COTACAO_RECEBIDA)
+  canal           CanalOrigem
+  clienteId       String
+  cliente         Cliente      @relation(fields: [clienteId], references: [id])
+  contatoId       String?
+  contato         Contato?     @relation(fields: [contatoId], references: [id])
+  colaborador     String?
+  origemEndereco  String?
+  origemCidade    String?
+  origemUf        String?
+  destinoEndereco String?
+  destinoCidade   String?
+  destinoUf       String?
+  dataColeta      DateTime?    @db.Date
+  dataEntrega     DateTime?    @db.Date
+  inventario      String?      @db.Text
+  valorCotado     Decimal?     @db.Decimal(12, 2)
+  valorAprovado   Decimal?     @db.Decimal(12, 2)
+  numeroOc        String?
+  numeroCte       String?
+  numeroNf        String?
+  dataVencimento  DateTime?    @db.Date
+  dataRecebimento DateTime?    @db.Date
+  responsavelId   String?
+  responsavel     Usuario?     @relation("Responsavel", fields: [responsavelId], references: [id])
+  exemplo         Boolean      @default(false)
+  criadoEm        DateTime     @default(now())
+  atualizadoEm    DateTime     @updatedAt
+  eventos         Evento[]
+  anexos          Anexo[]
+
+  @@index([etapa])
+  @@index([clienteId])
+  @@index([responsavelId])
+  @@index([dataColeta])
+  @@index([dataVencimento])
+}
+
+model Evento {
+  id         String     @id @default(cuid())
+  processoId String
+  processo   Processo   @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  tipo       TipoEvento
+  mensagem   String     @db.Text
+  etapaDe    Etapa?
+  etapaPara  Etapa?
+  usuarioId  String?
+  usuario    Usuario?   @relation(fields: [usuarioId], references: [id])
+  origem     String
+  criadoEm   DateTime   @default(now())
+
+  @@index([processoId, criadoEm])
+}
+
+model Anexo {
+  id          String   @id @default(cuid())
+  processoId  String
+  processo    Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  nomeArquivo String
+  tipoMime    String
+  tamanho     Int
+  conteudo    Bytes
+  usuarioId   String?
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id])
+  criadoEm    DateTime @default(now())
+}
