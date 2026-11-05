@@ -5,10 +5,14 @@ export type SegredosWhatsapp = {
   appSecret: string | null;
   accessToken: string | null;
   wabaId: string | null;
+  appId: string | null;
+  embeddedSignupConfigId: string | null;
   apiVersion: string;
   verifyTokenNoAmbiente: boolean;
   appSecretNoAmbiente: boolean;
   accessTokenNoAmbiente: boolean;
+  appIdNoAmbiente: boolean;
+  configIdNoAmbiente: boolean;
 };
 
 function limpo(valor: string | undefined): string | null {
@@ -56,15 +60,21 @@ export async function segredosWhatsapp(): Promise<SegredosWhatsapp> {
   const appSecretEnv = limpo(process.env.WHATSAPP_APP_SECRET);
   const accessTokenEnv = limpo(process.env.WHATSAPP_ACCESS_TOKEN);
   const wabaEnv = limpo(process.env.WHATSAPP_WABA_ID);
+  const appIdEnv = limpo(process.env.WHATSAPP_APP_ID);
+  const configIdEnv = limpo(process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID);
   return {
     verifyToken: verifyTokenEnv ?? config.verifyToken,
     appSecret: appSecretEnv ?? config.appSecret,
     accessToken: accessTokenEnv ?? config.accessToken,
     wabaId: wabaEnv ?? config.wabaId,
+    appId: appIdEnv ?? config.appId,
+    embeddedSignupConfigId: configIdEnv ?? config.embeddedSignupConfigId,
     apiVersion: limpo(process.env.WHATSAPP_API_VERSION) ?? config.apiVersion ?? "v21.0",
     verifyTokenNoAmbiente: Boolean(verifyTokenEnv),
     appSecretNoAmbiente: Boolean(appSecretEnv),
     accessTokenNoAmbiente: Boolean(accessTokenEnv),
+    appIdNoAmbiente: Boolean(appIdEnv),
+    configIdNoAmbiente: Boolean(configIdEnv),
   };
 }
 

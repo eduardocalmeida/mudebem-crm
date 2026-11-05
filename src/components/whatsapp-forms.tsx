@@ -98,12 +98,16 @@ export function FormVinculo({ conversaId, codigo }: { conversaId: string; codigo
 
 export function FormConfigWhatsapp({
   wabaId,
+  appId,
+  configId,
   apiVersion,
   travado,
 }: {
   wabaId: string;
+  appId: string;
+  configId: string;
   apiVersion: string;
-  travado: { verifyToken: boolean; appSecret: boolean; accessToken: boolean; waba: boolean; versao: boolean };
+  travado: { verifyToken: boolean; appSecret: boolean; accessToken: boolean; waba: boolean; versao: boolean; appId: boolean; configId: boolean };
 }) {
   return (
     <FormAcao acao={salvarConfigWhatsapp} className="grade-form">
@@ -118,6 +122,14 @@ export function FormConfigWhatsapp({
       <label className="campo largo">
         <span>Token de acesso padrão {travado.accessToken ? "(vem do ambiente)" : ""}</span>
         <input name="accessToken" type="password" autoComplete="off" disabled={travado.accessToken} placeholder="deixe vazio para manter" />
+      </label>
+      <label className="campo">
+        <span>App id {travado.appId ? "(vem do ambiente)" : ""}</span>
+        <input name="appId" defaultValue={appId} disabled={travado.appId} />
+      </label>
+      <label className="campo">
+        <span>Configuration id do Embedded Signup {travado.configId ? "(vem do ambiente)" : ""}</span>
+        <input name="embeddedSignupConfigId" defaultValue={configId} disabled={travado.configId} />
       </label>
       <label className="campo">
         <span>WABA id</span>

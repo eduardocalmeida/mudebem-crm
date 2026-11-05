@@ -7,6 +7,7 @@ import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { enviarMensagem } from "@/server/whatsapp";
 import { segredosWhatsapp } from "@/server/whatsapp-config";
+import { solicitarSincronismo } from "@/server/whatsapp-signup";
 import { atribuirConversa, vincularProcesso } from "@/server/whatsapp";
 import { exigirUsuario } from "@/server/session";
 
@@ -85,16 +86,28 @@ export async function salvarConfigWhatsapp(_estado: EstadoForm, form: FormData):
     const usuario = await exigirUsuario();
     if (usuario.papel !== "ADMIN") throw new AppError("Só um administrador altera a conexão com a Meta.", 403, "PROIBIDO");
     const segredos = await segredosWhatsapp();
-    const data: { verifyToken?: string; appSecret?: string; accessToken?: string; wabaId?: string | null; apiVersion?: string } = {};
+    const data: {
+      verifyToken?: string;
+      appSecret?: string;
+      accessToken?: string;
+      wabaId?: string | null;
+      appId?: string | null;
+      embeddedSignupConfigId?: string | null;
+      apiVersion?: string;
+    } = {};
     const verifyToken = String(form.get("verifyToken") ?? "").trim();
     const appSecret = String(form.get("appSecret") ?? "").trim();
     const accessToken = String(form.get("accessToken") ?? "").trim();
     const wabaId = String(form.get("wabaId") ?? "").trim();
+    const appId = String(form.get("appId") ?? "").trim();
+    const embeddedSignupConfigId = String(form.get("embeddedSignupConfigId") ?? "").trim();
     const apiVersion = String(form.get("apiVersion") ?? "").trim();
     if (!segredos.verifyTokenNoAmbiente && verifyToken) data.verifyToken = verifyToken;
     if (!segredos.appSecretNoAmbiente && appSecret) data.appSecret = appSecret;
     if (!segredos.accessTokenNoAmbiente && accessToken) data.accessToken = accessToken;
     if (!process.env.WHATSAPP_WABA_ID?.trim()) data.wabaId = wabaId || null;
+    if (!segredos.appIdNoAmbiente) data.appId = appId || null;
+    if (!segredos.configIdNoAmbiente) data.embeddedSignupConfigId = embeddedSignupConfigId || null;
     if (!process.env.WHATSAPP_API_VERSION?.trim() && apiVersion) data.apiVersion = apiVersion;
     await prisma.configWhatsapp.upsert({ where: { id: "padrao" }, update: data, create: { id: "padrao", ...data } });
     revalidatePath("/whatsapp/ajustes");
@@ -129,6 +142,20 @@ export async function salvarNumeroWhatsapp(_estado: EstadoForm, form: FormData):
     return { ok: "Número salvo." };
   } catch (erro) {
     return falha(erro, "Não foi possível salvar o número.");
+  }
+}
+
+export async function sincronizarHistoricoWhatsapp(_estado: EstadoForm, form: FormData): Promise<EstadoForm> {
+  const id = String(form.get("numeroId") ?? "");
+  try {
+    const usuario = await exigirUsuario();
+    if (usuario.papel !== "ADMIN") throw new AppError("Só um administrador pede o histórico.", 403, "PROIBIDO");
+    await solicitarSincronismo(id);
+    revalidatePath("/whatsapp/ajustes");
+    revalidatePath("/whatsapp");
+    return { ok: "Histórico pedido. As conversas antigas chegam pelo webhook." };
+  } catch (erro) {
+    return falha(erro, "Não foi possível pedir o histórico.");
   }
 }
 

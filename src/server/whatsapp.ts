@@ -20,15 +20,30 @@ const atorWhatsapp: Ator = { tipo: "api", chaveId: "whatsapp", nome: "WhatsApp C
 type Payload = {
   entry?: {
     changes?: {
+      field?: string;
       value?: {
         metadata?: { phone_number_id?: string; display_phone_number?: string };
         contacts?: { profile?: { name?: string }; wa_id?: string }[];
         messages?: Record<string, unknown>[];
+        message_echoes?: Record<string, unknown>[];
         statuses?: {
           id?: string;
           status?: string;
           timestamp?: string;
           errors?: { title?: string; message?: string }[];
+        }[];
+        history?: {
+          metadata?: { phase?: number; chunk_order?: number; progress?: number };
+          errors?: { code?: number; title?: string; message?: string }[];
+          threads?: {
+            id?: string;
+            messages?: (Record<string, unknown> & { history_context?: { from_me?: boolean; status?: string } })[];
+          }[];
+        }[];
+        state_sync?: {
+          type?: string;
+          action?: string;
+          contact?: { full_name?: string; first_name?: string; phone_number?: string };
         }[];
       };
     }[];
@@ -111,6 +126,192 @@ async function garantirConversa(numeroId: string, waId: string, nome: string | n
   }
 }
 
+async function abrirLead(conversaId: string, waId: string, nome: string | null) {
+  const contato = await contatoPorTelefone(waId);
+  let processoId: string | null = null;
+  let contatoId: string | null = contato?.id ?? null;
+  if (!contato) {
+    const nomeLead = nome && nome.trim().length >= 2 ? nome.trim() : `Lead ${formatarWaId(waId)}`;
+    const processo = await criarProcesso(atorWhatsapp, {
+      titulo: `Lead WhatsApp — ${nomeLead}`.slice(0, 180),
+      canal: "WHATSAPP",
+      etapa: "COTACAO_RECEBIDA",
+      cliente: { nome: nomeLead, telefone: formatarWaId(waId) },
+      contato: { nome: nomeLead, telefone: formatarWaId(waId) },
+    });
+    contatoId = processo.contato?.id ?? null;
+    processoId = processo.id;
+  } else {
+    const aberto = await prisma.processo.findFirst({
+      where: { clienteId: contato.clienteId, etapa: { notIn: ["RECEBIDO", "PERDIDO_DECLINADO"] } },
+      orderBy: { atualizadoEm: "desc" },
+      select: { id: true },
+    });
+    processoId = aberto?.id ?? null;
+  }
+  const conversa = await prisma.conversaWhatsapp.update({
+    where: { id: conversaId },
+    data: { contatoId, processoId, nomeContato: nome ?? undefined },
+  });
+  return { conversa, processoCriado: Boolean(processoId && !contato) };
+}
+
+function statusDoHistorico(valor: string | undefined): StatusMensagem {
+  const normal = valor?.toUpperCase();
+  if (normal === "READ" || normal === "PLAYED") return "LIDA";
+  if (normal === "DELIVERED") return "ENTREGUE";
+  if (normal === "FAILED" || normal === "ERROR") return "FALHOU";
+  return "ENVIADA";
+}
+
+async function gravarMensagem(
+  conversaId: string,
+  mensagem: ReturnType<typeof interpretarMensagem>,
+  direcao: "ENTRADA" | "SAIDA",
+  status: StatusMensagem,
+) {
+  if (mensagem.wamid) {
+    const jaExiste = await prisma.mensagemWhatsapp.findUnique({ where: { wamid: mensagem.wamid } });
+    if (jaExiste) return false;
+  }
+  await prisma.mensagemWhatsapp.create({
+    data: {
+      conversaId,
+      wamid: mensagem.wamid,
+      direcao,
+      tipo: mensagem.tipo,
+      texto: mensagem.texto,
+      midiaId: mensagem.midiaId,
+      midiaMime: mensagem.midiaMime,
+      midiaNome: mensagem.midiaNome,
+      status,
+      criadaEm: mensagem.quando,
+    },
+  });
+  return true;
+}
+
+async function conversaSemLead(numeroId: string, waId: string, nome: string | null) {
+  const existente = await prisma.conversaWhatsapp.findUnique({ where: { numeroId_waId: { numeroId, waId } } });
+  if (existente) {
+    if (nome && !existente.nomeContato) {
+      return prisma.conversaWhatsapp.update({ where: { id: existente.id }, data: { nomeContato: nome } });
+    }
+    return existente;
+  }
+  const contato = await contatoPorTelefone(waId);
+  try {
+    return await prisma.conversaWhatsapp.create({
+      data: {
+        numeroId,
+        waId,
+        nomeContato: nome,
+        contatoId: contato?.id ?? null,
+        naoLida: false,
+      },
+    });
+  } catch (erro) {
+    if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
+      const criada = await prisma.conversaWhatsapp.findUnique({ where: { numeroId_waId: { numeroId, waId } } });
+      if (criada) return criada;
+    }
+    throw erro;
+  }
+}
+
+type BlocoHistorico = NonNullable<NonNullable<NonNullable<Payload["entry"]>[number]["changes"]>[number]["value"]>["history"];
+type BlocoContatos = NonNullable<NonNullable<NonNullable<Payload["entry"]>[number]["changes"]>[number]["value"]>["state_sync"];
+
+async function importarHistorico(numeroId: string, blocos: BlocoHistorico) {
+  if (!blocos) return;
+  for (const bloco of blocos) {
+    const erro = bloco.errors?.[0];
+    if (erro && !bloco.threads?.length) {
+      await prisma.numeroWhatsapp.update({
+        where: { id: numeroId },
+        data: {
+          historicoStatus: "recusado",
+          historicoErro: erro.title || erro.message || "A empresa não compartilhou o histórico.",
+        },
+      });
+      continue;
+    }
+    const progresso = bloco.metadata?.progress;
+    if (typeof progresso === "number") {
+      await prisma.numeroWhatsapp.update({
+        where: { id: numeroId },
+        data: {
+          historicoProgresso: progresso,
+          historicoStatus: progresso >= 100 ? "concluido" : "sincronizando",
+        },
+      });
+    }
+    for (const fio of bloco.threads ?? []) {
+      const cliente = digitosTelefone(fio.id);
+      if (!cliente) continue;
+      let ultimaMensagem: { quando: Date; texto: string } | null = null;
+      let ultimaEntrada: Date | null = null;
+      const conversa = await conversaSemLead(numeroId, cliente, null);
+      for (const bruta of fio.messages ?? []) {
+        if (bruta.type === "media_placeholder") {
+          bruta.text = { body: "Mídia antiga. O arquivo só volta se a mensagem tiver menos de 14 dias." };
+          bruta.type = "text";
+        }
+        const mensagem = interpretarMensagem(bruta);
+        const daEmpresa = bruta.history_context?.from_me === true;
+        const gravou = await gravarMensagem(
+          conversa.id,
+          mensagem,
+          daEmpresa ? "SAIDA" : "ENTRADA",
+          daEmpresa ? statusDoHistorico(bruta.history_context?.status) : "RECEBIDA",
+        );
+        if (!gravou) continue;
+        if (!ultimaMensagem || mensagem.quando > ultimaMensagem.quando) {
+          ultimaMensagem = { quando: mensagem.quando, texto: resumo(mensagem.tipo, mensagem.texto) };
+        }
+        if (!daEmpresa && (!ultimaEntrada || mensagem.quando > ultimaEntrada)) ultimaEntrada = mensagem.quando;
+      }
+      if (!ultimaMensagem) continue;
+      const atual = await prisma.conversaWhatsapp.findUnique({ where: { id: conversa.id } });
+      const maisNova = !atual?.ultimaMensagemEm || ultimaMensagem.quando > atual.ultimaMensagemEm;
+      await prisma.conversaWhatsapp.update({
+        where: { id: conversa.id },
+        data: {
+          ...(maisNova ? { ultimaMensagem: ultimaMensagem.texto, ultimaMensagemEm: ultimaMensagem.quando } : {}),
+          ...(ultimaEntrada && (!atual?.ultimaEntradaEm || ultimaEntrada > atual.ultimaEntradaEm)
+            ? { ultimaEntradaEm: ultimaEntrada }
+            : {}),
+        },
+      });
+    }
+  }
+}
+
+async function importarContatosDoApp(numeroId: string, contatos: BlocoContatos) {
+  for (const item of contatos ?? []) {
+    if (item.action === "remove") continue;
+    const waId = digitosTelefone(item.contact?.phone_number);
+    const nome = item.contact?.full_name?.trim() || item.contact?.first_name?.trim() || null;
+    if (!waId) continue;
+    await conversaSemLead(numeroId, waId, nome);
+  }
+}
+
+async function importarEcos(numeroId: string, ecos: Record<string, unknown>[]) {
+  for (const bruta of ecos) {
+    const mensagem = interpretarMensagem(bruta);
+    const destino = digitosTelefone(typeof bruta.to === "string" ? bruta.to : "");
+    if (!destino) continue;
+    const conversa = await conversaSemLead(numeroId, destino, null);
+    const gravou = await gravarMensagem(conversa.id, mensagem, "SAIDA", "ENVIADA");
+    if (!gravou) continue;
+    await prisma.conversaWhatsapp.update({
+      where: { id: conversa.id },
+      data: { ultimaMensagem: resumo(mensagem.tipo, mensagem.texto), ultimaMensagemEm: mensagem.quando },
+    });
+  }
+}
+
 export async function processarWebhook(payload: Payload) {
   await sincronizarNumerosDoAmbiente();
   for (const entrada of payload.entry ?? []) {
@@ -121,6 +322,10 @@ export async function processarWebhook(payload: Payload) {
       if (!phoneNumberId) continue;
       const numero = await prisma.numeroWhatsapp.findUnique({ where: { phoneNumberId } });
       if (!numero || !numero.ativo) continue;
+
+      if (valor.history) await importarHistorico(numero.id, valor.history);
+      if (valor.state_sync) await importarContatosDoApp(numero.id, valor.state_sync);
+      if (valor.message_echoes) await importarEcos(numero.id, valor.message_echoes);
 
       for (const status of valor.statuses ?? []) {
         if (!status.id) continue;
@@ -143,7 +348,12 @@ export async function processarWebhook(payload: Payload) {
       for (const bruta of valor.messages ?? []) {
         const mensagem = interpretarMensagem(bruta);
         if (!mensagem.de) continue;
-        const { conversa, processoCriado } = await garantirConversa(numero.id, mensagem.de, nomes.get(mensagem.de) ?? null);
+        let { conversa, processoCriado } = await garantirConversa(numero.id, mensagem.de, nomes.get(mensagem.de) ?? null);
+        if (!processoCriado && !conversa.processoId && !conversa.contatoId) {
+          const aberto = await abrirLead(conversa.id, conversa.waId, nomes.get(mensagem.de) ?? conversa.nomeContato);
+          conversa = aberto.conversa;
+          processoCriado = aberto.processoCriado;
+        }
         if (mensagem.wamid) {
           const jaExiste = await prisma.mensagemWhatsapp.findUnique({ where: { wamid: mensagem.wamid } });
           if (jaExiste) continue;

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { CadastroIncorporado } from "@/components/cadastro-incorporado";
 import { FormAcao } from "@/components/form-acao";
 import { FormConfigWhatsapp, FormNumeroWhatsapp } from "@/components/whatsapp-forms";
 import { SeloExemplo } from "@/components/selos";
 import { prisma } from "@/lib/prisma";
 import { exigirUsuario } from "@/server/session";
-import { alternarNumeroWhatsapp } from "@/server/acoes-whatsapp";
+import { alternarNumeroWhatsapp, sincronizarHistoricoWhatsapp } from "@/server/acoes-whatsapp";
 import { segredosWhatsapp, sincronizarNumerosDoAmbiente } from "@/server/whatsapp-config";
 
 export const metadata = { title: "WhatsApp · ajustes" };
@@ -24,7 +25,7 @@ export default async function AjustesWhatsappPage() {
         <div>
           <p className="sobretitulo">Meta</p>
           <h1>Números e conexão</h1>
-          <p className="muted">Um app e um WABA, com um ou mais phone number ids. O webhook é /api/whatsapp/webhook.</p>
+          <p className="muted">Um app e um WABA. O número que está no aplicativo entra por Embedded Signup, com coexistência.</p>
         </div>
         <Link className="btn secundario" href="/whatsapp">
           Voltar à inbox
@@ -38,6 +39,8 @@ export default async function AjustesWhatsappPage() {
         </p>
         <FormConfigWhatsapp
           wabaId={segredos.wabaId ?? ""}
+          appId={segredos.appId ?? ""}
+          configId={segredos.embeddedSignupConfigId ?? ""}
           apiVersion={segredos.apiVersion}
           travado={{
             verifyToken: segredos.verifyTokenNoAmbiente,
@@ -45,8 +48,14 @@ export default async function AjustesWhatsappPage() {
             accessToken: segredos.accessTokenNoAmbiente,
             waba: Boolean(process.env.WHATSAPP_WABA_ID?.trim()),
             versao: Boolean(process.env.WHATSAPP_API_VERSION?.trim()),
+            appId: segredos.appIdNoAmbiente,
+            configId: segredos.configIdNoAmbiente,
           }}
         />
+      </section>
+      <section className="cartao bloco">
+        <h2>Embedded Signup</h2>
+        <CadastroIncorporado appId={segredos.appId ?? ""} configId={segredos.embeddedSignupConfigId ?? ""} versao={segredos.apiVersion} />
       </section>
       <section className="ficha">
         <article className="cartao bloco">
@@ -73,11 +82,24 @@ export default async function AjustesWhatsappPage() {
                 <tr key={numero.id}>
                   <td>
                     <strong>{numero.nome}</strong> {numero.exemplo ? <SeloExemplo /> : null}
-                    <div className="muted">{numero.ativo ? "Ativo" : "Desativado"} · token {numero.accessToken ? "próprio" : "padrão"}</div>
+                    <div className="muted">
+                      {numero.ativo ? "Ativo" : "Desativado"}
+                      {numero.coexistencia ? " · coexistência" : ""}
+                      {numero.historicoStatus ? ` · histórico ${numero.historicoStatus}` : ""}
+                      {typeof numero.historicoProgresso === "number" ? ` ${numero.historicoProgresso}%` : ""}
+                    </div>
                   </td>
                   <td>{numero.numeroExibicao}</td>
                   <td><code>{numero.phoneNumberId}</code></td>
                   <td>
+                    {numero.coexistencia && numero.historicoStatus !== "concluido" && numero.historicoStatus !== "recusado" ? (
+                      <FormAcao acao={sincronizarHistoricoWhatsapp}>
+                        <input type="hidden" name="numeroId" value={numero.id} />
+                        <button className="btn secundario" type="submit">
+                          Pedir histórico
+                        </button>
+                      </FormAcao>
+                    ) : null}
                     <FormAcao acao={alternarNumeroWhatsapp}>
                       <input type="hidden" name="numeroId" value={numero.id} />
                       <button className="btn secundario" type="submit">

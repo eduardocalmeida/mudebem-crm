@@ -167,6 +167,8 @@ model ConfigWhatsapp {
   appSecret    String?
   accessToken  String?
   wabaId       String?
+  appId        String?
+  embeddedSignupConfigId String?
   apiVersion   String   @default("v21.0")
   atualizadoEm DateTime @updatedAt
 }
@@ -177,8 +179,15 @@ model NumeroWhatsapp {
   phoneNumberId  String             @unique
   numeroExibicao String
   accessToken    String?
+  wabaId         String?
   ativo          Boolean            @default(true)
   exemplo        Boolean            @default(false)
+  coexistencia   Boolean            @default(false)
+  coexistenciaAtivadoEm DateTime?
+  historicoSolicitadoEm DateTime?
+  historicoStatus String?
+  historicoProgresso Int?
+  historicoErro  String?
   criadoEm       DateTime           @default(now())
   atualizadoEm   DateTime           @updatedAt
   conversas      ConversaWhatsapp[]

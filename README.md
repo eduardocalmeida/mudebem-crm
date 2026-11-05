@@ -150,6 +150,8 @@ Na interface: lista, conversa, resposta, atribuição a um usuário e vínculo c
 
 | Variável | Uso |
 | --- | --- |
+| `WHATSAPP_APP_ID` | App id, usado pelo Embedded Signup no navegador |
+| `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID` | Configuration id do Facebook Login for Business |
 | `WHATSAPP_VERIFY_TOKEN` | String que você inventa e repete na configuração do webhook na Meta |
 | `WHATSAPP_APP_SECRET` | App secret do app (Configurações → Básico) |
 | `WHATSAPP_ACCESS_TOKEN` | Token permanente do usuário de sistema, com `whatsapp_business_messaging` e `whatsapp_business_management` |
@@ -170,9 +172,25 @@ Na interface: lista, conversa, resposta, atribuição a um usuário e vínculo c
 5. Copie o app secret. Preencha as variáveis (ou a tela de ajustes) e suba o deploy. A Meta manda o `GET` de verificação na hora de salvar o webhook.
 6. Envie um modelo de teste, ou peça para alguém escrever no número, e confira a conversa em WhatsApp.
 
+### Coexistência: aplicativo e API no mesmo número
+
+Um dos números pode continuar no aplicativo WhatsApp Business e, ao mesmo tempo, receber e enviar pela Cloud API. A Meta só liga essa coexistência pelo **Embedded Signup**. Não dá para marcar isso depois, num número que já entrou só pela API.
+
+1. No app da Meta, em Facebook Login for Business, crie uma configuração de Embedded Signup e copie o configuration id para `WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID`. O app id vai em `WHATSAPP_APP_ID`.
+2. No webhook do app, além de `messages`, assine `history`, `smb_app_state_sync` e `smb_message_echoes`.
+3. Em **WhatsApp → Números e conexão**, deixe marcada a opção **Coexistência** e clique em **Conectar número com a Meta**.
+4. Na janela da Meta (fluxo v4), informe o número que já está no aplicativo. Se a coexistência estiver habilitada na configuração e o número for do aplicativo, a Meta entra nesse fluxo sozinha. Quem opera o celular precisa autorizar o compartilhamento do histórico.
+5. Ao concluir, o CRM troca o código por um token, grava o phone number id, inscreve o app na WABA e **não** chama o registro que derrubaria o aplicativo.
+6. Na mesma hora ele pede, uma única vez, o sincronismo `history` (mensagens) e `smb_app_state_sync` (contatos) em `POST /{phone-number-id}/smb_app_data`. A Meta só aceita esses dois pedidos nas **24 horas** seguintes ao cadastro. O histórico cobre até **180 dias**, em fases (o dia da entrada, até 90 dias e até 180). As conversas chegam depois, pelo webhook `history`, e entram na inbox sem abrir um processo comercial. Um processo em Cotação recebida continua nascendo só quando chega uma mensagem nova de um telefone ainda sem ficha.
+7. Se a empresa recusar o histórico, o webhook avisa e o número fica com o status recusado. Se a chamada falhar antes de a Meta aceitar, o botão **Pedir histórico** repete o pedido enquanto as 24 horas não tiverem acabado.
+
+O número segue funcionando no aplicativo para conversas individuais. O que for enviado por lá chega como eco (`smb_message_echoes`) e aparece na mesma conversa.
+
 ### Tirar o número do aplicativo WhatsApp Business
 
-O mesmo número não fica ao mesmo tempo no aplicativo do celular e na Cloud API.
+Use este caminho só quando o número **não** deve permanecer no celular. Se a ideia é manter o aplicativo, use a coexistência acima.
+
+O mesmo número não fica ao mesmo tempo no aplicativo do celular e na Cloud API quando a coexistência não foi escolhida.
 
 1. Guarde o que precisar do histórico do celular. Esta migração não traz as conversas antigas para o CRM.
 2. No Gerenciador do WhatsApp da WABA da Mude Bem, em Números de telefone, adicione o número que hoje está no aplicativo.
