@@ -30,6 +30,10 @@ O funil segue o da Kommo e pode ser reordenado em **Etapas** por um administrado
 
 Ganho e Perdido fecham o processo fora dessa sequência. O time de demonstração tem oito usuários (comercial, operação, financeiro e administração), a mesma ordem de grandeza da operação atual. Não há teto de usuários: o administrador cria quantos precisar em Equipe.
 
+Cada processo tem abas: resumo, inventário, tarefas e CT-e. Em **Tarefas** há lista e calendário (dia, semana e mês), das minhas tarefas ou da equipe, com atraso em destaque. Mudar de etapa cria a tarefa configurada (acompanhar, proposta, precificar, contrato, CT-e, faturamento, recebimento, WhatsApp). O **Inventário** usa um catálogo de cerca de 90 itens de mudança com volume em m³; a soma atualiza o campo Volume. O catálogo é editável em **Catálogo**. O CT-e é um rascunho preenchido com o processo (remetente, destinatário, municípios, prestação, carga, RNTRC e documentos). A emissão chama `obterProvedorCte()` e, por enquanto, responde que nenhum provedor está configurado.
+
+A API também lê o catálogo em `GET /api/v1/inventario/catalogo` e lê ou acrescenta itens em `GET` e `POST /api/v1/processos/{id}/inventario`.
+
 A migração dos leads ativos está em **Importar**. Exporte o CSV de leads, contatos e empresas na Kommo (vence em 13/11/2026) e envie cada arquivo. O importador reconhece as colunas do funil — origem e destino com andar, elevador, imóvel e ponto de referência, modalidade, coleta, entrega, embalagem, volume, inventário, itens especiais, datas, dias para coletar e viajar, motorista, valores de frete, seguro, transporte e total, forma de pagamento, validade, links e atribuição de marketing (fonte, utm, fbclid, gclid, campanha e anúncio da Meta). Coluna que não tiver campo próprio vira campo personalizado. Importar de novo o mesmo ID da Kommo atualiza o registro.
 
 ## Stack

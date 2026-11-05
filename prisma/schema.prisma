@@ -43,6 +43,7 @@ model Usuario {
   anexos       Anexo[]
   chaves       ChaveApi[]
   conversasWhatsapp ConversaWhatsapp[] @relation("ResponsavelWhatsapp")
+  tarefas          Tarefa[]
 }
 
 model ChaveApi {
@@ -181,6 +182,9 @@ model Processo {
   eventos         Evento[]
   anexos          Anexo[]
   conversasWhatsapp ConversaWhatsapp[]
+  tarefas         Tarefa[]
+  itensInventario ItemInventario[]
+  cte             Cte?
 
   @@index([etapa])
   @@index([clienteId])
@@ -228,6 +232,126 @@ model CampoPersonalizado {
   criadoEm  DateTime @default(now())
 
   @@unique([entidade, chave])
+}
+
+model TipoTarefa {
+  id      String       @id
+  slug    String       @unique
+  rotulo  String
+  ativo   Boolean      @default(true)
+  regras  RegraTarefa[]
+  tarefas Tarefa[]
+}
+
+model RegraTarefa {
+  id          String     @id @default(cuid())
+  etapaSlug   String
+  tipoId      String
+  tipo        TipoTarefa @relation(fields: [tipoId], references: [id])
+  titulo      String
+  horasDepois Int        @default(24)
+  ativa       Boolean    @default(true)
+
+  @@unique([etapaSlug, tipoId])
+}
+
+model Tarefa {
+  id            String     @id @default(cuid())
+  processoId    String
+  processo      Processo   @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  tipoId        String
+  tipo          TipoTarefa @relation(fields: [tipoId], references: [id])
+  titulo        String
+  descricao     String?
+  responsavelId String?
+  responsavel   Usuario?   @relation(fields: [responsavelId], references: [id])
+  vencimento    DateTime
+  concluidaEm   DateTime?
+  automatica    Boolean    @default(false)
+  criadoEm      DateTime   @default(now())
+
+  @@index([vencimento])
+  @@index([responsavelId])
+  @@index([processoId])
+}
+
+model ItemCatalogo {
+  id        String           @id @default(cuid())
+  nome      String
+  categoria String
+  volumeM3  Decimal          @db.Decimal(8, 3)
+  ativo     Boolean          @default(true)
+  ordem     Int              @default(0)
+  itens     ItemInventario[]
+}
+
+model ItemInventario {
+  id              String        @id @default(cuid())
+  processoId      String
+  processo        Processo      @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  catalogoId      String?
+  catalogo        ItemCatalogo? @relation(fields: [catalogoId], references: [id])
+  nome            String
+  comodo          String
+  quantidade      Int           @default(1)
+  volumeUnitario  Decimal       @db.Decimal(8, 3)
+  fragil          Boolean       @default(false)
+  desmontagem     Boolean       @default(false)
+  embalagem       Boolean       @default(false)
+  personalizado   Boolean       @default(false)
+  criadoEm        DateTime      @default(now())
+}
+
+model Cte {
+  id                      String    @id @default(cuid())
+  processoId              String    @unique
+  processo                Processo  @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  status                  String    @default("RASCUNHO")
+  emitenteNome            String?
+  emitenteDocumento       String?
+  emitenteIe              String?
+  emitenteMunicipio       String?
+  emitenteUf              String?
+  remetenteNome           String?
+  remetenteDocumento      String?
+  remetenteMunicipio      String?
+  remetenteUf             String?
+  destinatarioNome        String?
+  destinatarioDocumento   String?
+  destinatarioMunicipio   String?
+  destinatarioUf          String?
+  expedidorNome           String?
+  expedidorDocumento      String?
+  recebedorNome           String?
+  recebedorDocumento      String?
+  tomador                 String    @default("REMETENTE")
+  cfop                    String?
+  naturezaOperacao        String?
+  modal                   String    @default("01")
+  municipioInicio         String?
+  ufInicio                String?
+  municipioFim            String?
+  ufFim                   String?
+  valorPrestacao          Decimal?  @db.Decimal(12, 2)
+  componentes             Json?
+  icmsCst                 String?
+  icmsBase                Decimal?  @db.Decimal(12, 2)
+  icmsAliquota            Decimal?  @db.Decimal(6, 2)
+  icmsValor               Decimal?  @db.Decimal(12, 2)
+  produtoPredominante     String?
+  valorCarga              Decimal?  @db.Decimal(12, 2)
+  quantidadeCarga         Decimal?  @db.Decimal(12, 3)
+  unidadeCarga            String?   @default("M3")
+  rntrc                   String?
+  documentos              Json?
+  chave                   String?
+  numero                  String?
+  serie                   String?
+  xmlUrl                  String?
+  dacteUrl                String?
+  provedor                String?
+  criadoEm                DateTime  @default(now())
+  atualizadoEm            DateTime  @updatedAt
 }
 
 model ConfigWhatsapp {

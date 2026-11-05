@@ -8,6 +8,7 @@ import { sairAction } from "@/server/actions";
 const LINKS = [
   { href: "/painel", rotulo: "Painel" },
   { href: "/processos", rotulo: "Processos" },
+  { href: "/tarefas", rotulo: "Tarefas" },
   { href: "/whatsapp", rotulo: "WhatsApp" },
   { href: "/clientes", rotulo: "Clientes" },
 ];
@@ -22,6 +23,7 @@ export function BarraLateral({
   const caminho = usePathname();
   const itens = usuario.papel === "ADMIN" ? [...LINKS, { href: "/equipe", rotulo: "Equipe" },
     { href: "/etapas", rotulo: "Etapas" },
+    { href: "/inventario", rotulo: "Catálogo" },
     { href: "/importar", rotulo: "Importar" },
     { href: "/integracoes", rotulo: "Integrações" },
   ] : LINKS;

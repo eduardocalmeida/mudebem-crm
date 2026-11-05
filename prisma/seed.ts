@@ -2,6 +2,7 @@ import { PrismaClient, type CanalOrigem } from "@prisma/client";
 import { CHAVE_API_EXEMPLO, hashChave } from "../src/lib/api-key";
 import { adicionarDias, digitosCnpjValidos, hojeSaoPaulo, paraDataBanco } from "../src/lib/format";
 import { hashSenha } from "../src/lib/password";
+import { CATALOGO_MUDANCA, REGRAS_TAREFA, TIPOS_TAREFA } from "../src/server/catalogo-mudanca";
 
 const prisma = new PrismaClient();
 const SENHA = "MudeBem@2026";
@@ -509,6 +510,25 @@ async function main() {
       criadaPorId: ana.id,
     },
   });
+
+  for (const [slug, rotuloTarefa] of TIPOS_TAREFA) {
+    await prisma.tipoTarefa.upsert({ where: { slug }, update: {}, create: { id: slug, slug, rotulo: rotuloTarefa } });
+  }
+  for (const [etapaSlug, tipo, titulo, horas] of REGRAS_TAREFA) {
+    await prisma.regraTarefa.upsert({
+      where: { etapaSlug_tipoId: { etapaSlug, tipoId: tipo } },
+      update: {},
+      create: { etapaSlug, tipoId: tipo, titulo, horasDepois: horas },
+    });
+  }
+  for (const [indice, item] of CATALOGO_MUDANCA.entries()) {
+    const existe = await prisma.itemCatalogo.findFirst({ where: { nome: item.nome } });
+    if (!existe) {
+      await prisma.itemCatalogo.create({
+        data: { nome: item.nome, categoria: item.categoria, volumeM3: item.volume, ordem: indice },
+      });
+    }
+  }
 
   console.log("Seed concluído com 10 processos de exemplo.");
   console.log("Senha dos usuários de demonstração: MudeBem@2026");

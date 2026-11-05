@@ -7,6 +7,7 @@ import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, formatarDataHora, formatarNumero, localidade } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { AbaCte, AbaInventario, AbaTarefas } from "@/components/abas-operacao";
 import { obterProcesso } from "@/server/processos";
 import { exigirUsuario } from "@/server/session";
 
@@ -34,9 +35,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: processo?.codigo ?? "Processo" };
 }
 
-export default async function ProcessoPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProcessoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ aba?: string; aviso?: string }>;
+}) {
   const usuario = await exigirUsuario();
   const { id } = await params;
+  const consulta = await searchParams;
+  const aba = consulta.aba || "resumo";
   const processo = await obterProcesso(id, true).catch((erro: unknown) => {
     if (erro instanceof AppError && erro.status === 404) return null;
     throw erro;
@@ -77,6 +86,23 @@ export default async function ProcessoPage({ params }: { params: Promise<{ id: s
         <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
       ) : null}
       <ConversasDoProcesso processoId={processo.id} />
+      <nav className="abas">
+        {[
+          ["resumo", "Resumo"],
+          ["inventario", "Inventário"],
+          ["tarefas", "Tarefas"],
+          ["cte", "CT-e"],
+        ].map(([idAba, rotulo]) => (
+          <Link key={idAba} className={aba === idAba ? "ativa" : ""} href={`/processos/${processo.id}?aba=${idAba}`}>
+            {rotulo}
+          </Link>
+        ))}
+      </nav>
+      {aba === "inventario" ? <AbaInventario processoId={processo.id} /> : null}
+      {aba === "tarefas" ? <AbaTarefas processoId={processo.id} /> : null}
+      {aba === "cte" ? <AbaCte processoId={processo.id} aviso={consulta.aviso} /> : null}
+      {aba === "resumo" ? (
+      <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>
       <section className="rota-grande">
         <div>
@@ -249,6 +275,8 @@ export default async function ProcessoPage({ params }: { params: Promise<{ id: s
           </article>
         </aside>
       </section>
+      </>
+      ) : null}
     </>
   );
 }

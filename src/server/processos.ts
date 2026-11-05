@@ -11,6 +11,7 @@ import {
   type Etapa,
 } from "@/lib/domain";
 import { carregarEtapas } from "@/server/etapas";
+import { criarTarefasDaEtapa } from "@/server/tarefas";
 import { AppError } from "@/lib/errors";
 import { anoSaoPaulo, dataParaIso, paraDataBanco } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -539,6 +540,7 @@ export async function moverEtapa(ator: Ator, id: string, etapa: Etapa, observaca
     }),
   ]);
 
+  await criarTarefasDaEtapa(id, etapa, processo.responsavelId);
   return { etapaAnterior: processo.etapa, processo: await obterProcesso(id, true) };
 }
 
