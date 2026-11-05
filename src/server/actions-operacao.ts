@@ -99,6 +99,21 @@ export async function atualizarCatalogoAction(form: FormData) {
   revalidatePath("/inventario");
 }
 
+export async function atualizarRegraTarefaAction(form: FormData) {
+  const usuario = await exigirUsuario();
+  if (usuario.papel !== "ADMIN") return;
+  const horas = Number(form.get("horasDepois"));
+  await prisma.regraTarefa.update({
+    where: { id: String(form.get("id") || "") },
+    data: {
+      ativa: form.get("ativa") === "on",
+      horasDepois: Number.isFinite(horas) && horas >= 0 ? Math.round(horas) : 24,
+      titulo: String(form.get("titulo") || "").trim() || "Tarefa",
+    },
+  });
+  revalidatePath("/tarefas");
+}
+
 export async function emitirCteAction(form: FormData) {
   await exigirUsuario();
   const processoId = String(form.get("processoId") || "");

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { atualizarRegraTarefaAction } from "@/server/actions-operacao";
 import { formatarDataHora } from "@/lib/format";
-import { listarTarefas, tarefaAtrasada } from "@/server/tarefas";
+import { prisma } from "@/lib/prisma";
+import { garantirTarefasPadrao, listarTarefas, tarefaAtrasada } from "@/server/tarefas";
 import { exigirUsuario } from "@/server/session";
 
 function diaSp(data: Date) {
@@ -19,6 +21,10 @@ export default async function TarefasPage({
   searchParams: Promise<{ visao?: string; quem?: string; data?: string }>;
 }) {
   const usuario = await exigirUsuario();
+  await garantirTarefasPadrao();
+  const regras = usuario.papel === "ADMIN"
+    ? await prisma.regraTarefa.findMany({ include: { tipo: true }, orderBy: { etapaSlug: "asc" } })
+    : [];
   const consulta = await searchParams;
   const visao = consulta.visao === "semana" || consulta.visao === "dia" || consulta.visao === "mes" ? consulta.visao : "lista";
   const quem = consulta.quem === "equipe" ? "equipe" : "eu";
@@ -96,6 +102,24 @@ export default async function TarefasPage({
           ))}
         </div>
       )}
+      {regras.length > 0 ? (
+        <section className="cartao">
+          <h2>Tarefas criadas ao mudar de etapa</h2>
+          {regras.map((regra) => (
+            <form key={regra.id} action={atualizarRegraTarefaAction} className="linha">
+              <input type="hidden" name="id" value={regra.id} />
+              <strong>{regra.etapaSlug}</strong>
+              <span className="muted">{regra.tipo.rotulo}</span>
+              <input name="titulo" defaultValue={regra.titulo} />
+              <input name="horasDepois" type="number" min={0} defaultValue={regra.horasDepois} />
+              <label className="check">
+                <input type="checkbox" name="ativa" defaultChecked={regra.ativa} /> Ativa
+              </label>
+              <button className="btn secundario" type="submit">Salvar</button>
+            </form>
+          ))}
+        </section>
+      ) : null}
     </>
   );
 }
