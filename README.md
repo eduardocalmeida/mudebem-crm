@@ -10,6 +10,7 @@ CRM interno da **Mude Bem Mudanças e Logística** para acompanhar cada processo
 - Cadastro de clientes e contatos.
 - Painel com quantidade e valor por etapa, coletas dos próximos 7 dias e recebíveis vencidos.
 - API REST com chave, para um agente criar processos, atualizar campos, lançar notas e mover etapas.
+- Caixa de entrada de WhatsApp na API oficial da Meta (Cloud API), com mais de um número, webhook assinado e abertura automática de lead.
 - Seed com processos realistas marcados como **Exemplo**.
 
 A pipeline, nesta ordem:
@@ -136,6 +137,88 @@ SEED_CONFIRM=sim NODE_ENV=production npm run db:seed
 Em seguida entre como Ana, troque as senhas criando novos usuários, desative os acessos de demonstração e revogue a chave de exemplo. O seed de produção recria os registros marcados como exemplo e redefine a senha dos e-mails de demonstração.
 
 Anexos maiores que 5 MB ou com necessidade de antivírus devem ir para um bucket (S3, R2 ou equivalente) numa versão seguinte. O disco local da Vercel não é usado.
+
+## WhatsApp pela API da Meta
+
+A inbox fala direto com a [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api). Não há provedor no meio (nem Kommo, nem BSP). Um único app da Meta e uma WABA podem ter vários números; cada um tem o seu `phone number id`. O CRM começa preparado para dois.
+
+O webhook público é `https://SEU-DOMINIO/api/whatsapp/webhook`. A verificação (`GET`) confere o verify token e devolve o `hub.challenge`. Cada `POST` só é aceito se o cabeçalho `X-Hub-Signature-256` bater com o HMAC SHA-256 do corpo cru, calculado com o app secret.
+
+Mensagem de texto, mídia e atualização de status entram na conversa daquele número. Se o telefone ainda não existe como contato, o CRM cria o cliente, o contato e um processo em **Cotação recebida** com canal **WhatsApp**. A resposta livre só sai dentro da janela de 24 horas contadas da última mensagem do cliente. Fora dela, o envio precisa ser um modelo aprovado.
+
+Na interface: lista, conversa, resposta, atribuição a um usuário e vínculo com um processo. Em **WhatsApp → Números e conexão** (administrador) dá para gravar verify token, app secret, token de acesso, WABA id e os números. Variável de ambiente, quando preenchida, ganha da tela.
+
+| Variável | Uso |
+| --- | --- |
+| `WHATSAPP_VERIFY_TOKEN` | String que você inventa e repete na configuração do webhook na Meta |
+| `WHATSAPP_APP_SECRET` | App secret do app (Configurações → Básico) |
+| `WHATSAPP_ACCESS_TOKEN` | Token permanente do usuário de sistema, com `whatsapp_business_messaging` e `whatsapp_business_management` |
+| `WHATSAPP_WABA_ID` | Opcional. Lista os modelos aprovados na conversa |
+| `WHATSAPP_API_VERSION` | Padrão `v21.0` |
+| `WHATSAPP_NUMERO_1_ID` | Phone number id do primeiro número |
+| `WHATSAPP_NUMERO_1_NOME` | Nome interno, por exemplo Comercial |
+| `WHATSAPP_NUMERO_1_EXIBICAO` | Número como o cliente vê |
+| `WHATSAPP_NUMERO_1_TOKEN` | Opcional, se esse número não usar o token padrão |
+| `WHATSAPP_NUMERO_2_*` | O segundo número, no mesmo formato |
+
+### Ligar o app
+
+1. Em [developers.facebook.com](https://developers.facebook.com), crie um app do tipo Business e adicione o produto WhatsApp.
+2. No Gerenciador do WhatsApp, anote o WABA id e o phone number id de cada número (Começar a usar a API).
+3. Em Configurações do negócio → Usuários do sistema, crie um usuário admin, atribua o app e a conta do WhatsApp, e gere um token permanente com as duas permissões acima.
+4. No app, em WhatsApp → Configuração, defina a URL de callback `https://SEU-DOMINIO/api/whatsapp/webhook`, o mesmo verify token do ambiente, e assine o campo `messages`.
+5. Copie o app secret. Preencha as variáveis (ou a tela de ajustes) e suba o deploy. A Meta manda o `GET` de verificação na hora de salvar o webhook.
+6. Envie um modelo de teste, ou peça para alguém escrever no número, e confira a conversa em WhatsApp.
+
+### Tirar o número do aplicativo WhatsApp Business
+
+O mesmo número não fica ao mesmo tempo no aplicativo do celular e na Cloud API.
+
+1. Guarde o que precisar do histórico do celular. Esta migração não traz as conversas antigas para o CRM.
+2. No Gerenciador do WhatsApp da WABA da Mude Bem, em Números de telefone, adicione o número que hoje está no aplicativo.
+3. Peça o código por SMS ou ligação e informe no gerenciador. A Meta transfere o registro para a Cloud API.
+4. O aplicativo WhatsApp Business daquele número deixa de funcionar. Se a tela pedir um PIN de verificação em duas etapas, defina um e guarde.
+5. Espere a aprovação do nome de exibição, se ainda estiver pendente, e confirme que o phone number id apareceu na configuração da API.
+
+O passo a passo da Meta está em [migrar um número que já está no WhatsApp](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started/migrate-existing-whatsapp-number-to-a-business-account).
+
+### Sair do Kommo
+
+O Kommo entra como provedor (BSP) ou como dono do webhook do app. Os dois casos precisam soltar o número antes de a Mude Bem receber as mensagens.
+
+1. Combine uma janela curta. Enquanto a troca acontece, mensagens novas podem falhar.
+2. No Kommo, desconecte o canal de WhatsApp desse número para ele parar de enviar e de consumir o código de verificação.
+3. Se o número estiver na WABA do próprio Kommo, migre para a WABA da Mude Bem: peça ao Kommo para desligar a verificação em duas etapas (ou informar o PIN) e para liberar o número. No Gerenciador, adicione o número. A Meta manda um OTP por SMS ou voz; o Kommo não pode capturar esse código. Essa migração, e não um cadastro do zero, é o que preserva qualidade e nome de exibição. A referência é a [migração de número entre contas](https://developers.facebook.com/docs/whatsapp/solution-providers/migrate-existing-numbers).
+4. Se a WABA já for da Mude Bem e o Kommo só estava conectado por login incorporado, não precisa migrar o número. Em Configurações do negócio, tire o usuário de sistema do Kommo da conta de WhatsApp, crie o usuário de sistema de vocês, gere o token e troque a URL de callback do app para `https://SEU-DOMINIO/api/whatsapp/webhook`. Cada app tem um único webhook.
+5. Confira no Gerenciador que o callback é o do CRM. Mande um modelo (a janela de 24 horas pode estar fechada) e responda de um celular pessoal. A mensagem tem que aparecer na inbox e, se o telefone for novo, abrir um processo em Cotação recebida.
+
+### API da inbox para agentes
+
+Exige a mesma chave das outras rotas.
+
+```bash
+curl -s "http://localhost:3000/api/v1/whatsapp/conversas?naoLidas=sim" \
+  -H "Authorization: Bearer mb_live_exemplo_mudebem_demo_key_2026"
+
+curl -s http://localhost:3000/api/v1/whatsapp/conversas/ID \
+  -H "Authorization: Bearer mb_live_exemplo_mudebem_demo_key_2026"
+
+curl -s -X POST http://localhost:3000/api/v1/whatsapp/conversas/ID/mensagens \
+  -H "Authorization: Bearer mb_live_exemplo_mudebem_demo_key_2026" \
+  -H "Content-Type: application/json" \
+  -d '{ "texto": "Olá, recebemos o pedido de cotação." }'
+```
+
+Fora da janela de 24 horas, `texto` responde `409` com `JANELA_ENCERRADA`. Envie um modelo:
+
+```bash
+curl -s -X POST http://localhost:3000/api/v1/whatsapp/conversas/ID/mensagens \
+  -H "Authorization: Bearer mb_live_exemplo_mudebem_demo_key_2026" \
+  -H "Content-Type: application/json" \
+  -d '{ "modelo": { "nome": "cotacao_recebida", "idioma": "pt_BR", "parametros": ["Marina"] } }'
+```
+
+`GET` da conversa marca como lida. Para só olhar, use `?marcarLida=nao`.
 
 ## API
 

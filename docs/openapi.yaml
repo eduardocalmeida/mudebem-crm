@@ -253,3 +253,57 @@ paths:
             schema: { $ref: "#/components/schemas/ContatoNovo" }
       responses:
         "201": { description: Contato criado }
+  /whatsapp/conversas:
+    get:
+      summary: Lista conversas de WhatsApp
+      parameters:
+        - in: query
+          name: naoLidas
+          schema: { type: string, enum: ["sim", "true"] }
+        - in: query
+          name: numeroId
+          schema: { type: string }
+      responses:
+        "200": { description: Conversas em dados }
+  /whatsapp/conversas/{id}:
+    get:
+      summary: Lê a conversa e marca como lida
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: marcarLida
+          schema: { type: string, enum: ["nao"] }
+          description: Use nao para não marcar a conversa como lida
+      responses:
+        "200": { description: Conversa com mensagens }
+  /whatsapp/conversas/{id}/mensagens:
+    post:
+      summary: Envia texto dentro da janela de 24h ou um modelo aprovado
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                texto: { type: string }
+                modelo:
+                  type: object
+                  required: [nome]
+                  properties:
+                    nome: { type: string }
+                    idioma: { type: string, example: pt_BR }
+                    parametros:
+                      type: array
+                      items: { type: string }
+      responses:
+        "201": { description: Mensagem enviada }
+        "409": { description: Janela de 24 horas encerrada }

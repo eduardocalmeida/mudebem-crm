@@ -8,10 +8,17 @@ import { sairAction } from "@/server/actions";
 const LINKS = [
   { href: "/painel", rotulo: "Painel" },
   { href: "/processos", rotulo: "Processos" },
+  { href: "/whatsapp", rotulo: "WhatsApp" },
   { href: "/clientes", rotulo: "Clientes" },
 ];
 
-export function BarraLateral({ usuario }: { usuario: { nome: string; email: string; papel: Papel } }) {
+export function BarraLateral({
+  usuario,
+  naoLidas = 0,
+}: {
+  usuario: { nome: string; email: string; papel: Papel };
+  naoLidas?: number;
+}) {
   const caminho = usePathname();
   const itens = usuario.papel === "ADMIN" ? [...LINKS, { href: "/equipe", rotulo: "Equipe" }, { href: "/integracoes", rotulo: "Integrações" }] : LINKS;
   const inicial = usuario.nome.trim().charAt(0).toUpperCase();
@@ -37,6 +44,7 @@ export function BarraLateral({ usuario }: { usuario: { nome: string; email: stri
           return (
             <Link key={item.href} href={item.href} className={ativo ? "ativo" : undefined}>
               {item.rotulo}
+              {item.href === "/whatsapp" && naoLidas > 0 ? <em>{naoLidas}</em> : null}
             </Link>
           );
         })}

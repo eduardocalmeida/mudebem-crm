@@ -12,6 +12,7 @@ export async function GET(req: Request) {
         etapas: "/api/v1/etapas",
         processos: "/api/v1/processos",
         clientes: "/api/v1/clientes",
+        whatsapp: "/api/v1/whatsapp/conversas",
       },
     });
   } catch (erro) {

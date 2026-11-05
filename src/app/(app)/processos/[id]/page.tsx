@@ -9,6 +9,24 @@ import { prisma } from "@/lib/prisma";
 import { obterProcesso } from "@/server/processos";
 import { exigirUsuario } from "@/server/session";
 
+async function ConversasDoProcesso({ processoId }: { processoId: string }) {
+  const conversas = await prisma.conversaWhatsapp.findMany({
+    where: { processoId },
+    select: { id: true, nomeContato: true, waId: true },
+  });
+  if (conversas.length === 0) return null;
+  return (
+    <p>
+      WhatsApp:{" "}
+      {conversas.map((conversa) => (
+        <Link key={conversa.id} href={`/whatsapp/${conversa.id}`}>
+          {conversa.nomeContato || conversa.waId}
+        </Link>
+      ))}
+    </p>
+  );
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const processo = await prisma.processo.findUnique({ where: { id }, select: { codigo: true } });
@@ -56,6 +74,7 @@ export default async function ProcessoPage({ params }: { params: Promise<{ id: s
       {processo.exemplo ? (
         <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
       ) : null}
+      <ConversasDoProcesso processoId={processo.id} />
       <p className="muted">{etapaPorId(processo.etapa).resumo}</p>
       <section className="rota-grande">
         <div>

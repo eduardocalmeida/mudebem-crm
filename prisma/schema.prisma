@@ -55,6 +55,7 @@ model Usuario {
   eventos      Evento[]
   anexos       Anexo[]
   chaves       ChaveApi[]
+  conversasWhatsapp ConversaWhatsapp[] @relation("ResponsavelWhatsapp")
 }
 
 model ChaveApi {
@@ -98,6 +99,7 @@ model Contato {
   principal Boolean    @default(false)
   criadoEm  DateTime   @default(now())
   processos Processo[]
+  conversasWhatsapp ConversaWhatsapp[]
 }
 
 model Processo {
@@ -134,6 +136,7 @@ model Processo {
   atualizadoEm    DateTime     @updatedAt
   eventos         Evento[]
   anexos          Anexo[]
+  conversasWhatsapp ConversaWhatsapp[]
 
   @@index([etapa])
   @@index([clienteId])
@@ -156,6 +159,100 @@ model Evento {
   criadoEm   DateTime   @default(now())
 
   @@index([processoId, criadoEm])
+}
+
+model ConfigWhatsapp {
+  id           String   @id @default("padrao")
+  verifyToken  String?
+  appSecret    String?
+  accessToken  String?
+  wabaId       String?
+  apiVersion   String   @default("v21.0")
+  atualizadoEm DateTime @updatedAt
+}
+
+model NumeroWhatsapp {
+  id             String             @id @default(cuid())
+  nome           String
+  phoneNumberId  String             @unique
+  numeroExibicao String
+  accessToken    String?
+  ativo          Boolean            @default(true)
+  exemplo        Boolean            @default(false)
+  criadoEm       DateTime           @default(now())
+  atualizadoEm   DateTime           @updatedAt
+  conversas      ConversaWhatsapp[]
+}
+
+model ConversaWhatsapp {
+  id                 String             @id @default(cuid())
+  numeroId           String
+  numero             NumeroWhatsapp     @relation(fields: [numeroId], references: [id], onDelete: Cascade)
+  waId               String
+  nomeContato        String?
+  contatoId          String?
+  contato            Contato?           @relation(fields: [contatoId], references: [id], onDelete: SetNull)
+  processoId         String?
+  processo           Processo?          @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  responsavelId      String?
+  responsavel        Usuario?           @relation("ResponsavelWhatsapp", fields: [responsavelId], references: [id], onDelete: SetNull)
+  naoLida            Boolean            @default(true)
+  ultimaMensagem     String?
+  ultimaMensagemEm   DateTime?
+  ultimaEntradaEm    DateTime?
+  exemplo            Boolean            @default(false)
+  criadoEm           DateTime           @default(now())
+  atualizadoEm       DateTime           @updatedAt
+  mensagens          MensagemWhatsapp[]
+
+  @@unique([numeroId, waId])
+  @@index([naoLida])
+  @@index([ultimaMensagemEm])
+}
+
+model MensagemWhatsapp {
+  id           String                  @id @default(cuid())
+  conversaId   String
+  conversa     ConversaWhatsapp        @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  wamid        String?                 @unique
+  direcao      DirecaoMensagem
+  tipo         TipoMensagemWhatsapp
+  texto        String?                 @db.Text
+  midiaId      String?
+  midiaMime    String?
+  midiaNome    String?
+  status       StatusMensagemWhatsapp
+  erro         String?
+  criadaEm     DateTime
+  registradaEm DateTime                @default(now())
+
+  @@index([conversaId, criadaEm])
+}
+
+enum DirecaoMensagem {
+  ENTRADA
+  SAIDA
+}
+
+enum TipoMensagemWhatsapp {
+  TEXTO
+  IMAGEM
+  AUDIO
+  VIDEO
+  DOCUMENTO
+  FIGURINHA
+  LOCALIZACAO
+  MODELO
+  INTERATIVA
+  DESCONHECIDO
+}
+
+enum StatusMensagemWhatsapp {
+  RECEBIDA
+  ENVIADA
+  ENTREGUE
+  LIDA
+  FALHOU
 }
 
 model Anexo {

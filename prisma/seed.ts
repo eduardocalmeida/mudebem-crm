@@ -35,6 +35,8 @@ async function main() {
   const hoje = hojeSaoPaulo();
   const senhaHash = await hashSenha(SENHA);
 
+  await prisma.conversaWhatsapp.deleteMany({ where: { exemplo: true } });
+  await prisma.numeroWhatsapp.deleteMany({ where: { exemplo: true } });
   await prisma.processo.deleteMany({ where: { exemplo: true } });
   try {
     await prisma.cliente.deleteMany({ where: { exemplo: true } });
@@ -451,6 +453,46 @@ async function main() {
       tamanho: arquivo.length,
       conteudo: arquivo,
       usuarioId: bruno.id,
+    },
+  });
+
+  const leadWhatsapp = await prisma.processo.findUniqueOrThrow({
+    where: { codigo: "MB-EX-0001" },
+    include: { contato: true },
+  });
+  const numeroExemplo = await prisma.numeroWhatsapp.create({
+    data: {
+      nome: "Comercial (exemplo)",
+      phoneNumberId: "exemplo-phone-id",
+      numeroExibicao: "+55 11 4000-2026",
+      exemplo: true,
+    },
+  });
+  const agora = new Date();
+  const conversaExemplo = await prisma.conversaWhatsapp.create({
+    data: {
+      numeroId: numeroExemplo.id,
+      waId: "5511988213344",
+      nomeContato: "Marina Alves",
+      contatoId: leadWhatsapp.contatoId,
+      processoId: leadWhatsapp.id,
+      responsavelId: bruno.id,
+      naoLida: true,
+      ultimaMensagem: "Olá, preciso mudar de São Paulo para Campinas.",
+      ultimaMensagemEm: agora,
+      ultimaEntradaEm: agora,
+      exemplo: true,
+    },
+  });
+  await prisma.mensagemWhatsapp.create({
+    data: {
+      conversaId: conversaExemplo.id,
+      wamid: "wamid.exemplo.marina",
+      direcao: "ENTRADA",
+      tipo: "TEXTO",
+      texto: "Olá, preciso mudar de São Paulo para Campinas.",
+      status: "RECEBIDA",
+      criadaEm: agora,
     },
   });
 
