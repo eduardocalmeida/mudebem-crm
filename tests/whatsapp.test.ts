@@ -68,7 +68,7 @@ beforeEach(async () => {
     throw new Error(`Teste apontou para o banco ${linhas[0]?.current_database}.`);
   }
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "MensagemWhatsapp", "ConversaWhatsapp", "NumeroWhatsapp", "ConfigWhatsapp", "Anexo", "Evento", "Processo", "Contato", "Cliente", "ChaveApi", "Usuario" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "Mensagem", "Conversa", "MensagemWhatsapp", "ConversaWhatsapp", "NumeroWhatsapp", "ConfigWhatsapp", "Anexo", "Evento", "Processo", "Contato", "Cliente", "ChaveApi", "Usuario" RESTART IDENTITY CASCADE',
   );
   await prisma.numeroWhatsapp.create({
     data: { nome: "Comercial", phoneNumberId: "phone-teste", numeroExibicao: "+55 11 4000-2026" },

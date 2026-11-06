@@ -8,27 +8,10 @@ import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, formatarDataHora, formatarNumero, localidade } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
+import { FichaConversa } from "@/components/ficha-conversa";
 import { AbaFiscal } from "@/components/nfse-painel";
 import { obterProcesso } from "@/server/processos";
 import { exigirUsuario } from "@/server/session";
-
-async function ConversasDoProcesso({ processoId }: { processoId: string }) {
-  const conversas = await prisma.conversaWhatsapp.findMany({
-    where: { processoId },
-    select: { id: true, nomeContato: true, waId: true },
-  });
-  if (conversas.length === 0) return null;
-  return (
-    <p>
-      WhatsApp:{" "}
-      {conversas.map((conversa) => (
-        <Link key={conversa.id} href={`/whatsapp/${conversa.id}`}>
-          {conversa.nomeContato || conversa.waId}
-        </Link>
-      ))}
-    </p>
-  );
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -86,7 +69,7 @@ export default async function ProcessoPage({
       {processo.exemplo ? (
         <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
       ) : null}
-      <ConversasDoProcesso processoId={processo.id} />
+      {aba === "resumo" ? <FichaConversa processoId={processo.id} usuarioId={usuario.id} /> : null}
       <nav className="abas">
         {[
           ["resumo", "Resumo"],

@@ -25,7 +25,7 @@ beforeEach(async () => {
   const linhas = await prisma.$queryRaw<{ current_database: string }[]>`SELECT current_database()`;
   if (linhas[0]?.current_database !== "mudebem_test") throw new Error("Banco de teste incorreto.");
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "MensagemWhatsapp", "ConversaWhatsapp", "NumeroWhatsapp", "ConfigWhatsapp", "Anexo", "Evento", "Processo", "Contato", "Cliente", "ChaveApi", "Usuario" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "Mensagem", "Conversa", "MensagemWhatsapp", "ConversaWhatsapp", "NumeroWhatsapp", "ConfigWhatsapp", "Anexo", "Evento", "Processo", "Contato", "Cliente", "ChaveApi", "Usuario" RESTART IDENTITY CASCADE',
   );
 });
 

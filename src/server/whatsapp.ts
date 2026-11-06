@@ -12,6 +12,7 @@ import {
   type StatusMensagem,
   type TipoMensagem,
 } from "@/lib/whatsapp";
+import { espelharWhatsapp } from "@/server/conversas";
 import { adicionarNota, criarProcesso } from "@/server/processos";
 import { segredosWhatsapp, sincronizarNumerosDoAmbiente, tokenDoNumero } from "@/server/whatsapp-config";
 
@@ -283,6 +284,7 @@ async function importarHistorico(numeroId: string, blocos: BlocoHistorico) {
             : {}),
         },
       });
+      await espelharWhatsapp(conversa.id);
     }
   }
 }
@@ -309,6 +311,7 @@ async function importarEcos(numeroId: string, ecos: Record<string, unknown>[]) {
       where: { id: conversa.id },
       data: { ultimaMensagem: resumo(mensagem.tipo, mensagem.texto), ultimaMensagemEm: mensagem.quando },
     });
+    await espelharWhatsapp(conversa.id);
   }
 }
 
@@ -382,6 +385,7 @@ export async function processarWebhook(payload: Payload) {
             ultimaEntradaEm: mensagem.quando,
           },
         });
+        await espelharWhatsapp(conversa.id);
         if (processoCriado && conversa.processoId && mensagem.texto) {
           await adicionarNota(atorWhatsapp, conversa.processoId, `WhatsApp: ${mensagem.texto}`.slice(0, 5000));
         }
@@ -474,6 +478,7 @@ export async function enviarMensagem(
         criadaEm: new Date(),
       },
     });
+    await espelharWhatsapp(conversa.id);
     throw new AppError(detalhe, 502, "FALHA_ENVIO");
   }
 
@@ -494,6 +499,7 @@ export async function enviarMensagem(
     where: { id: conversa.id },
     data: { ultimaMensagem: previa.slice(0, 180), ultimaMensagemEm: mensagem.criadaEm },
   });
+  await espelharWhatsapp(conversa.id);
   return mensagem;
 }
 
@@ -600,19 +606,24 @@ export async function atribuirConversa(id: string, responsavelId: string | null)
     where: { id },
     data: { responsavelId },
   });
+  await espelharWhatsapp(conversa.id);
   return conversa;
 }
 
 export async function vincularProcesso(id: string, referencia: string | null) {
   if (!referencia) {
-    return prisma.conversaWhatsapp.update({ where: { id }, data: { processoId: null } });
+    const conversa = await prisma.conversaWhatsapp.update({ where: { id }, data: { processoId: null } });
+    await espelharWhatsapp(conversa.id);
+    return conversa;
   }
   const processo = await prisma.processo.findFirst({
     where: { OR: [{ id: referencia }, { codigo: referencia }] },
     select: { id: true },
   });
   if (!processo) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
-  return prisma.conversaWhatsapp.update({ where: { id }, data: { processoId: processo.id } });
+  const conversa = await prisma.conversaWhatsapp.update({ where: { id }, data: { processoId: processo.id } });
+  await espelharWhatsapp(conversa.id);
+  return conversa;
 }
 
 export async function baixarMidia(mensagemId: string) {

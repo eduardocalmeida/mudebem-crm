@@ -46,7 +46,7 @@ async function limpar() {
     throw new Error(`Teste apontou para o banco ${linhas[0]?.current_database}, não para mudebem_test.`);
   }
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "MensagemWhatsapp", "ConversaWhatsapp", "NumeroWhatsapp", "ConfigWhatsapp", "Anexo", "Evento", "Processo", "Contato", "Cliente", "ChaveApi", "Usuario" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "Mensagem", "Conversa", "MensagemWhatsapp", "ConversaWhatsapp", "NumeroWhatsapp", "ConfigWhatsapp", "Anexo", "Evento", "Processo", "Contato", "Cliente", "ChaveApi", "Usuario" RESTART IDENTITY CASCADE',
   );
   const senhaHash = await hashSenha("senha-de-teste");
   const usuario = await prisma.usuario.create({

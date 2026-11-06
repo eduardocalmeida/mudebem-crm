@@ -258,6 +258,8 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .calendario section { padding: 8px; min-height: 120px; }
 .calendario .chip { display: block; margin-top: 6px; font-size: 0.85rem; text-decoration: none; }
 .check { display: flex; align-items: center; gap: 8px; }
+.kommo { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr); gap: 14px; margin-bottom: 14px; }
+.fio-curto { max-height: 320px; }
 .portal { max-width: 1100px; margin: 0 auto; padding: 28px 16px 64px; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; }
 .portal.largo { display: block; max-width: 1200px; }
 .portal-hero { color: var(--ink); padding: 28px; }
@@ -321,7 +323,7 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   }
   .gaveta a { min-height: 44px; display: flex; align-items: center; text-decoration: none; }
   .conteudo { padding: 18px 14px 96px; }
-  .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
+  .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .kommo, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
   .kpi-grade { grid-template-columns: 1fr 1fr; }
   .funil-linha { grid-template-columns: minmax(0, 1fr) minmax(48px, 1fr) auto; }
   .funil-linha em { display: none; }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SeloExemplo } from "@/components/selos";
 import { formatarDataHora } from "@/lib/format";
 import { exigirUsuario } from "@/server/session";
+import { listarConversasAbertas, rotuloCanalConversa, rotuloStatusConversa } from "@/server/conversas";
 import { listarConversas } from "@/server/whatsapp";
 
 export const metadata = { title: "Comunicação" };
@@ -14,8 +15,13 @@ export default async function WhatsappPage({
   const usuario = await exigirUsuario();
   const sp = await searchParams;
   const naoLidas = sp.naoLidas === "sim";
-  const canal = sp.canal === "instagram" || sp.canal === "email" ? sp.canal : "whatsapp";
-  const conversas = canal === "whatsapp" ? await listarConversas({ naoLidas }) : [];
+  const caixa = sp.caixa === "meta";
+  const canal = sp.canal === "WHATSAPP" || sp.canal === "EMAIL" || sp.canal === "TELEFONE" || sp.canal === "OUTRO" ? sp.canal : null;
+  const status = sp.status === "EM_ESPERA" || sp.status === "FECHADA" || sp.status === "TODAS" ? sp.status : "ABERTA";
+  const [abertas, conversasMeta] = await Promise.all([
+    caixa ? Promise.resolve([]) : listarConversasAbertas({ canal, status }),
+    caixa ? listarConversas({ naoLidas }) : Promise.resolve([]),
+  ]);
 
   return (
     <>
@@ -23,36 +29,29 @@ export default async function WhatsappPage({
         <div>
           <p className="sobretitulo">Canais</p>
           <h1>Comunicação</h1>
-          <p className="muted">WhatsApp já entra aqui. Instagram e e-mail ficam no mesmo lugar quando forem conectados.</p>
+          <p className="muted">Fios abertos de todos os canais. O WhatsApp da Meta continua na caixa própria.</p>
         </div>
-        {canal === "whatsapp" ? (
-          <div className="linha">
-            <Link className="btn secundario" href={naoLidas ? "/whatsapp" : "/whatsapp?naoLidas=sim"}>
-              {naoLidas ? "Ver todas" : "Só não lidas"}
-            </Link>
-            {usuario.papel === "ADMIN" ? (
-              <Link className="btn primario" href="/whatsapp/ajustes">
-                Números e conexão
-              </Link>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="linha">
+          {usuario.papel === "ADMIN" ? <Link className="btn secundario" href="/whatsapp/ajustes">Números e conexão</Link> : null}
+          <Link className="btn secundario" href={caixa ? "/whatsapp" : "/whatsapp?caixa=meta"}>
+            {caixa ? "Inbox" : "Caixa WhatsApp"}
+          </Link>
+        </div>
       </header>
-      <nav className="abas" aria-label="Canais">
-        <Link className={canal === "whatsapp" ? "ativa" : undefined} href="/whatsapp">WhatsApp</Link>
-        <Link className={canal === "instagram" ? "ativa" : undefined} href="/whatsapp?canal=instagram">Instagram</Link>
-        <Link className={canal === "email" ? "ativa" : undefined} href="/whatsapp?canal=email">E-mail</Link>
-      </nav>
-      {canal !== "whatsapp" ? (
-        <section className="cartao canal-vazio">
-          <h2>{canal === "instagram" ? "Instagram" : "E-mail"}</h2>
-          <p className="muted">Este canal ainda não está conectado. As conversas continuam no WhatsApp.</p>
-        </section>
-      ) : null}
-      {canal === "whatsapp" ? <section className="cartao">
-        {conversas.length === 0 ? <p className="vazio">Nenhuma conversa por aqui.</p> : null}
+      {caixa ? null : (
+        <nav className="abas" aria-label="Canais">
+          <Link className={!canal && status === "ABERTA" ? "ativa" : undefined} href="/whatsapp">Abertas</Link>
+          <Link className={canal === "WHATSAPP" ? "ativa" : undefined} href="/whatsapp?canal=WHATSAPP">WhatsApp</Link>
+          <Link className={canal === "EMAIL" ? "ativa" : undefined} href="/whatsapp?canal=EMAIL">E-mail</Link>
+          <Link className={canal === "TELEFONE" ? "ativa" : undefined} href="/whatsapp?canal=TELEFONE">Telefone</Link>
+          <Link className={status === "EM_ESPERA" ? "ativa" : undefined} href="/whatsapp?status=EM_ESPERA">Em espera</Link>
+          <Link className={status === "FECHADA" ? "ativa" : undefined} href="/whatsapp?status=FECHADA">Fechadas</Link>
+        </nav>
+      )}
+      {caixa ? <section className="cartao">
+        {conversasMeta.length === 0 ? <p className="vazio">Nenhuma conversa por aqui.</p> : null}
         <div className="conversas">
-          {conversas.map((conversa) => (
+          {conversasMeta.map((conversa) => (
             <Link
               key={conversa.id}
               href={`/whatsapp/${conversa.id}`}
@@ -67,7 +66,23 @@ export default async function WhatsappPage({
             </Link>
           ))}
         </div>
-      </section> : null}
+      </section> : (
+        <section className="cartao">
+          {abertas.length === 0 ? <p className="vazio">Nenhuma conversa com esse filtro.</p> : null}
+          <div className="conversas">
+            {abertas.map((conversa) => (
+              <Link key={conversa.id} href={`/comunicacao/${conversa.id}`} className={`conversa-item${conversa.naoLida ? " nao-lida" : ""}`}>
+                <div className="linha">
+                  <strong>{conversa.numero} · {conversa.contato?.nome || conversa.whatsapp?.nomeContato || conversa.processo?.titulo || "Sem nome"}</strong>
+                  <span className="muted">{conversa.ultimaMensagemEm ? formatarDataHora(conversa.ultimaMensagemEm) : ""}</span>
+                </div>
+                <div className="muted">{rotuloCanalConversa(conversa.canal)} · {rotuloStatusConversa(conversa.status)}{conversa.processo ? ` · ${conversa.processo.codigo}` : ""}</div>
+                <div>{conversa.ultimaMensagem || "Sem mensagens"}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

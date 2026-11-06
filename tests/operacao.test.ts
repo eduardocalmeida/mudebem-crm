@@ -11,7 +11,7 @@ async function limpar() {
   const linhas = await prisma.$queryRaw<{ current_database: string }[]>`SELECT current_database()`;
   if (linhas[0]?.current_database !== "mudebem_test") throw new Error("Banco de teste incorreto.");
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "ItemInventario", "Cte", "Tarefa", "Anexo", "Evento", "Processo", "Contato", "Cliente", "Usuario" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "Mensagem", "Conversa", "ItemInventario", "Cte", "Tarefa", "Anexo", "Evento", "Processo", "Contato", "Cliente", "Usuario" RESTART IDENTITY CASCADE',
   );
 }
 

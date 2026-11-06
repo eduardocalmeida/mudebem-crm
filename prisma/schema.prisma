@@ -43,6 +43,7 @@ model Usuario {
   anexos       Anexo[]
   chaves       ChaveApi[]
   conversasWhatsapp ConversaWhatsapp[] @relation("ResponsavelWhatsapp")
+  conversas        Conversa[]          @relation("ResponsavelConversa")
   tarefas          Tarefa[]
 }
 
@@ -97,6 +98,7 @@ model Contato {
   criadoEm  DateTime   @default(now())
   processos Processo[]
   conversasWhatsapp ConversaWhatsapp[]
+  conversas         Conversa[]
 }
 
 model Processo {
@@ -189,6 +191,7 @@ model Processo {
   eventos         Evento[]
   anexos          Anexo[]
   conversasWhatsapp ConversaWhatsapp[]
+  conversas       Conversa[]
   tarefas         Tarefa[]
   itensInventario ItemInventario[]
   ctes            Cte[]
@@ -691,6 +694,8 @@ model ConversaWhatsapp {
   processo           Processo?          @relation(fields: [processoId], references: [id], onDelete: SetNull)
   responsavelId      String?
   responsavel        Usuario?           @relation("ResponsavelWhatsapp", fields: [responsavelId], references: [id], onDelete: SetNull)
+  conversaId         String?            @unique
+  conversa           Conversa?          @relation(fields: [conversaId], references: [id], onDelete: SetNull)
   naoLida            Boolean            @default(true)
   ultimaMensagem     String?
   ultimaMensagemEm   DateTime?
@@ -720,8 +725,75 @@ model MensagemWhatsapp {
   erro         String?
   criadaEm     DateTime
   registradaEm DateTime                @default(now())
+  mensagem     Mensagem?
 
   @@index([conversaId, criadaEm])
+}
+
+enum StatusConversa {
+  ABERTA
+  EM_ESPERA
+  FECHADA
+}
+
+enum CanalConversa {
+  WHATSAPP
+  EMAIL
+  TELEFONE
+  OUTRO
+}
+
+enum TipoMensagem {
+  TEXTO
+  AUDIO
+  IMAGEM
+  VIDEO
+  DOCUMENTO
+  SISTEMA
+  OUTRO
+}
+
+model Conversa {
+  id               String          @id @default(cuid())
+  numero           String          @unique
+  status           StatusConversa  @default(ABERTA)
+  canal            CanalConversa
+  processoId       String?
+  processo         Processo?       @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  contatoId        String?
+  contato          Contato?        @relation(fields: [contatoId], references: [id], onDelete: SetNull)
+  responsavelId    String?
+  responsavel      Usuario?        @relation("ResponsavelConversa", fields: [responsavelId], references: [id], onDelete: SetNull)
+  criadoEm         DateTime        @default(now())
+  atualizadoEm     DateTime        @updatedAt
+  ultimaMensagemEm DateTime?
+  fechadaEm        DateTime?
+  ultimaMensagem   String?
+  naoLida          Boolean         @default(true)
+  mensagens        Mensagem[]
+  whatsapp         ConversaWhatsapp?
+
+  @@index([processoId])
+  @@index([status, ultimaMensagemEm])
+  @@index([naoLida])
+}
+
+model Mensagem {
+  id                 String            @id @default(cuid())
+  conversaId         String
+  conversa           Conversa          @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  canal              CanalConversa
+  direcao            DirecaoMensagem
+  conteudo           String            @db.Text
+  remetente          String?
+  tipo               TipoMensagem      @default(TEXTO)
+  criadaEm           DateTime          @default(now())
+  idExterno          String?
+  mensagemWhatsappId String?           @unique
+  mensagemWhatsapp   MensagemWhatsapp? @relation(fields: [mensagemWhatsappId], references: [id], onDelete: SetNull)
+
+  @@index([conversaId, criadaEm])
+  @@index([idExterno])
 }
 
 enum DirecaoMensagem {
