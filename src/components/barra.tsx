@@ -7,11 +7,11 @@ import { Logo } from "@/components/logo";
 import { rotuloPapel, type Papel } from "@/lib/domain";
 import { sairAction } from "@/server/actions";
 
-type IconeNome = "casa" | "funil" | "calendario" | "comunicacao" | "listas" | "equipe" | "etapas" | "inventario" | "contratos" | "importar" | "integracoes" | "engrenagem" | "sair";
+type IconeNome = "casa" | "funil" | "calendario" | "comunicacao" | "listas" | "equipe" | "etapas" | "inventario" | "contratos" | "importar" | "integracoes" | "engrenagem" | "sair" | "mais" | "menu";
 
 const PRINCIPAL: { href: string; rotulo: string; icone: IconeNome }[] = [
   { href: "/painel", rotulo: "Início", icone: "casa" },
-  { href: "/processos", rotulo: "Funil", icone: "funil" },
+  { href: "/processos", rotulo: "Oportunidades", icone: "funil" },
   { href: "/tarefas", rotulo: "Calendário", icone: "calendario" },
   { href: "/whatsapp", rotulo: "Comunicação", icone: "comunicacao" },
   { href: "/clientes", rotulo: "Listas", icone: "listas" },
@@ -26,8 +26,6 @@ const CONFIG: { href: string; rotulo: string; icone: IconeNome }[] = [
   { href: "/integracoes", rotulo: "Integrações", icone: "integracoes" },
 ];
 
-const CURTOS = ["/painel", "/processos", "/tarefas", "/whatsapp"];
-
 export function BarraLateral({
   usuario,
   naoLidas = 0,
@@ -39,7 +37,12 @@ export function BarraLateral({
   const [aberto, setAberto] = useState(false);
   const config = usuario.papel === "ADMIN" ? CONFIG : [];
   const iniciais = usuario.nome.trim().charAt(0).toUpperCase();
-  const ativo = (href: string) => caminho === href || caminho.startsWith(`${href}/`);
+  const ativo = (href: string) => {
+    if (href === "/processos") {
+      return caminho === "/processos" || (caminho.startsWith("/processos/") && !caminho.startsWith("/processos/novo"));
+    }
+    return caminho === href || caminho.startsWith(`${href}/`);
+  };
   const mais = [
     { href: "/clientes", rotulo: "Listas" },
     ...config.map((item) => ({ href: item.href, rotulo: item.rotulo })),
@@ -92,17 +95,18 @@ export function BarraLateral({
         ))}
         <form action={sairAction}><button className="btn secundario" type="submit">Sair</button></form>
       </nav>
-      <nav className="nav-base" aria-label="Atalhos">
-        {PRINCIPAL.filter((item) => CURTOS.includes(item.href)).map((item) => (
-          <Link key={item.href} href={item.href} className={ativo(item.href) ? "ativo" : undefined}>
-            <Icone nome={item.icone} />
-            {item.rotulo}
-          </Link>
-        ))}
-        <button type="button" className={aberto ? "ativo" : undefined} onClick={() => setAberto((valor) => !valor)}>
-          <Icone nome="engrenagem" />
-          Mais
-        </button>
+      <button className="atalho-mais" type="button" aria-label="Mais opções" onClick={() => setAberto((valor) => !valor)}>
+        <Icone nome="menu" />
+      </button>
+      <nav className="nav-base" aria-label="Principal">
+        <Link href="/painel" aria-label="Início" className={ativo("/painel") ? "ativo" : undefined}><Icone nome="casa" /></Link>
+        <Link href="/tarefas" aria-label="Calendário" className={ativo("/tarefas") ? "ativo" : undefined}><Icone nome="calendario" /></Link>
+        <Link href="/processos/novo" className="nav-novo" aria-label="Novo lead"><Icone nome="mais" /></Link>
+        <Link href="/whatsapp" aria-label="Comunicação" className={ativo("/whatsapp") ? "ativo" : undefined}>
+          <Icone nome="comunicacao" />
+          {naoLidas > 0 ? <em className="ponto">{naoLidas}</em> : null}
+        </Link>
+        <Link href="/processos" aria-label="Oportunidades" className={ativo("/processos") ? "ativo" : undefined}><Icone nome="funil" /></Link>
       </nav>
     </aside>
   );
@@ -133,5 +137,7 @@ function Icone({ nome }: { nome: IconeNome }) {
   if (nome === "importar") return <svg {...props}><path d="M12 4v10M8 10.5 12 14.5 16 10.5M5 19h14" /></svg>;
   if (nome === "integracoes") return <svg {...props}><circle cx="6" cy="12" r="2.2" /><circle cx="18" cy="7" r="2.2" /><circle cx="18" cy="17" r="2.2" /><path d="M8.2 11.2 15.8 8M8.2 12.8l7.6 3.2" /></svg>;
   if (nome === "engrenagem") return <svg {...props}><circle cx="12" cy="12" r="3" /><path d="M12 3.5v2.2M12 18.3V20.5M4.8 6.8l1.6 1.6M17.6 15.6l1.6 1.6M3.5 12h2.2M18.3 12H20.5M4.8 17.2l1.6-1.6M17.6 8.4l1.6-1.6" /></svg>;
+  if (nome === "mais") return <svg {...props}><path d="M12 5v14M5 12h14" /></svg>;
+  if (nome === "menu") return <svg {...props}><path d="M5 7h14M5 12h14M5 17h14" /></svg>;
   return <svg {...props}><path d="M10 7 6 12l4 5M6 12h12" /></svg>;
 }

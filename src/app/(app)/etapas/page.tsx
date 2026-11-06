@@ -8,14 +8,14 @@ export const metadata = { title: "Etapas" };
 
 export default async function EtapasPage() {
   const usuario = await exigirUsuario();
-  if (usuario.papel !== "ADMIN") return <p className="alerta">Só um administrador configura o funil.</p>;
+  if (usuario.papel !== "ADMIN") return <p className="alerta">Só um administrador configura as oportunidades.</p>;
   const etapas = await carregarEtapas();
 
   return (
     <>
       <header className="pagina-cabeca">
         <div>
-          <p className="sobretitulo">Funil</p>
+          <p className="sobretitulo">Oportunidades</p>
           <h1>Etapas</h1>
           <p className="muted">A ordem da Kommo, com Contas a receber e Recebido no fim. Ganho e Perdido fecham o processo.</p>
         </div>

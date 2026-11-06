@@ -109,7 +109,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .barra:hover .btn-sair, .barra:focus-within .btn-sair { width: 100%; max-width: none; }
   .barra:hover .btn-sair span, .barra:focus-within .btn-sair span { max-width: 80px; opacity: 1; }
 }
-.nav-base, .gaveta, .cortina { display: none; }
+.nav-base, .gaveta, .cortina, .atalho-mais { display: none; }
 .fato small { display: block; overflow-wrap: anywhere; }
 .quem { display: flex; gap: 10px; align-items: center; }
 .avatar {
@@ -283,20 +283,37 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   .shell { grid-template-columns: 1fr; }
   .barra { display: contents; }
   .barra .marca, .barra .menu, .barra-rodape { display: none; }
+  .atalho-mais {
+    display: grid; place-items: center; position: fixed; z-index: 40; top: 12px; right: 12px;
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.82); color: var(--ink); backdrop-filter: blur(12px);
+  }
+  .pagina-cabeca { padding-right: 52px; }
   .nav-base {
     display: flex; position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
-    justify-content: space-around; gap: 4px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(16px);
+    align-items: flex-end; justify-content: space-around; gap: 4px;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(16px);
     border-top: 1px solid var(--line);
   }
-  .nav-base a, .nav-base button {
-    flex: 1; min-width: 0; min-height: 52px; border: 0; background: transparent; border-radius: 12px;
-    color: var(--muted); text-decoration: none; font-size: 0.64rem; line-height: 1.1;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    padding: 4px 2px; gap: 2px;
+  .nav-base a {
+    position: relative; flex: 1; min-width: 0; min-height: 48px; border: 0; background: transparent; border-radius: 14px;
+    color: var(--muted); text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
   }
-  .nav-base .icone { width: 18px; height: 18px; }
-  .nav-base a.ativo, .nav-base button.ativo { color: var(--ink); background: rgba(184, 152, 112, 0.22); }
+  .nav-base .icone { width: 24px; height: 24px; }
+  .nav-base a.ativo:not(.nav-novo) { color: var(--ink); background: rgba(184, 152, 112, 0.22); }
+  .nav-base .nav-novo {
+    flex: 0 0 58px; width: 58px; height: 58px; min-height: 58px; margin-top: -28px;
+    border-radius: 50%; background: var(--ink); color: #F7F4EF;
+    box-shadow: 0 14px 28px -12px rgba(16, 24, 40, 0.7);
+  }
+  .nav-base .nav-novo .icone { width: 28px; height: 28px; }
+  .nav-base .ponto {
+    position: absolute; top: 8px; right: calc(50% - 16px);
+    min-width: 8px; height: 8px; padding: 0; overflow: hidden; text-indent: -99px;
+    border-radius: 99px; background: var(--gold);
+  }
   .cortina.aberta { display: block; position: fixed; inset: 0; background: rgba(16, 24, 40, 0.35); z-index: 35; }
   .gaveta.aberta {
     display: flex; flex-direction: column; gap: 6px; position: fixed; z-index: 45;

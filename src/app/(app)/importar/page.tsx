@@ -15,7 +15,7 @@ export default async function ImportarPage() {
           <p className="sobretitulo">Migração</p>
           <h1>Importar CSV da Kommo</h1>
           <p className="muted">
-            Exporte leads, contatos e empresas na Kommo e envie o CSV aqui. A importação reconhece as colunas do funil
+            Exporte leads, contatos e empresas na Kommo e envie o CSV aqui. A importação reconhece as colunas das oportunidades
             (cidade, andar, modalidade, valores, motorista, UTM) e guarda o que não mapeou como campo personalizado.
             Rodar de novo o mesmo arquivo atualiza pelo ID da Kommo.
           </p>

@@ -4,15 +4,15 @@ import { camposDoPapel, podeCriarProcesso } from "@/lib/domain";
 import { prisma } from "@/lib/prisma";
 import { exigirUsuario } from "@/server/session";
 
-export const metadata = { title: "Novo processo" };
+export const metadata = { title: "Nova oportunidade" };
 
 export default async function NovoProcessoPage() {
   const usuario = await exigirUsuario();
   if (!podeCriarProcesso(usuario.papel)) {
     return (
       <>
-        <h1>Novo processo</h1>
-        <p className="alerta">Seu papel acompanha a operação, mas a abertura de processos fica com o comercial.</p>
+        <h1>Nova oportunidade</h1>
+        <p className="alerta">Seu papel acompanha a operação, mas a abertura de oportunidades fica com o comercial.</p>
       </>
     );
   }
@@ -29,7 +29,7 @@ export default async function NovoProcessoPage() {
       <header className="pagina-cabeca">
         <div>
           <p className="sobretitulo">Comercial</p>
-          <h1>Novo processo</h1>
+          <h1>Nova oportunidade</h1>
           <p className="muted">A entrada fica em Cotação recebida. O código MB é gerado automaticamente.</p>
         </div>
         <Link className="btn secundario" href="/clientes/novo">

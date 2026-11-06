@@ -23,10 +23,10 @@ export default async function PainelPage() {
         <div>
           <p className="sobretitulo">Início</p>
           <h1>{saudacao(usuario.nome)}</h1>
-          <p className="muted">Funil, agenda e origens da Mude Bem. Datas em America/Sao_Paulo.</p>
+          <p className="muted">Oportunidades, agenda e origens da Mude Bem. Datas em America/Sao_Paulo.</p>
         </div>
         <Link className="btn primario" href="/processos/novo">
-          Novo processo
+          Nova oportunidade
         </Link>
       </header>
       {painel.exemplos ? (
@@ -62,7 +62,7 @@ export default async function PainelPage() {
 
       <section className="dash-grade">
         <article className="painel-card">
-          <h2>Funil por etapa</h2>
+          <h2>Oportunidades por etapa</h2>
           <div className="funil">
             {painel.porEtapa.map((etapa) => (
               <Link key={etapa.slug} className="funil-linha" href={`/processos?visao=kanban&etapa=${etapa.slug}`}>
