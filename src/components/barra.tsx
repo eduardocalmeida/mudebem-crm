@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
@@ -47,8 +47,13 @@ export function BarraLateral({
     }
     return caminho === href || caminho.startsWith(`${href}/`);
   };
+  const emConfig = config.some((item) => ativo(item.href));
+  const [configAberta, setConfigAberta] = useState(emConfig);
+  useEffect(() => {
+    setConfigAberta(emConfig);
+  }, [caminho, emConfig]);
   return (
-    <aside className="barra">
+    <aside className={configAberta ? "barra config-aberta" : "barra"}>
       <Link href="/painel" className="marca" aria-label="Início">
         <Logo />
       </Link>
@@ -62,8 +67,17 @@ export function BarraLateral({
         ))}
         {config.length > 0 ? (
           <div className="menu-secao">
-            <p className="secao-rotulo"><Icone nome="engrenagem" /> Configuração</p>
-            <div className="submenu-config">
+            <button
+              type="button"
+              className={emConfig ? "ativo" : undefined}
+              aria-expanded={configAberta}
+              title="Configuração"
+              onClick={() => setConfigAberta((valor) => !valor)}
+            >
+              <Icone nome="engrenagem" />
+              <span className="rotulo">Configuração</span>
+            </button>
+            <div className={configAberta ? "submenu-config aberto" : "submenu-config"}>
               {config.map((item) => (
                 <Link key={item.href} href={item.href} className={ativo(item.href) ? "ativo" : undefined} title={item.rotulo}>
                   <Icone nome={item.icone} />
@@ -94,10 +108,10 @@ export function BarraLateral({
         <Link href="/clientes" onClick={() => setAberto(false)}>Listas</Link>
         {config.length > 0 ? (
           <>
-            <p className="gaveta-secao">Configuração</p>
-            {config.map((item) => (
+            <button type="button" aria-expanded={configAberta} onClick={() => setConfigAberta((valor) => !valor)}>Configuração</button>
+            {configAberta ? config.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setAberto(false)}>{item.rotulo}</Link>
-            ))}
+            )) : null}
           </>
         ) : null}
         <form action={sairAction}><button className="btn secundario" type="submit">Sair</button></form>
