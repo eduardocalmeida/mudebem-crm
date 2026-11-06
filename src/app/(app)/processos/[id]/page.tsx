@@ -8,7 +8,7 @@ import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, formatarDataHora, formatarNumero, localidade } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
-import { AbaCte } from "@/components/cte-painel";
+import { AbaFiscal } from "@/components/nfse-painel";
 import { obterProcesso } from "@/server/processos";
 import { exigirUsuario } from "@/server/session";
 
@@ -92,16 +92,18 @@ export default async function ProcessoPage({
           ["resumo", "Resumo"],
           ["inventario", "Inventário"],
           ["tarefas", "Tarefas"],
-          ["cte", "CT-e"],
+          ["fiscal", "Fiscal"],
         ].map(([idAba, rotulo]) => (
-          <Link key={idAba} className={aba === idAba ? "ativa" : ""} href={`/processos/${processo.id}?aba=${idAba}`}>
+          <Link key={idAba} className={aba === idAba || (idAba === "fiscal" && (aba === "cte" || aba === "nfse")) ? "ativa" : ""} href={`/processos/${processo.id}?aba=${idAba}`}>
             {rotulo}
           </Link>
         ))}
       </nav>
       {aba === "inventario" ? <AbaInventario processoId={processo.id} /> : null}
       {aba === "tarefas" ? <AbaTarefas processoId={processo.id} /> : null}
-      {aba === "cte" ? <AbaCte processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} /> : null}
+      {aba === "fiscal" || aba === "cte" || aba === "nfse" ? (
+        <AbaFiscal processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} admin={usuario.papel === "ADMIN"} />
+      ) : null}
       {aba === "resumo" ? (
       <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>

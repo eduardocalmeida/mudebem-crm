@@ -310,6 +310,14 @@ O grupo `rodoviario` do JSON leva só o RNTRC de 8 dígitos. Placa, motorista e 
 
 O certificado digital A1 é carregado na empresa emitente, no painel da WebmaniaBR. Este CRM não guarda o arquivo nem a senha do certificado. A API usa só o `WEBMANIA_ACCESS_TOKEN` dessa conta.
 
+## NFS-e
+
+Mudança dentro do mesmo município sugere NFS-e. Municípios diferentes sugerem CT-e. A escolha fica na aba **Fiscal** e pode ser trocada. Sem escolha manual, a sugestão vale de novo.
+
+A NFS-e guarda prestador, tomador (CPF ou CNPJ, endereço e e-mail), município da prestação, discriminação, código da LC 116, CNAE, ISS, retenções de PIS, COFINS, CSLL, IR e INSS, valor dos serviços, deduções e IBS/CBS. Os códigos `16.02` e `26.01` nascem no cadastro e o administrador ajusta descrição, CNAE, alíquota e qual é o padrão. O valor do serviço sai do valor aprovado.
+
+`obterProvedorNfse()` monta `POST /2/nfse/emissao` e `PUT /2/nfse/cancelar`. Sem token, nada é enviado. Com token, o pedido fica gravado. O retorno entra em `POST /api/webmania/nfse?token=`. Para município do Padrão Nacional, defina `WEBMANIA_NFSE_MODELO=padrao_nacional` para não enviar `impostos.iss`.
+
 ## MDF-e
 
 O manifesto rodoviário agrupa um ou mais CT-e da viagem. Ele nasce do processo com motorista, CPF, placa e ANTT, UF e municípios de origem e destino. Dá para informar RENAVAM, tara, capacidade, percurso, seguro (seguradora, apólice e averbação) e os totais. O peso não é inventado a partir do m³.

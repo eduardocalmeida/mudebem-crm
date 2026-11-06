@@ -106,6 +106,8 @@ model Processo {
   kommoId         String?      @unique
   extras          Json?
   canal           CanalOrigem
+  documentoFiscal       String?
+  documentoFiscalManual Boolean      @default(false)
   clienteId       String
   cliente         Cliente      @relation(fields: [clienteId], references: [id])
   contatoId       String?
@@ -186,6 +188,7 @@ model Processo {
   itensInventario ItemInventario[]
   ctes            Cte[]
   mdfes           Mdfe[]
+  nfses           Nfse[]
 
   @@index([etapa])
   @@index([clienteId])
@@ -419,6 +422,65 @@ model MdfeCte {
   cte    Cte    @relation(fields: [cteId], references: [id], onDelete: Cascade)
 
   @@unique([mdfeId, cteId])
+}
+
+model CodigoServicoNfse {
+  id          String   @id @default(cuid())
+  codigo      String   @unique
+  descricao   String
+  cnae        String?
+  aliquotaIss Decimal? @db.Decimal(6, 2)
+  padrao      Boolean  @default(false)
+  ativo       Boolean  @default(true)
+}
+
+model Nfse {
+  id                  String    @id @default(cuid())
+  processoId          String
+  processo            Processo  @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  status              String    @default("RASCUNHO")
+  prestadorNome       String?
+  prestadorDocumento  String?
+  tomadorNome         String?
+  tomadorDocumento    String?
+  tomadorEmail        String?
+  tomadorEndereco     String?
+  tomadorNumero       String?
+  tomadorBairro       String?
+  tomadorCidade       String?
+  tomadorUf           String?
+  tomadorCep          String?
+  municipioPrestacao  String?
+  ufPrestacao         String?
+  discriminacao       String?   @db.Text
+  codigoServico       String?
+  cnae                String?
+  aliquotaIss         Decimal?  @db.Decimal(6, 2)
+  valorIss            Decimal?  @db.Decimal(12, 2)
+  issRetido           Boolean   @default(false)
+  aliquotaPis         Decimal?  @db.Decimal(6, 2)
+  aliquotaCofins      Decimal?  @db.Decimal(6, 2)
+  aliquotaCsll        Decimal?  @db.Decimal(6, 2)
+  aliquotaIr          Decimal?  @db.Decimal(6, 2)
+  aliquotaInss        Decimal?  @db.Decimal(6, 2)
+  valorServicos       Decimal?  @db.Decimal(12, 2)
+  deducoes            Decimal?  @db.Decimal(12, 2)
+  ibsSituacao         String?
+  ibsClassificacao    String?
+  numero              String?
+  codigoVerificacao   String?
+  serieRps            String?
+  numeroRps           String?
+  uuidProvedor        String?
+  pdfUrl              String?
+  xmlUrl              String?
+  pedidoPreparado     Json?
+  mensagemProvedor    String?
+  criadoEm            DateTime  @default(now())
+  atualizadoEm        DateTime  @updatedAt
+
+  @@index([processoId])
+  @@index([uuidProvedor])
 }
 
 model ConfigWhatsapp {
