@@ -23,6 +23,7 @@ import { ContatosOportunidade, type ContatoFicha } from "@/components/contatos-o
 import { FORMAS_PAGAMENTO_FICHA, formaPagamentoDaFicha } from "@/lib/pagamento";
 import type { VinculoContato } from "@/lib/contatos-oportunidade";
 import { EnderecoFicha, type PartesEndereco } from "@/components/endereco-ficha";
+import { SecaoMovel } from "@/components/secao-movel";
 
 type ClienteOpcao = { id: string; nome: string; contatos: ContatoFicha[] };
 type UsuarioOpcao = { id: string; nome: string };
@@ -156,6 +157,7 @@ export function FormProcesso({
         </article>
       ) : null}
       {algum("embalagemNecessaria", "itensEspeciais", "numeroCte", "inventario") ? (
+      <SecaoMovel titulo="Operação">
       <article className="cartao bloco">
       <fieldset className="secao-form">
         <legend>Operação</legend>
@@ -181,8 +183,10 @@ export function FormProcesso({
         </div>
       </fieldset>
       </article>
+      </SecaoMovel>
       ) : null}
       {algum(...financeiro) ? (
+      <SecaoMovel titulo="Financeiro">
       <article className="cartao bloco">
       <fieldset className="secao-form">
         <legend>Financeiro</legend>
@@ -195,6 +199,7 @@ export function FormProcesso({
         </div>
       </fieldset>
       </article>
+      </SecaoMovel>
       ) : null}
       {modo === "criar" && mostra("responsavelId") ? <p className="muted">Você será o responsável desta oportunidade.</p> : null}
       <button className="btn primario" type="submit">

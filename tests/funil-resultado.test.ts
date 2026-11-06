@@ -94,5 +94,11 @@ describe("resultado comercial e pós-venda", () => {
     expect(trava).toContain("overflow: visible");
     expect(trava).not.toContain("height: 100vh; overflow: hidden");
     expect(trava).toContain(".ficha.ficha-persistente > .coluna-dados .coluna-rolagem { display: block; height: auto; min-height: 0; overflow: visible; }");
+    expect(colunas).toContain("Dados");
+    expect(colunas).toContain("Conversa");
+    expect(colunas).toContain("data-area");
+    expect(css).toContain(".quadro { display: flex; gap: 12px; overflow-x: auto;");
+    expect(css).toContain(".quadro { flex-direction: column; overflow-x: hidden; scroll-snap-type: none; }");
+    expect(css).toContain('[data-area="conversa"] > .coluna-dados { display: none; }');
   });
 });

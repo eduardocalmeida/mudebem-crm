@@ -119,14 +119,15 @@ export function BarraLateral({
         <Icone nome="menu" />
       </button>
       <nav className="nav-base" aria-label="Principal">
-        <Link href="/painel" aria-label="Início" className={ativo("/painel") ? "ativo" : undefined}><Icone nome="casa" /></Link>
-        <Link href="/tarefas" aria-label="Calendário" className={ativo("/tarefas") ? "ativo" : undefined}><Icone nome="calendario" /></Link>
-        <Link href="/processos/novo" className="nav-novo" aria-label="Novo lead"><Icone nome="mais" /></Link>
+        <Link href="/painel" aria-label="Início" className={ativo("/painel") ? "ativo" : undefined}><Icone nome="casa" /><span className="nav-rotulo">Início</span></Link>
+        <Link href="/processos" aria-label="Oportunidades" className={ativo("/processos") ? "ativo" : undefined}><Icone nome="funil" /><span className="nav-rotulo">Leads</span></Link>
+        <Link href="/processos/novo" className="nav-novo" aria-label="Novo lead"><Icone nome="mais" /><span className="nav-rotulo">Novo</span></Link>
         <Link href="/whatsapp" aria-label="Comunicação" className={ativo("/whatsapp") ? "ativo" : undefined}>
           <Icone nome="comunicacao" />
+          <span className="nav-rotulo">Conversas</span>
           {naoLidas > 0 ? <em className="ponto">{naoLidas}</em> : null}
         </Link>
-        <Link href="/processos" aria-label="Oportunidades" className={ativo("/processos") ? "ativo" : undefined}><Icone nome="funil" /></Link>
+        <Link href="/tarefas" aria-label="Calendário" className={ativo("/tarefas") ? "ativo" : undefined}><Icone nome="calendario" /><span className="nav-rotulo">Agenda</span></Link>
       </nav>
     </aside>
   );

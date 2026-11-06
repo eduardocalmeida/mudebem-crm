@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { FormAcao } from "@/components/form-acao";
 import { FormAnexo, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
 import { FichaColunas, IrParaAba } from "@/components/ficha-colunas";
+import { SecaoMovel } from "@/components/secao-movel";
 import { FormPosVenda, MarcarPerdido } from "@/components/resultado-comercial";
 import { SeletorEtapa } from "@/components/seletor-etapa";
 import { validarTransicao } from "@/lib/domain";
@@ -39,7 +40,8 @@ export default async function ProcessoPage({
   const { id } = await params;
   const consulta = await searchParams;
   const abaPedida = consulta.aba || "resumo";
-  const aba = abaPedida === "tarefas" ? "resumo" : abaPedida;
+  const dadosIniciais = Boolean(consulta.aba) && consulta.aba !== "conversa";
+  const aba = abaPedida === "tarefas" || abaPedida === "conversa" ? "resumo" : abaPedida === "cte" || abaPedida === "nfse" ? "fiscal" : abaPedida;
   const processo = await obterProcesso(id, true).catch((erro: unknown) => {
     if (erro instanceof AppError && erro.status === 404) return null;
     throw erro;
@@ -88,6 +90,8 @@ export default async function ProcessoPage({
       ) : null}
       <FichaColunas
         inicial={aba}
+        dadosIniciais={dadosIniciais}
+        legenda={`${rotuloEtapa(processo.etapa, etapas)} · ${processo.contato?.nome ?? "Sem contato"}`}
         rolarTarefas={abaPedida === "tarefas"}
         topo={
           <>
@@ -218,6 +222,7 @@ export default async function ProcessoPage({
               }}
             />
           </article>
+          <SecaoMovel titulo="Anexos">
           <article className="cartao bloco">
             <h2>Anexos</h2>
             <div className="anexos">
@@ -236,6 +241,7 @@ export default async function ProcessoPage({
             </div>
             <FormAnexo processoId={processo.id} />
           </article>
+          </SecaoMovel>
           <AbaTarefas processoId={processo.id} />
       </>
         }

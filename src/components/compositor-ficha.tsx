@@ -37,7 +37,8 @@ export function CompositorFicha({
   const [tarefa, enviarTarefa, pendenteTarefa] = useActionState(criarTarefaFichaAction, {} as EstadoForm);
 
   return (
-    <section className="compositor-unico" aria-label="Compositor">
+    <section className="compositor-unico" data-modo={modo} aria-label="Compositor">
+      <p className={`selo-modo selo-modo-${modo}`}>{modo === "nota" ? "Nota interna" : modo === "tarefa" ? "Tarefa do processo" : "Histórico sem envio"}</p>
       <label className="modo-seletor">
         <span className="so-leitor">Modo do compositor</span>
         <select value={modo} onChange={(evento) => setModo(evento.target.value as Modo)} aria-label="Bate-papo, nota ou tarefa">
