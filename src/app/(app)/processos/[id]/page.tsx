@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormAcao } from "@/components/form-acao";
 import { FormAnexo, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
-import { FichaColunas } from "@/components/ficha-colunas";
+import { FichaColunas, IrParaAba } from "@/components/ficha-colunas";
 import { FormPosVenda, MarcarPerdido } from "@/components/resultado-comercial";
 import { SeletorEtapa } from "@/components/seletor-etapa";
 import { validarTransicao } from "@/lib/domain";
@@ -69,7 +69,7 @@ export default async function ProcessoPage({
   }));
 
   return (
-    <>
+    <div className="pagina-ficha">
       <header className="pagina-cabeca">
         <div>
           <h1>{processo.codigo}</h1>
@@ -89,19 +89,30 @@ export default async function ProcessoPage({
       <FichaColunas
         inicial={aba}
         rolarTarefas={abaPedida === "tarefas"}
+        topo={
+          <>
+            <SeletorEtapa processoId={processo.id} atual={processo.etapa} rotuloAtual={rotuloEtapa(processo.etapa, etapas)} destinos={destinos} />
+            <div className="contato-topo">
+              <div>
+                <span>Empresa</span>
+                <strong>{processo.cliente.nome}</strong>
+              </div>
+              <div>
+                <span>Contato</span>
+                <strong>{processo.contato?.nome ?? "Sem contato"}</strong>
+                <small>
+                  {[processo.contato?.telefone, processo.contato?.email, processo.contato?.cargo].filter(Boolean).join(" · ") || "Sem telefone, e-mail ou cargo"}
+                </small>
+              </div>
+              <IrParaAba aba="resumo" ancora="contatos-oportunidade">Adicionar</IrParaAba>
+            </div>
+          </>
+        }
         inventario={<AbaInventario processoId={processo.id} />}
         fiscal={<AbaFiscal processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} admin={usuario.papel === "ADMIN"} />}
         conversa={
           <>
             <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
-            <CompositorFicha
-              processoId={processo.id}
-              conversaId={fioAberto?.id ?? null}
-              whatsappId={fioAberto?.whatsapp?.id ?? null}
-              tipos={tiposTarefa}
-              usuarios={usuarios}
-              responsavelInicial={usuario.id}
-            />
             <article className="cartao bloco">
               <h2>Histórico</h2>
               <div className="timeline">
@@ -115,6 +126,16 @@ export default async function ProcessoPage({
               </div>
             </article>
           </>
+        }
+        rodape={
+          <CompositorFicha
+            processoId={processo.id}
+            conversaId={fioAberto?.id ?? null}
+            whatsappId={fioAberto?.whatsapp?.id ?? null}
+            tipos={tiposTarefa}
+            usuarios={usuarios}
+            responsavelInicial={usuario.id}
+          />
         }
         resumo={
       <>
@@ -132,7 +153,6 @@ export default async function ProcessoPage({
           </FormAcao>
         </article>
       ) : null}
-          <SeletorEtapa processoId={processo.id} atual={processo.etapa} rotuloAtual={rotuloEtapa(processo.etapa, etapas)} destinos={destinos} />
           {podePerder ? <MarcarPerdido processoId={processo.id} /> : null}
           {processo.etapa === "POS_VENDA" ? <FormPosVenda processoId={processo.id} nota={posVenda?.nota ?? null} comentario={posVenda?.comentario ?? null} /> : null}
           <article className="cartao bloco">
@@ -220,7 +240,7 @@ export default async function ProcessoPage({
       </>
         }
       />
-    </>
+    </div>
   );
 }
 

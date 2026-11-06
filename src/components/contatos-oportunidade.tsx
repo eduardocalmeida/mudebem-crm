@@ -119,7 +119,7 @@ export function ContatosOportunidade({
   }
 
   return (
-    <div className="campo largo contatos-oportunidade">
+    <div id="contatos-oportunidade" className="campo largo contatos-oportunidade">
       <span>Contatos</span>
       <input type="hidden" name="contatosVinculo" value={JSON.stringify(payload())} />
       <input type="hidden" name="contatoPrincipalId" value={principal && !principal.startsWith("novo-") ? principal : ""} />

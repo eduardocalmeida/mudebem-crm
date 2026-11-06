@@ -244,8 +244,22 @@ table { font-variant-numeric: lining-nums tabular-nums; }
 .selo { display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px; padding: 2px 8px; font-size: 0.78rem; background: white; white-space: nowrap; }
 .selo.exemplo { border-style: dashed; color: #6d5314; border-color: #d7b15a; background: #fff8e8; }
 .ficha { display: grid; grid-template-columns: minmax(0, 5fr) minmax(320px, 7fr); gap: 12px; align-items: start; }
-.ficha.ficha-persistente { grid-template-columns: minmax(320px, 0.92fr) minmax(360px, 1.08fr); align-items: stretch; }
-.ficha.ficha-persistente > aside { position: sticky; top: 8px; align-self: start; max-height: calc(100vh - 16px); overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.conteudo:has(.pagina-ficha) { height: 100vh; overflow: hidden; display: flex; flex-direction: column; padding-bottom: 12px; }
+.pagina-ficha { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pagina-ficha .pagina-cabeca { margin-bottom: 8px; }
+.ficha.ficha-persistente { grid-template-columns: minmax(260px, 1fr) minmax(420px, 1.8fr); align-items: stretch; flex: 1; min-height: 0; height: auto; }
+.ficha.ficha-persistente > .coluna-dados,
+.ficha.ficha-persistente > aside { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+.coluna-fixa { flex: none; }
+.coluna-rolagem { flex: 1; min-height: 0; overflow: auto; }
+.ficha.ficha-persistente .grade-form { grid-template-columns: 1fr; gap: 8px; }
+.ficha.ficha-persistente .fio { max-height: none; }
+.linha-tarefa { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 8px; align-items: end; }
+.contato-topo { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; margin: 0 0 8px; padding: 8px 0; border-bottom: 1px solid var(--line); color: #101828; }
+.contato-topo span, .contato-topo small { display: block; color: #3d4450; font-size: 0.75rem; }
+.contato-topo strong { font-weight: 540; }
+.atalhos-vencimento { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.modo-seletor select { max-width: 180px; }
 .ficha.ficha-persistente .cartao.bloco { padding: 10px 12px; margin-bottom: 8px; box-shadow: none; background: #fff; }
 .ficha.ficha-persistente .campo span, .ficha.ficha-persistente h2, .ficha.ficha-persistente p { color: #101828; }
 .ficha.ficha-persistente .muted { color: #3d4450; }
@@ -516,8 +530,10 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   .gaveta-secao { margin: 10px 0 0; color: var(--gold); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
   .conteudo { padding: 18px 14px 96px; }
   .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
-  .ficha.ficha-persistente { grid-template-columns: minmax(0, 1fr) minmax(220px, 38vw); }
-  .ficha.ficha-persistente > aside { max-height: 100vh; }
+  .conteudo:has(.pagina-ficha) { height: auto; overflow: visible; display: block; padding-bottom: 96px; }
+  .pagina-ficha { height: calc(100dvh - 132px); }
+  .ficha.ficha-persistente { grid-template-columns: minmax(0, 1fr) minmax(180px, 42vw); }
+  .linha-tarefa { grid-template-columns: 1fr; }
   .painel-aba { padding: 16px; }
   .barra-filtro-linha, .checks-etapa, .perda-compacta { grid-template-columns: 1fr; }
   .painel-filtro { width: 100vw; max-width: 100vw; height: 100%; max-height: 100%; border-radius: 0; }
