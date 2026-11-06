@@ -17,7 +17,7 @@ export async function FichaConversa({ processoId, usuarioId }: { processoId: str
   const aberta = conversas.find((conversa) => conversa.status !== "FECHADA") ?? conversas[0];
 
   return (
-    <section className="kommo">
+    <section className="conversa-lateral">
       <article className="cartao bloco">
         <h2>Conversa</h2>
         {aberta ? (

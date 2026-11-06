@@ -258,7 +258,14 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .calendario section { padding: 8px; min-height: 120px; }
 .calendario .chip { display: block; margin-top: 6px; font-size: 0.85rem; text-decoration: none; }
 .check { display: flex; align-items: center; gap: 8px; }
-.kommo { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr); gap: 14px; margin-bottom: 14px; }
+.topo-lead { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.7fr); gap: 14px; margin-bottom: 14px; }
+.valor-principal b { display: block; font-size: 2rem; letter-spacing: -0.03em; margin: 4px 0; }
+.acoes-etapa { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
+.acoes-etapa .faixa-exemplo { flex-basis: 100%; margin: 0; }
+.secao-form { border: 0; margin: 0 0 18px; padding: 0; min-width: 0; }
+.secao-form legend { font-weight: 650; margin-bottom: 8px; padding: 0; }
+.conversa-lateral { display: flex; flex-direction: column; gap: 14px; }
+.ficha-form { display: flex; flex-direction: column; gap: 4px; }
 .fio-curto { max-height: 320px; }
 .portal { max-width: 1100px; margin: 0 auto; padding: 28px 16px 64px; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; }
 .portal.largo { display: block; max-width: 1200px; }
@@ -323,7 +330,7 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   }
   .gaveta a { min-height: 44px; display: flex; align-items: center; text-decoration: none; }
   .conteudo { padding: 18px 14px 96px; }
-  .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .kommo, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
+  .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .topo-lead, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
   .kpi-grade { grid-template-columns: 1fr 1fr; }
   .funil-linha { grid-template-columns: minmax(0, 1fr) minmax(48px, 1fr) auto; }
   .funil-linha em { display: none; }

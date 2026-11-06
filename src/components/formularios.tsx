@@ -47,9 +47,18 @@ export function FormProcesso({
   const mostra = (campo: Campo) => campos.includes(campo);
   const acao = modo === "criar" ? criarProcessoAction : salvarProcessoAction;
 
+  const algum = (...lista: Campo[]) => lista.some(mostra);
+  const comercial = ["modalidade", "volume", "validadeProposta", "valorCotado", "valorAprovado", "valorFrete", "valorSeguro", "formaPagamento", "fonte"] as const;
+  const operacao = ["origemEndereco", "origemCidade", "origemUf", "origemReferencia", "origemAndar", "origemElevador", "origemImovel", "destinoEndereco", "destinoCidade", "destinoUf", "destinoReferencia", "destinoAndar", "destinoElevador", "destinoImovel", "descricaoColeta", "descricaoEntrega", "embalagemNecessaria", "itensEspeciais", "dataPretendida", "dataColeta", "dataEntrega", "dataPrevista", "diasParaColetar", "diasParaViagem", "inventario", "numeroCte"] as const;
+  const financeiro = ["numeroOc", "numeroNf", "dataEmissao", "dataVencimento", "dataRecebimento"] as const;
+
   return (
-    <FormAcao acao={acao} className="grade-form">
+    <FormAcao acao={acao} className="ficha-form">
       {processoId ? <input type="hidden" name="processoId" value={processoId} /> : null}
+      {algum("titulo", "canal", "clienteId", "contatoId", "colaborador", "responsavelId") ? (
+      <fieldset className="secao-form">
+        <legend>Cadastro</legend>
+        <div className="grade-form">
       {mostra("titulo") ? <Campo nome="titulo" rotulo="Título" valor={valores?.titulo} className="largo" obrigatorio /> : null}
       {mostra("canal") ? (
         <label className="campo">
@@ -102,6 +111,13 @@ export function FormProcesso({
           </select>
         </label>
       ) : null}
+        </div>
+      </fieldset>
+      ) : null}
+      {algum(...operacao) ? (
+      <fieldset className="secao-form">
+        <legend>Operação</legend>
+        <div className="grade-form">
       {mostra("origemEndereco") ? <Campo nome="origemEndereco" rotulo="Endereço de origem" valor={valores?.origemEndereco} className="largo" /> : null}
       {mostra("origemCidade") ? <Campo nome="origemCidade" rotulo="Cidade de origem" valor={valores?.origemCidade} /> : null}
       {mostra("origemUf") ? <Uf nome="origemUf" rotulo="UF de origem" valor={valores?.origemUf} /> : null}
@@ -116,7 +132,6 @@ export function FormProcesso({
       {mostra("destinoAndar") ? <Campo nome="destinoAndar" rotulo="Andar de destino" valor={valores?.destinoAndar} /> : null}
       {mostra("destinoElevador") ? <Campo nome="destinoElevador" rotulo="Elevador de destino" valor={valores?.destinoElevador} /> : null}
       {mostra("destinoImovel") ? <Campo nome="destinoImovel" rotulo="Imóvel de destino" valor={valores?.destinoImovel} /> : null}
-      {mostra("modalidade") ? <Campo nome="modalidade" rotulo="Modalidade" valor={valores?.modalidade} /> : null}
       {mostra("descricaoColeta") ? <Campo nome="descricaoColeta" rotulo="Coleta" valor={valores?.descricaoColeta} /> : null}
       {mostra("descricaoEntrega") ? <Campo nome="descricaoEntrega" rotulo="Entrega" valor={valores?.descricaoEntrega} /> : null}
       {mostra("embalagemNecessaria") ? (
@@ -129,50 +144,54 @@ export function FormProcesso({
           </select>
         </label>
       ) : null}
-      {mostra("volume") ? <Campo nome="volume" rotulo="Volume" valor={valores?.volume} /> : null}
       {mostra("itensEspeciais") ? <Campo nome="itensEspeciais" rotulo="Itens especiais" valor={valores?.itensEspeciais} className="largo" /> : null}
       {mostra("dataPretendida") ? <Campo nome="dataPretendida" rotulo="Data pretendida" tipo="date" valor={valores?.dataPretendida} /> : null}
       {mostra("dataColeta") ? <Campo nome="dataColeta" rotulo="Data da coleta" tipo="date" valor={valores?.dataColeta} /> : null}
       {mostra("dataEntrega") ? <Campo nome="dataEntrega" rotulo="Data da entrega" tipo="date" valor={valores?.dataEntrega} /> : null}
       {mostra("dataPrevista") ? <Campo nome="dataPrevista" rotulo="Data prevista" tipo="date" valor={valores?.dataPrevista} /> : null}
-      {mostra("dataEmissao") ? <Campo nome="dataEmissao" rotulo="Data de emissão" tipo="date" valor={valores?.dataEmissao} /> : null}
       {mostra("diasParaColetar") ? <Campo nome="diasParaColetar" rotulo="Dias para coletar" valor={valores?.diasParaColetar} /> : null}
       {mostra("diasParaViagem") ? <Campo nome="diasParaViagem" rotulo="Dias para viagem" valor={valores?.diasParaViagem} /> : null}
-      {mostra("motoristaNome") ? <Campo nome="motoristaNome" rotulo="Motorista" valor={valores?.motoristaNome} /> : null}
-      {mostra("motoristaPlaca") ? <Campo nome="motoristaPlaca" rotulo="Placa" valor={valores?.motoristaPlaca} /> : null}
-      {mostra("motoristaAntt") ? <Campo nome="motoristaAntt" rotulo="ANTT" valor={valores?.motoristaAntt} /> : null}
-      {mostra("motoristaCnh") ? <Campo nome="motoristaCnh" rotulo="CNH" valor={valores?.motoristaCnh} /> : null}
-      {mostra("motoristaCpf") ? <Campo nome="motoristaCpf" rotulo="CPF do motorista" valor={valores?.motoristaCpf} /> : null}
+      {mostra("numeroCte") ? <Campo nome="numeroCte" rotulo="CT-e" valor={valores?.numeroCte} /> : null}
       {mostra("inventario") ? (
         <label className="campo largo">
           <span>Inventário e observações</span>
           <textarea name="inventario" defaultValue={valores?.inventario || ""} />
         </label>
       ) : null}
-      {mostra("valorCotado") ? <Campo nome="valorCotado" rotulo="Valor cotado (R$)" valor={valores?.valorCotado} /> : null}
-      {mostra("valorAprovado") ? <Campo nome="valorAprovado" rotulo="Valor aprovado (R$)" valor={valores?.valorAprovado} /> : null}
-      {mostra("valorFrete") ? <Campo nome="valorFrete" rotulo="Valor do frete (R$)" valor={valores?.valorFrete} /> : null}
-      {mostra("valorSeguro") ? <Campo nome="valorSeguro" rotulo="Valor do seguro (R$)" valor={valores?.valorSeguro} /> : null}
-      {mostra("valorTransporte") ? <Campo nome="valorTransporte" rotulo="Valor do transporte (R$)" valor={valores?.valorTransporte} /> : null}
-      {mostra("valorTotal") ? <Campo nome="valorTotal" rotulo="Valor total (R$)" valor={valores?.valorTotal} /> : null}
-      {mostra("formaPagamento") ? <Campo nome="formaPagamento" rotulo="Forma de pagamento" valor={valores?.formaPagamento} /> : null}
+        </div>
+      </fieldset>
+      ) : null}
+      {algum(...comercial) ? (
+      <fieldset className="secao-form">
+        <legend>Comercial</legend>
+        <div className="grade-form">
+      {mostra("modalidade") ? <Campo nome="modalidade" rotulo="Modalidade" valor={valores?.modalidade} /> : null}
+      {mostra("volume") ? <Campo nome="volume" rotulo="Volume" valor={valores?.volume} /> : null}
       {mostra("validadeProposta") ? <Campo nome="validadeProposta" rotulo="Validade da proposta" tipo="date" valor={valores?.validadeProposta} /> : null}
-      {mostra("linkProposta") ? <Campo nome="linkProposta" rotulo="Link da proposta" valor={valores?.linkProposta} /> : null}
-      {mostra("linkContrato") ? <Campo nome="linkContrato" rotulo="Link do contrato" valor={valores?.linkContrato} /> : null}
-      {mostra("linkContratoCarreteiro") ? <Campo nome="linkContratoCarreteiro" rotulo="Link do contrato do carreteiro" valor={valores?.linkContratoCarreteiro} /> : null}
-      {mostra("linkOs") ? <Campo nome="linkOs" rotulo="Link da O.S." valor={valores?.linkOs} /> : null}
-      {mostra("linkRecibo") ? <Campo nome="linkRecibo" rotulo="Link do recibo" valor={valores?.linkRecibo} /> : null}
+      {mostra("valorAprovado") ? <Campo nome="valorAprovado" rotulo="Valor aprovado (R$)" valor={valores?.valorAprovado} /> : null}
+      {mostra("valorCotado") ? <Campo nome="valorCotado" rotulo="Valor cotado (R$)" valor={valores?.valorCotado} /> : null}
+      {mostra("valorFrete") ? <Campo nome="valorFrete" rotulo="Frete (R$)" valor={valores?.valorFrete} /> : null}
+      {mostra("valorSeguro") ? <Campo nome="valorSeguro" rotulo="Seguro (R$)" valor={valores?.valorSeguro} /> : null}
+      {mostra("formaPagamento") ? <Campo nome="formaPagamento" rotulo="Forma de pagamento" valor={valores?.formaPagamento} /> : null}
       {mostra("fonte") ? <Campo nome="fonte" rotulo="Fonte" valor={valores?.fonte} /> : null}
+        </div>
+      </fieldset>
+      ) : null}
+      {algum(...financeiro) ? (
+      <fieldset className="secao-form">
+        <legend>Financeiro</legend>
+        <div className="grade-form">
       {mostra("numeroOc") ? <Campo nome="numeroOc" rotulo="Ordem de compra (OC)" valor={valores?.numeroOc} /> : null}
-      {mostra("numeroCte") ? <Campo nome="numeroCte" rotulo="CT-e" valor={valores?.numeroCte} /> : null}
       {mostra("numeroNf") ? <Campo nome="numeroNf" rotulo="NF / fatura" valor={valores?.numeroNf} /> : null}
+      {mostra("dataEmissao") ? <Campo nome="dataEmissao" rotulo="Data de emissão" tipo="date" valor={valores?.dataEmissao} /> : null}
       {mostra("dataVencimento") ? <Campo nome="dataVencimento" rotulo="Vencimento" tipo="date" valor={valores?.dataVencimento} /> : null}
       {mostra("dataRecebimento") ? <Campo nome="dataRecebimento" rotulo="Recebimento" tipo="date" valor={valores?.dataRecebimento} /> : null}
-      <div className="largo">
-        <button className="btn primario" type="submit">
-          {modo === "criar" ? "Criar processo" : "Salvar alterações"}
-        </button>
-      </div>
+        </div>
+      </fieldset>
+      ) : null}
+      <button className="btn primario" type="submit">
+        {modo === "criar" ? "Criar processo" : "Salvar alterações"}
+      </button>
     </FormAcao>
   );
 }

@@ -177,12 +177,8 @@ const CAMPOS_COMERCIAL: Campo[] = [
   "diasParaViagem",
   "valorFrete",
   "valorSeguro",
-  "valorTransporte",
-  "valorTotal",
   "formaPagamento",
   "validadeProposta",
-  "linkProposta",
-  "linkContrato",
   "fonte",
   "utmSource",
   "utmMedium",
@@ -225,11 +221,6 @@ const CAMPOS_OPERACAO: Campo[] = [
   "dataPrevista",
   "diasParaColetar",
   "diasParaViagem",
-  "motoristaNome",
-  "motoristaPlaca",
-  "motoristaAntt",
-  "motoristaCnh",
-  "motoristaCpf",
 ];
 
 const CAMPOS_FINANCEIRO: Campo[] = [
@@ -240,12 +231,8 @@ const CAMPOS_FINANCEIRO: Campo[] = [
   "dataRecebimento",
   "valorFrete",
   "valorSeguro",
-  "valorTransporte",
-  "valorTotal",
   "formaPagamento",
   "dataEmissao",
-  "linkOs",
-  "linkRecibo",
 ];
 
 const ROTULO_CAMPO: Record<Campo, string> = {
@@ -362,11 +349,25 @@ export function rotuloCampo(campo: Campo): string {
   return ROTULO_CAMPO[campo];
 }
 
+const FORA_DA_FICHA = new Set<Campo>([
+  "motoristaNome",
+  "motoristaPlaca",
+  "motoristaAntt",
+  "motoristaCnh",
+  "motoristaCpf",
+  "linkProposta",
+  "linkContrato",
+  "linkContratoCarreteiro",
+  "linkOs",
+  "linkRecibo",
+  "valorTransporte",
+  "valorTotal",
+]);
+
 export function camposDoPapel(papel: Papel): Campo[] {
-  if (papel === "ADMIN") return [...CAMPOS];
-  if (papel === "COMERCIAL") return [...CAMPOS_COMERCIAL];
-  if (papel === "OPERACAO") return [...CAMPOS_OPERACAO];
-  return [...CAMPOS_FINANCEIRO];
+  const lista =
+    papel === "ADMIN" ? CAMPOS : papel === "COMERCIAL" ? CAMPOS_COMERCIAL : papel === "OPERACAO" ? CAMPOS_OPERACAO : CAMPOS_FINANCEIRO;
+  return lista.filter((campo) => !FORA_DA_FICHA.has(campo));
 }
 
 export function podeCriarProcesso(autoridade: Autoridade): boolean {

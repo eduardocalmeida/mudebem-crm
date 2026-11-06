@@ -24,7 +24,7 @@ export default async function ProcessoPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ aba?: string; aviso?: string; secao?: string }>;
+  searchParams: Promise<{ aba?: string; aviso?: string; secao?: string; acao?: string }>;
 }) {
   const usuario = await exigirUsuario();
   const { id } = await params;
@@ -69,7 +69,6 @@ export default async function ProcessoPage({
       {processo.exemplo ? (
         <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
       ) : null}
-      {aba === "resumo" ? <FichaConversa processoId={processo.id} usuarioId={usuario.id} /> : null}
       <nav className="abas">
         {[
           ["resumo", "Resumo"],
@@ -90,61 +89,35 @@ export default async function ProcessoPage({
       {aba === "resumo" ? (
       <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>
-      <section className="rota-grande">
-        <div>
-          <span className="muted">Origem</span>
-          <strong>{localidade(processo.origem.cidade, processo.origem.uf)}</strong>
-          <div>{processo.origem.endereco || "Endereço não informado"}</div>
-        </div>
-        <div aria-hidden>→</div>
-        <div>
-          <span className="muted">Destino</span>
-          <strong>{localidade(processo.destino.cidade, processo.destino.uf)}</strong>
-          <div>{processo.destino.endereco || "Endereço não informado"}</div>
-        </div>
-      </section>
-      <section className="fatos">
-        <article className="cartao fato">
-          <span>Colaborador</span>
-          <strong>{processo.colaborador || "—"}</strong>
+      <section className="topo-lead">
+        <article className="cartao bloco rota-grande">
+          <div>
+            <span className="muted">Origem</span>
+            <strong>{localidade(processo.origem.cidade, processo.origem.uf)}</strong>
+            <div>{processo.origem.endereco || "Endereço não informado"}</div>
+          </div>
+          <div aria-hidden>→</div>
+          <div>
+            <span className="muted">Destino</span>
+            <strong>{localidade(processo.destino.cidade, processo.destino.uf)}</strong>
+            <div>{processo.destino.endereco || "Endereço não informado"}</div>
+          </div>
         </article>
-        <article className="cartao fato">
-          <span>Contato</span>
-          <strong>{processo.contato?.nome || "—"}</strong>
+        <article className="cartao bloco valor-principal">
+          <span className="muted">Valor</span>
+          <b>{formatarBRL(processo.valorAprovado ?? processo.valorCotado)}</b>
           <small className="muted">
-            {processo.contato?.email || "sem e-mail"} · {processo.contato?.telefone || "sem telefone"}
+            {processo.valorAprovado != null ? "aprovado" : "cotado"}
+            {" · "}frete {formatarBRL(processo.valorFrete)}
+            {" · "}seguro {formatarBRL(processo.valorSeguro)}
           </small>
-        </article>
-        <article className="cartao fato">
-          <span>Coleta / entrega</span>
-          <strong>
-            {formatarData(processo.dataColeta)} → {formatarData(processo.dataEntrega)}
-          </strong>
-        </article>
-        <article className="cartao fato">
-          <span>Valor</span>
-          <strong>{formatarBRL(processo.valorAprovado ?? processo.valorCotado)}</strong>
-          <small className="muted">cotado {formatarBRL(processo.valorCotado)}</small>
-        </article>
-        <article className="cartao fato">
-          <span>OC</span>
-          <strong>{processo.numeroOc || "—"}</strong>
-        </article>
-        <article className="cartao fato">
-          <span>CT-e</span>
-          <strong>{processo.numeroCte || "—"}</strong>
-        </article>
-        <article className="cartao fato">
-          <span>NF / fatura</span>
-          <strong>{processo.numeroNf || "—"}</strong>
-        </article>
-        <article className="cartao fato">
-          <span>Vencimento / recebimento</span>
-          <strong>
-            {formatarData(processo.dataVencimento)} · {formatarData(processo.dataRecebimento)}
-          </strong>
+          <div className="muted">
+            Coleta {formatarData(processo.dataColeta)} · entrega {formatarData(processo.dataEntrega)}
+            {processo.dataPretendida ? ` · pretendida ${formatarData(processo.dataPretendida)}` : ""}
+          </div>
         </article>
       </section>
+      <AcoesDaEtapa etapa={processo.etapa} processoId={processo.id} acao={consulta.acao} etapas={etapas} />
       <section className="ficha">
         <div>
           <article className="cartao bloco">
@@ -191,25 +164,13 @@ export default async function ProcessoPage({
                 dataEmissao: processo.dataEmissao ? formatarData(processo.dataEmissao) : "",
                 diasParaColetar: processo.diasParaColetar == null ? "" : String(processo.diasParaColetar),
                 diasParaViagem: processo.diasParaViagem == null ? "" : String(processo.diasParaViagem),
-                motoristaNome: processo.motorista.nome ?? "",
-                motoristaPlaca: processo.motorista.placa ?? "",
-                motoristaAntt: processo.motorista.antt ?? "",
-                motoristaCnh: processo.motorista.cnh ?? "",
-                motoristaCpf: processo.motorista.cpf ?? "",
                 inventario: processo.inventario ?? "",
                 valorCotado: formatarNumero(processo.valorCotado),
                 valorAprovado: formatarNumero(processo.valorAprovado),
                 valorFrete: formatarNumero(processo.valorFrete),
                 valorSeguro: formatarNumero(processo.valorSeguro),
-                valorTransporte: formatarNumero(processo.valorTransporte),
-                valorTotal: formatarNumero(processo.valorTotal),
                 formaPagamento: processo.formaPagamento ?? "",
                 validadeProposta: processo.validadeProposta ? formatarData(processo.validadeProposta) : "",
-                linkProposta: processo.links.proposta ?? "",
-                linkContrato: processo.links.contrato ?? "",
-                linkContratoCarreteiro: processo.links.contratoCarreteiro ?? "",
-                linkOs: processo.links.os ?? "",
-                linkRecibo: processo.links.recibo ?? "",
                 fonte: processo.marketing.fonte ?? "",
                 numeroOc: processo.numeroOc ?? "",
                 numeroCte: processo.numeroCte ?? "",
@@ -239,6 +200,7 @@ export default async function ProcessoPage({
           </article>
         </div>
         <aside>
+          <FichaConversa processoId={processo.id} usuarioId={usuario.id} />
           <article className="cartao bloco">
             <h2>Mover etapa</h2>
             <FormEtapa processoId={processo.id} destinos={destinos} />
@@ -264,5 +226,43 @@ export default async function ProcessoPage({
       </>
       ) : null}
     </>
+  );
+}
+
+function AcoesDaEtapa({
+  etapa,
+  processoId,
+  acao,
+  etapas,
+}: {
+  etapa: string;
+  processoId: string;
+  acao?: string;
+  etapas: { slug: string; ordem: number }[];
+}) {
+  const ordem = etapas.find((item) => item.slug === etapa)?.ordem ?? 0;
+  const botoes = [
+    ordem >= 40 ? { chave: "proposta", rotulo: "Gerar proposta", href: `/processos/${processoId}?aba=resumo&acao=proposta` } : null,
+    ordem >= 70 ? { chave: "contrato", rotulo: "Gerar contrato", href: `/processos/${processoId}?aba=resumo&acao=contrato` } : null,
+    ordem >= 80 ? { chave: "fiscal", rotulo: "Abrir CT-e", href: `/processos/${processoId}?aba=fiscal` } : null,
+    ordem >= 80 ? { chave: "os", rotulo: "Gerar O.S.", href: `/processos/${processoId}?aba=resumo&acao=os` } : null,
+    ordem >= 100 ? { chave: "recibo", rotulo: "Gerar recibo", href: `/processos/${processoId}?aba=resumo&acao=recibo` } : null,
+  ].filter((item) => item !== null);
+  const avisos: Record<string, string> = {
+    proposta: "A proposta ainda não gera PDF neste CRM. O valor aprovado, o frete, o seguro e a validade ficam nesta ficha.",
+    contrato: "O contrato ainda não gera PDF neste CRM. O fechamento segue pela etapa e pelos dados comerciais.",
+    os: "A ordem de serviço ainda não gera PDF neste CRM. A operação usa endereço, datas e volume desta ficha.",
+    recibo: "O recibo ainda não gera PDF neste CRM. O financeiro usa NF, vencimento e recebimento.",
+  };
+  if (botoes.length === 0 && !(acao && avisos[acao])) return null;
+  return (
+    <div className="acoes-etapa">
+      {botoes.map((botao) => (
+        <Link key={botao.chave} className={acao === botao.chave ? "btn primario" : "btn secundario"} href={botao.href}>
+          {botao.rotulo}
+        </Link>
+      ))}
+      {acao && avisos[acao] ? <p className="faixa-exemplo">{avisos[acao]}</p> : null}
+    </div>
   );
 }
