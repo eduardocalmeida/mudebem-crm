@@ -89,5 +89,10 @@ describe("resultado comercial e pós-venda", () => {
     expect(compositor).toContain("Nota");
     expect(compositor).toContain("Tarefa");
     expect(compositor).toContain("Não envia WhatsApp");
+    const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+    const trava = css.slice(css.indexOf(".conteudo:has(.pagina-ficha)"), css.indexOf(".contato-topo"));
+    expect(trava).toContain("overflow: visible");
+    expect(trava).not.toContain("height: 100vh; overflow: hidden");
+    expect(trava).toContain(".ficha.ficha-persistente > .coluna-dados .coluna-rolagem { display: block; height: auto; min-height: 0; overflow: visible; }");
   });
 });

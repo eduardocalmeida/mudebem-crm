@@ -244,15 +244,19 @@ table { font-variant-numeric: lining-nums tabular-nums; }
 .selo { display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px; padding: 2px 8px; font-size: 0.78rem; background: white; white-space: nowrap; }
 .selo.exemplo { border-style: dashed; color: #6d5314; border-color: #d7b15a; background: #fff8e8; }
 .ficha { display: grid; grid-template-columns: minmax(0, 5fr) minmax(320px, 7fr); gap: 12px; align-items: start; }
-.conteudo:has(.pagina-ficha) { height: 100vh; overflow: hidden; display: flex; flex-direction: column; padding-bottom: 12px; }
-.pagina-ficha { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.conteudo:has(.pagina-ficha) { height: auto; min-height: 100vh; overflow: visible; display: block; }
+.pagina-ficha { display: block; min-height: 0; }
 .pagina-ficha .pagina-cabeca { margin-bottom: 8px; }
-.ficha.ficha-persistente { grid-template-columns: minmax(260px, 1fr) minmax(420px, 1.8fr); align-items: stretch; flex: 1; min-height: 0; height: auto; }
-.ficha.ficha-persistente > .coluna-dados,
-.ficha.ficha-persistente > aside { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
-.coluna-fixa { flex: none; }
-.coluna-rolagem { flex: 1; min-height: 0; overflow: auto; }
-.ficha.ficha-persistente .grade-form { grid-template-columns: 1fr; gap: 8px; }
+.ficha.ficha-persistente { grid-template-columns: minmax(320px, 1fr) minmax(420px, 1.8fr); align-items: start; height: auto; }
+.ficha.ficha-persistente > .coluna-dados { display: block; min-height: 0; overflow: visible; }
+.coluna-fixa { position: sticky; top: 0; z-index: 3; background: #F7F4EF; padding-bottom: 4px; }
+.ficha.ficha-persistente > .coluna-dados .coluna-rolagem { display: block; height: auto; min-height: 0; overflow: visible; }
+.ficha.ficha-persistente > aside {
+  position: sticky; top: 12px; align-self: start;
+  height: calc(100vh - 210px); max-height: calc(100vh - 24px);
+  min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px;
+}
+.ficha.ficha-persistente > aside .coluna-rolagem { flex: 1 1 auto; min-height: 0; height: auto; overflow: auto; }
 .ficha.ficha-persistente .fio { max-height: none; }
 .linha-tarefa { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 8px; align-items: end; }
 .contato-topo { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; margin: 0 0 8px; padding: 8px 0; border-bottom: 1px solid var(--line); color: #101828; }
@@ -530,9 +534,10 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   .gaveta-secao { margin: 10px 0 0; color: var(--gold); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
   .conteudo { padding: 18px 14px 96px; }
   .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
-  .conteudo:has(.pagina-ficha) { height: auto; overflow: visible; display: block; padding-bottom: 96px; }
-  .pagina-ficha { height: calc(100dvh - 132px); }
+  .conteudo:has(.pagina-ficha) { padding-bottom: 96px; }
+  .coluna-fixa { position: static; }
   .ficha.ficha-persistente { grid-template-columns: minmax(0, 1fr) minmax(180px, 42vw); }
+  .ficha.ficha-persistente > aside { position: sticky; height: calc(100dvh - 220px); }
   .linha-tarefa { grid-template-columns: 1fr; }
   .painel-aba { padding: 16px; }
   .barra-filtro-linha, .checks-etapa, .perda-compacta { grid-template-columns: 1fr; }
