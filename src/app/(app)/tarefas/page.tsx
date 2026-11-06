@@ -26,7 +26,7 @@ export default async function TarefasPage({
     ? await prisma.regraTarefa.findMany({ include: { tipo: true }, orderBy: { etapaSlug: "asc" } })
     : [];
   const consulta = await searchParams;
-  const visao = consulta.visao === "semana" || consulta.visao === "dia" || consulta.visao === "mes" ? consulta.visao : "lista";
+  const visao = consulta.visao === "semana" || consulta.visao === "dia" || consulta.visao === "mes" || consulta.visao === "lista" ? consulta.visao : "semana";
   const quem = consulta.quem === "equipe" ? "equipe" : "eu";
   const ancora = /^\d{4}-\d{2}-\d{2}$/.test(consulta.data || "") ? consulta.data! : diaSp(new Date());
   const inicio = visao === "mes" ? `${ancora.slice(0, 8)}01` : visao === "semana" ? deslocar(ancora, -((new Date(`${ancora}T12:00:00-03:00`).getUTCDay() + 6) % 7)) : ancora;
@@ -47,7 +47,7 @@ export default async function TarefasPage({
       <header className="pagina-cabeca">
         <div>
           <p className="sobretitulo">Agenda</p>
-          <h1>Tarefas</h1>
+          <h1>Calendário</h1>
         </div>
       </header>
       <p className="linha">

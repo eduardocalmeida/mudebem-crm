@@ -12,7 +12,7 @@ export default async function CatalogoPage() {
       <header className="pagina-cabeca">
         <div>
           <p className="sobretitulo">Mudança</p>
-          <h1>Catálogo de volumes</h1>
+          <h1>Inventário</h1>
           <p className="muted">Volumes padrão em m³. A alteração vale para os próximos itens lançados.</p>
         </div>
       </header>

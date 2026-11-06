@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { listarProcessos } from "@/server/processos";
 import { exigirUsuario } from "@/server/session";
 
-export const metadata = { title: "Processos" };
+export const metadata = { title: "Funil" };
 
 export default async function ProcessosPage({
   searchParams,
@@ -70,7 +70,7 @@ export default async function ProcessosPage({
       <header className="pagina-cabeca">
         <div>
           <p className="sobretitulo">Comercial</p>
-          <h1>Processos</h1>
+          <h1>Funil</h1>
           <p className="muted">{lista.total} processo(s) com os filtros atuais.</p>
         </div>
         <div className="linha">

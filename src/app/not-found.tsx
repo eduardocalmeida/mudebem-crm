@@ -8,7 +8,7 @@ export default function NaoEncontrado() {
       <p className="muted">O processo ou o cadastro pode ter sido removido.</p>
       <p>
         <Link className="btn primario" href="/painel">
-          Voltar ao painel
+          Voltar ao início
         </Link>
       </p>
     </main>
