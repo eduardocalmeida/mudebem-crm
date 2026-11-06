@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import { pedirLinkAction } from "@/server/actions-portal";
 import { portalPorSlug } from "@/server/portal/portal";
 import { notFound } from "next/navigation";
@@ -21,6 +22,7 @@ export default async function PortalLogin({
   return (
     <main className="portal">
       <section className="portal-hero">
+        <Logo />
         <p>Nova solicitação</p>
         <h1>Sua mudança, bem planejada.</h1>
         <p>{empresa.nome}</p>

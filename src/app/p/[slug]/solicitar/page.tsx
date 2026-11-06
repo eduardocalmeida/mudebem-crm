@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import { redirect } from "next/navigation";
 import { PortalWizard } from "@/components/portal-wizard";
 import { listarCatalogo } from "@/server/inventario";
@@ -13,6 +14,7 @@ export default async function Solicitar({ params }: { params: Promise<{ slug: st
   return (
     <main className="portal">
       <aside className="portal-hero">
+        <Logo />
         <p>Nova solicitação</p>
         <h1>Sua mudança, bem planejada.</h1>
         <ol>

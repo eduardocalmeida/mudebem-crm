@@ -1,4 +1,5 @@
 import { FormAcao } from "@/components/form-acao";
+import { Logo } from "@/components/logo";
 import { entrarAction } from "@/server/actions";
 
 export const metadata = { title: "Entrar" };
@@ -25,6 +26,7 @@ export default function LoginPage() {
       </section>
       <section className="login-painel">
         <div className="login-cartao">
+          <Logo />
           <p className="sobretitulo">Acesso</p>
           <h2>Entrar no CRM</h2>
           <FormAcao acao={entrarAction}>

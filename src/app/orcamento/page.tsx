@@ -1,4 +1,5 @@
 import { FormularioOrcamento } from "@/components/formulario-orcamento";
+import { Logo } from "@/components/logo";
 import { listarCatalogo } from "@/server/inventario";
 import { headers } from "next/headers";
 
@@ -32,6 +33,7 @@ export default async function OrcamentoPage({
   return (
     <main className={embed ? "orcamento embed" : "orcamento"}>
       <header>
+        <Logo />
         <p className="sobretitulo">Mude Bem Mudanças e Logística</p>
         <h1>Peça seu orçamento</h1>
         <p className="muted">Conte de onde sai, para onde vai e o que será transportado. O volume em m³ entra no pedido.</p>

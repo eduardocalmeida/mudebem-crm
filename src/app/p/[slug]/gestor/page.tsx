@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import { redirect } from "next/navigation";
 import { decidirSolicitacaoAction } from "@/server/actions-portal";
 import { formatarBRL, formatarData } from "@/lib/format";
@@ -31,6 +32,7 @@ export default async function Gestor({
     <main className="portal largo">
       <header className="pagina-cabeca">
         <div>
+          <Logo />
           <p className="sobretitulo">Painel administrativo</p>
           <h1>Solicitações de mudança</h1>
         </div>

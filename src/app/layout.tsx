@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: { default: "Mude Bem CRM", template: "%s · Mude Bem" },
   description: "CRM comercial e operacional da Mude Bem Mudanças e Logística.",
   robots: { index: false, follow: false },
+  icons: { icon: "/brand/logo-mudebem.png", apple: "/brand/logo-mudebem.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

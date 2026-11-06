@@ -5,12 +5,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        paper: "#f3eee6",
-        card: "#fffdf9",
-        ink: "#1a1814",
-        forest: "#1e4d3a",
-        clay: "#c45c26",
-        line: "#e3d9c8",
+        paper: "#F7F4EF",
+        beige: "#F3ECE4",
+        card: "#FFFFFF",
+        ink: "#101828",
+        gold: "#B89870",
+        muted: "#6B6F76",
+        line: "#E2D9CF",
       },
       fontFamily: {
         display: ["Fraunces", "Georgia", "serif"],
