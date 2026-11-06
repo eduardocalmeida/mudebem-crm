@@ -79,7 +79,12 @@ const esquema = z.object({
     }),
   telefone: texto(40),
   observacoes: texto(2000),
-  origemEndereco: texto(180),
+  origemEndereco: texto(300),
+  origemCep: texto(12),
+  origemLogradouro: texto(120),
+  origemNumero: texto(20),
+  origemComplemento: texto(80),
+  origemBairro: texto(80),
   origemCidade: texto(80),
   origemUf: z
     .string()
@@ -99,7 +104,12 @@ const esquema = z.object({
   origemAndar: texto(20),
   origemElevador: texto(20),
   origemImovel: texto(40),
-  destinoEndereco: texto(180),
+  destinoEndereco: texto(300),
+  destinoCep: texto(12),
+  destinoLogradouro: texto(120),
+  destinoNumero: texto(20),
+  destinoComplemento: texto(80),
+  destinoBairro: texto(80),
   destinoCidade: texto(80),
   destinoUf: z
     .string()
@@ -121,6 +131,9 @@ const esquema = z.object({
   destinoImovel: texto(40),
   dataPretendida: dataCampo,
   dataColeta: dataCampo,
+  comoConheceu: texto(80),
+  transferenciaEmpresa: z.boolean().optional().nullable(),
+  empresaTrabalho: texto(120),
   utmSource: texto(120),
   utmMedium: texto(120),
   utmCampaign: texto(180),
@@ -147,6 +160,67 @@ const esquema = z.object({
 });
 
 export type LeadPublico = z.infer<typeof esquema>;
+
+function objetoJson(valor: unknown): Record<string, unknown> {
+  if (valor && typeof valor === "object" && !Array.isArray(valor)) return { ...(valor as Record<string, unknown>) };
+  return {};
+}
+
+export function montarEndereco(partes: {
+  endereco?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cep?: string | null;
+}) {
+  const rua = [partes.logradouro, partes.numero].filter(Boolean).join(", ");
+  const cep = partes.cep ? `CEP ${partes.cep}` : "";
+  const montado = [rua, partes.complemento, partes.bairro, cep].filter(Boolean).join(" · ");
+  const textoEndereco = montado || partes.endereco || "";
+  return textoEndereco.trim() ? textoEndereco.trim().slice(0, 300) : null;
+}
+
+function textoComercial(dados: LeadPublico) {
+  const linhas: string[] = [];
+  if (dados.observacoes) linhas.push(dados.observacoes);
+  if (dados.comoConheceu) linhas.push(`Como conheceu: ${dados.comoConheceu}.`);
+  if (dados.transferenciaEmpresa === true) {
+    linhas.push(
+      dados.empresaTrabalho
+        ? `Mudança por transferência de empresa: sim. Empresa: ${dados.empresaTrabalho}.`
+        : "Mudança por transferência de empresa: sim. Nome da empresa não informado.",
+    );
+  } else if (dados.transferenciaEmpresa === false) {
+    linhas.push("Mudança por transferência de empresa: não.");
+  }
+  const textoFinal = linhas.join("\n");
+  return textoFinal ? textoFinal.slice(0, 4000) : null;
+}
+
+function extrasDoFormulario(dados: LeadPublico) {
+  return {
+    formularioPublico: {
+      origem: {
+        cep: dados.origemCep,
+        logradouro: dados.origemLogradouro,
+        numero: dados.origemNumero,
+        complemento: dados.origemComplemento,
+        bairro: dados.origemBairro,
+      },
+      destino: {
+        cep: dados.destinoCep,
+        logradouro: dados.destinoLogradouro,
+        numero: dados.destinoNumero,
+        complemento: dados.destinoComplemento,
+        bairro: dados.destinoBairro,
+      },
+      comoConheceu: dados.comoConheceu,
+      transferenciaEmpresa: dados.transferenciaEmpresa ?? null,
+      empresaTrabalho: dados.empresaTrabalho,
+    },
+  };
+}
 
 function digitos(valor: string | null | undefined) {
   return (valor ?? "").replace(/\D/g, "");
@@ -188,7 +262,10 @@ export async function receberLeadPublico(entrada: unknown) {
       where: { contatoId, etapa: "LEADS_DE_ENTRADA" },
       orderBy: { criadoEm: "desc" },
     });
-    const campos = camposDoLead(dados);
+    const campos = {
+      ...camposDoLead(dados),
+      extras: { ...objetoJson(aberto?.extras), ...extrasDoFormulario(dados) },
+    };
     const processo = aberto
       ? await tx.processo.update({ where: { id: aberto.id }, data: campos })
       : await tx.processo.create({
@@ -273,14 +350,28 @@ function camposDoLead(dados: LeadPublico) {
   return {
     titulo,
     colaborador: dados.nome,
-    origemEndereco: dados.origemEndereco,
+    origemEndereco: montarEndereco({
+      endereco: dados.origemEndereco,
+      logradouro: dados.origemLogradouro,
+      numero: dados.origemNumero,
+      complemento: dados.origemComplemento,
+      bairro: dados.origemBairro,
+      cep: dados.origemCep,
+    }),
     origemCidade: dados.origemCidade,
     origemUf: dados.origemUf,
     origemReferencia: dados.origemReferencia,
     origemAndar: dados.origemAndar,
     origemElevador: dados.origemElevador,
     origemImovel: dados.origemImovel,
-    destinoEndereco: dados.destinoEndereco,
+    destinoEndereco: montarEndereco({
+      endereco: dados.destinoEndereco,
+      logradouro: dados.destinoLogradouro,
+      numero: dados.destinoNumero,
+      complemento: dados.destinoComplemento,
+      bairro: dados.destinoBairro,
+      cep: dados.destinoCep,
+    }),
     destinoCidade: dados.destinoCidade,
     destinoUf: dados.destinoUf,
     destinoReferencia: dados.destinoReferencia,
@@ -289,8 +380,8 @@ function camposDoLead(dados: LeadPublico) {
     destinoImovel: dados.destinoImovel,
     dataPretendida: dia(dados.dataPretendida),
     dataColeta: dia(dados.dataColeta),
-    itensEspeciais: dados.observacoes,
-    fonte: dados.utmSource ?? "site",
+    itensEspeciais: textoComercial(dados),
+    fonte: dados.comoConheceu ?? dados.utmSource ?? "site",
     utmSource: dados.utmSource,
     utmMedium: dados.utmMedium,
     utmCampaign: dados.utmCampaign,

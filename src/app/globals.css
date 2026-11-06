@@ -340,6 +340,25 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .orcamento header h1 { font-family: var(--display); font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; margin: 0 0 8px; }
 .orcamento header .logo-marca { margin-bottom: 14px; }
 .orcamento-form { display: flex; flex-direction: column; gap: 12px; }
+.passo-cabeca { margin-bottom: 4px; }
+.passos { display: flex; gap: 8px; list-style: none; padding: 0; margin: 8px 0 0; }
+.passos li { flex: 1; min-width: 0; color: var(--muted); font-size: 0.75rem; }
+.passos li span { display: block; height: 4px; border-radius: 99px; background: var(--line); margin-bottom: 6px; }
+.passos li.feito span, .passos li.atual span { background: var(--gold); }
+.passos li.atual { color: var(--ink); font-weight: 650; }
+.passos li em { font-style: normal; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acoes-passo { display: flex; gap: 10px; }
+.acoes-passo .btn { min-height: 48px; flex: 1; }
+.campo-aviso { margin: 0; min-height: 1.2em; }
+.cidade-campo { position: relative; }
+.sugestoes { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% - 4px); margin: 0; padding: 4px; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px -20px rgba(16, 24, 40, 0.45); max-height: 220px; overflow: auto; }
+.sugestoes button { width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.sugestoes button:hover { background: var(--paper-deep); }
+.escolha { display: flex; gap: 16px; }
+.escolha label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.opcional { font-style: normal; color: var(--muted); font-weight: 500; font-size: 0.85em; }
+.orcamento-form fieldset { border: 0; margin: 0; padding: 0; }
+.orcamento-form legend { font-weight: 560; margin-bottom: 6px; }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .catalogo-lista { max-height: 320px; overflow: auto; margin-top: 8px; background: white; border: 1px solid var(--line); border-radius: 12px; }

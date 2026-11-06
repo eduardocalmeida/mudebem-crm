@@ -36,7 +36,7 @@ export default async function OrcamentoPage({
         <Logo />
         <p className="sobretitulo">Mude Bem Mudanças e Logística</p>
         <h1>Peça seu orçamento</h1>
-        <p className="muted">Conte de onde sai, para onde vai e o que será transportado. O volume em m³ entra no pedido.</p>
+        <p className="muted">São cinco etapas: contato, origem, destino, inventário e envio. O pedido entra em Leads de entrada.</p>
       </header>
       <FormularioOrcamento
         embed={embed}

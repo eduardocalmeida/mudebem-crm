@@ -1,15 +1,34 @@
 import { NextResponse } from "next/server";
+import { consultarCep } from "@/server/cep-publico";
+
+export const dynamic = "force-dynamic";
+
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, OPTIONS",
+  "access-control-allow-headers": "content-type",
+};
+
+export function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
 
 export async function GET(req: Request) {
-  const cep = new URL(req.url).searchParams.get("cep")?.replace(/\D/g, "") || "";
-  if (cep.length !== 8) return NextResponse.json({ erro: "CEP inválido." }, { status: 400 });
-  const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { cache: "no-store" });
-  if (!resposta.ok) return NextResponse.json({ erro: "Consulta de CEP indisponível." }, { status: 502 });
-  const dados = (await resposta.json()) as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string };
-  if (dados.erro) return NextResponse.json({ erro: "CEP não encontrado." }, { status: 404 });
+  const cep = new URL(req.url).searchParams.get("cep") || "";
+  if (cep.replace(/\D/g, "").length !== 8) {
+    return NextResponse.json({ erro: "CEP inválido.", encontrado: false }, { status: 400, headers: CORS });
+  }
+  const endereco = await consultarCep(cep);
+  if (!endereco) {
+    return NextResponse.json({ erro: "CEP não encontrado.", encontrado: false }, { status: 404, headers: CORS });
+  }
   return NextResponse.json({
-    endereco: [dados.logradouro, dados.bairro].filter(Boolean).join(", "),
-    cidade: dados.localidade || "",
-    uf: dados.uf || "",
-  });
+    encontrado: true,
+    endereco: [endereco.logradouro, endereco.bairro].filter(Boolean).join(", "),
+    logradouro: endereco.logradouro,
+    bairro: endereco.bairro,
+    cidade: endereco.cidade,
+    uf: endereco.uf,
+    cep: endereco.cep,
+  }, { headers: CORS });
 }

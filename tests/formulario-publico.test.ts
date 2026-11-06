@@ -122,9 +122,51 @@ describe("formulário público", () => {
     expect(processos[0]?.itensInventario[0]?.comodo).toBe("SALA");
     expect(processos[0]?.volume).toBe("0,15 m³");
 
+    const comEndereco = await POST(
+      pedido({
+        nome: "Helena Dias",
+        email: "helena.dias@example.com",
+        telefone: "(62) 98888-1010",
+        dataPretendida: "2026-12-20",
+        origemCep: "01310-100",
+        origemLogradouro: "Avenida Paulista",
+        origemNumero: "1000",
+        origemComplemento: "ap 12",
+        origemBairro: "Bela Vista",
+        origemCidade: "São Paulo",
+        origemUf: "SP",
+        origemImovel: "Apartamento",
+        origemAndar: "8",
+        origemElevador: "Sim",
+        origemReferencia: "Em frente à praça",
+        destinoCep: "74000-000",
+        destinoLogradouro: "Rua 3",
+        destinoNumero: "50",
+        destinoBairro: "Setor Central",
+        destinoCidade: "Goiânia",
+        destinoUf: "GO",
+        destinoImovel: "Casa",
+        comoConheceu: "Indicação",
+        transferenciaEmpresa: true,
+        empresaTrabalho: "Atvos",
+        itens: [{ catalogoId: cadeira!.id, comodo: "SALA", quantidade: 1 }],
+      }, "203.0.113.40"),
+    );
+    expect(comEndereco.status).toBe(201);
+    const gravado = await prisma.processo.findFirst({ where: { contato: { email: "helena.dias@example.com" } } });
+    expect(gravado?.etapa).toBe("LEADS_DE_ENTRADA");
+    expect(gravado?.origemEndereco).toContain("Avenida Paulista, 1000");
+    expect(gravado?.origemEndereco).toContain("Bela Vista");
+    expect(gravado?.destinoEndereco).toContain("Rua 3, 50");
+    expect(gravado?.origemAndar).toBe("8");
+    expect(gravado?.destinoImovel).toBe("Casa");
+    expect(gravado?.fonte).toBe("Indicação");
+    expect(gravado?.itensEspeciais).toContain("Empresa: Atvos");
+    expect(JSON.stringify(gravado?.extras)).not.toContain("token");
+
     const isca = await POST(pedido({ nome: "Robô", email: "robo@example.com", website: "http://spam.test" }, "203.0.113.21"));
     expect(isca.status).toBe(200);
-    expect(await prisma.processo.count()).toBe(1);
+    expect(await prisma.processo.count()).toBe(2);
   });
 
   it("limita envios repetidos do mesmo IP", async () => {
