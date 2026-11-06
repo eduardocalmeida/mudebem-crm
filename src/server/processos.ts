@@ -81,6 +81,11 @@ async function resolverCliente(
   return criado.id;
 }
 
+function patchExtras(valor: unknown): Record<string, unknown> {
+  if (valor && typeof valor === "object" && !Array.isArray(valor)) return { ...(valor as Record<string, unknown>) };
+  return {};
+}
+
 async function resolverContato(
   tx: Tx,
   clienteId: string,
@@ -99,6 +104,15 @@ async function resolverContato(
     const porEmail = await tx.contato.findFirst({ where: { clienteId, email: contato.email } });
     if (porEmail) return porEmail.id;
   }
+  const mesmoNome = await tx.contato.findFirst({
+    where: { clienteId, nome: { equals: contato.nome, mode: "insensitive" } },
+  });
+  if (mesmoNome) {
+    const novo = (contato.telefone ?? "").replace(/\D/g, "");
+    const antigo = (mesmoNome.telefone ?? "").replace(/\D/g, "");
+    if (novo.length >= 8 && antigo.length >= 8 && novo.slice(-8) === antigo.slice(-8)) return mesmoNome.id;
+    throw new AppError("Já existe um contato com este nome neste cliente. Selecione-o na busca.", 409, "CONFLITO");
+  }
   const total = await tx.contato.count({ where: { clienteId } });
   const criado = await tx.contato.create({
     data: {
@@ -113,6 +127,24 @@ async function resolverContato(
     },
   });
   return criado.id;
+}
+
+export function responsavelNaCriacao(
+  ator: Ator,
+  dados: {
+    responsavelId?: string | null;
+    formulario?: string | null;
+    utmSource?: string | null;
+    utmMedium?: string | null;
+    utmCampaign?: string | null;
+    gclid?: string | null;
+    fbclid?: string | null;
+  },
+) {
+  const campanha = dados.formulario === "orcamento-site" || Boolean(dados.utmSource || dados.utmMedium || dados.utmCampaign || dados.gclid || dados.fbclid);
+  if (campanha) return null;
+  if (ator.tipo === "usuario") return ator.id;
+  return dados.responsavelId ?? null;
 }
 
 async function exigirResponsavel(tx: Tx, responsavelId: string | null | undefined) {
@@ -249,7 +281,7 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
     const clienteId = await resolverCliente(tx, dados.clienteId, dados.cliente);
     const contatoId = await resolverContato(tx, clienteId, dados.contatoId, dados.contato);
     const codigo = await proximoCodigo(tx);
-    const responsavelId = ator.tipo === "usuario" ? ator.id : dados.responsavelId ?? null;
+    const responsavelId = responsavelNaCriacao(ator, dados);
     await exigirResponsavel(tx, responsavelId);
     const criado = await tx.processo.create({
       data: {
@@ -324,6 +356,7 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
         dataVencimento: paraDataBanco(dados.dataVencimento),
         dataRecebimento: paraDataBanco(dados.dataRecebimento),
         responsavelId,
+        ...(dados.dataEmbalagem !== undefined ? { extras: { fichaDatas: { dataEmbalagem: dados.dataEmbalagem } } } : {}),
       },
     });
     await tx.evento.create({
@@ -470,6 +503,11 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
     dataCampo("dataEntrega");
     dataCampo("dataPretendida");
     dataCampo("dataPrevista");
+    if (patch.dataEmbalagem !== undefined) {
+      const extras = patchExtras(atual.extras);
+      const datas = patchExtras(extras.fichaDatas);
+      data.extras = { ...extras, fichaDatas: { ...datas, dataEmbalagem: patch.dataEmbalagem } };
+    }
     dataCampo("dataEmissao");
     dataCampo("validadeProposta");
     dataCampo("dataVencimento");

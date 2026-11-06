@@ -176,6 +176,7 @@ const camposProcesso = {
   dataColeta: dataOpcional,
   dataEntrega: dataOpcional,
   dataPrevista: dataOpcional,
+  dataEmbalagem: dataOpcional,
   dataEmissao: dataOpcional,
   diasParaColetar: inteiroOpcional,
   diasParaViagem: inteiroOpcional,

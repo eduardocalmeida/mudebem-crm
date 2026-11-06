@@ -29,6 +29,7 @@ type UsuarioOpcao = { id: string; nome: string };
 type Valores = Partial<Record<Campo, string>> & {
   origemPartes?: PartesEndereco;
   destinoPartes?: PartesEndereco;
+  dataEmbalagem?: string;
 };
 
 export function FormProcesso({
@@ -38,7 +39,6 @@ export function FormProcesso({
   usuarios,
   valores,
   processoId,
-  etapaSlug,
 }: {
   modo: "criar" | "editar";
   campos: Campo[];
@@ -46,7 +46,6 @@ export function FormProcesso({
   usuarios: UsuarioOpcao[];
   valores?: Valores;
   processoId?: string;
-  etapaSlug?: string;
 }) {
   const inicial = valores?.clienteId || clientes[0]?.id || "";
   const [clienteId, setClienteId] = useState(inicial);
@@ -56,7 +55,6 @@ export function FormProcesso({
 
   const algum = (...lista: Campo[]) => lista.some(mostra);
   const comercial = ["modalidade", "volume", "validadeProposta", "valorCotado", "valorAprovado", "valorFrete", "valorSeguro", "formaPagamento", "fonte"] as const;
-  const operacao = ["origemEndereco", "origemCidade", "origemUf", "origemReferencia", "origemAndar", "origemElevador", "origemImovel", "destinoEndereco", "destinoCidade", "destinoUf", "destinoReferencia", "destinoAndar", "destinoElevador", "destinoImovel", "descricaoColeta", "descricaoEntrega", "embalagemNecessaria", "itensEspeciais", "dataPretendida", "dataColeta", "dataEntrega", "dataPrevista", "diasParaColetar", "diasParaViagem", "inventario", "numeroCte"] as const;
   const financeiro = ["numeroOc", "numeroNf", "dataEmissao", "dataVencimento", "dataRecebimento"] as const;
 
   return (
@@ -148,17 +146,8 @@ export function FormProcesso({
           <div className="grade-form">
             {mostra("dataPrevista") || mostra("dataPretendida") ? <Campo nome="dataPrevista" rotulo="Data prevista" tipo="date" valor={valores?.dataPrevista || valores?.dataPretendida} /> : null}
             {mostra("dataColeta") ? <Campo nome="dataColeta" rotulo="Data de coleta" tipo="date" valor={valores?.dataColeta} /> : null}
+            <Campo nome="dataEmbalagem" rotulo="Data de embalagem" tipo="date" valor={valores?.dataEmbalagem} />
             {mostra("dataEntrega") ? <Campo nome="dataEntrega" rotulo="Data de entrega" tipo="date" valor={valores?.dataEntrega} /> : null}
-          </div>
-        </article>
-      ) : null}
-      {etapaSlug === "PROPOSTA" && algum("diasParaColetar", "diasParaViagem") ? (
-        <article className="cartao bloco">
-          <h2>Cronograma da proposta</h2>
-          <p className="muted">Duração em dias. As datas de coleta e entrega ficam no cronograma, com o dia do mês.</p>
-          <div className="grade-form">
-            {mostra("diasParaColetar") ? <Campo nome="diasParaColetar" rotulo="Dias para coletar" valor={valores?.diasParaColetar} /> : null}
-            {mostra("diasParaViagem") ? <Campo nome="diasParaViagem" rotulo="Dias para viagem" valor={valores?.diasParaViagem} /> : null}
           </div>
         </article>
       ) : null}

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Roboto_Serif } from "next/font/google";
+import { Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
-const texto = Roboto_Serif({
+const texto = Source_Serif_4({
   subsets: ["latin"],
   display: "swap",
   weight: "variable",

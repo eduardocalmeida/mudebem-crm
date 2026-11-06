@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FormAcao } from "@/components/form-acao";
 import { FormAnexo, FormEtapa, FormNota, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
 import { SeloCanal, SeloEtapa, SeloExemplo } from "@/components/selos";
 import { camposDoPapel, destinosPossiveis, etapaPorId, rotuloEtapa } from "@/lib/domain";
@@ -11,6 +12,7 @@ import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
 import { FichaConversa } from "@/components/ficha-conversa";
 import { AbaFiscal } from "@/components/nfse-painel";
 import { obterProcesso } from "@/server/processos";
+import { salvarProcessoAction } from "@/server/actions";
 import { exigirUsuario } from "@/server/session";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -118,6 +120,18 @@ export default async function ProcessoPage({
         </article>
       </section>
       <AcoesDaEtapa etapa={processo.etapa} processoId={processo.id} acao={consulta.acao} etapas={etapas} />
+      {consulta.acao === "proposta" ? (
+        <article className="cartao bloco">
+          <h2>Proposta</h2>
+          <p className="muted">O PDF ainda não é gerado. O cronograma desta proposta é a duração em dias. As datas com dia do mês ficam no cronograma da ficha.</p>
+          <FormAcao acao={salvarProcessoAction} className="grade-form">
+            <input type="hidden" name="processoId" value={processo.id} />
+            <label className="campo"><span>Dias para coletar</span><input name="diasParaColetar" type="number" min={0} defaultValue={processo.diasParaColetar ?? ""} /></label>
+            <label className="campo"><span>Dias para viagem</span><input name="diasParaViagem" type="number" min={0} defaultValue={processo.diasParaViagem ?? ""} /></label>
+            <button className="btn primario" type="submit">Salvar proposta</button>
+          </FormAcao>
+        </article>
+      ) : null}
       <section className="ficha">
         <div>
           <article className="cartao bloco">
@@ -127,7 +141,6 @@ export default async function ProcessoPage({
             <FormProcesso
               modo="editar"
               processoId={processo.id}
-              etapaSlug={processo.etapa}
               campos={camposDoPapel(usuario.papel)}
               clientes={clientes}
               usuarios={usuarios}
@@ -162,6 +175,7 @@ export default async function ProcessoPage({
                 dataColeta: processo.dataColeta ? formatarData(processo.dataColeta) : "",
                 dataEntrega: processo.dataEntrega ? formatarData(processo.dataEntrega) : "",
                 dataPrevista: processo.dataPrevista || processo.dataPretendida ? formatarData(processo.dataPrevista ?? processo.dataPretendida) : "",
+                dataEmbalagem: dataEmbalagemDe(processo.extras),
                 dataEmissao: processo.dataEmissao ? formatarData(processo.dataEmissao) : "",
                 diasParaColetar: processo.diasParaColetar == null ? "" : String(processo.diasParaColetar),
                 diasParaViagem: processo.diasParaViagem == null ? "" : String(processo.diasParaViagem),
@@ -228,6 +242,12 @@ export default async function ProcessoPage({
       ) : null}
     </>
   );
+}
+
+function dataEmbalagemDe(extras: unknown) {
+  if (!extras || typeof extras !== "object" || Array.isArray(extras)) return "";
+  const datas = (extras as { fichaDatas?: { dataEmbalagem?: string | null } }).fichaDatas;
+  return datas?.dataEmbalagem || "";
 }
 
 function AcoesDaEtapa({

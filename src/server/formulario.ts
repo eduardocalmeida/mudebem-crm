@@ -55,6 +55,10 @@ function completarFicha(form: FormData, papel: Papel, bruto: Record<string, stri
       }
     }
   }
+  if (papel === "ADMIN" || camposDoPapel(papel).includes("dataColeta")) {
+    const embalagem = texto(form, "dataEmbalagem");
+    if (embalagem !== undefined) bruto.dataEmbalagem = embalagem;
+  }
   if (podeContato && texto(form, "contatoNome")?.trim()) {
     delete bruto.contatoId;
     return {

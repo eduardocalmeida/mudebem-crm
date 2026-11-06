@@ -46,10 +46,13 @@ describe("tarefas, inventário e CT-e", () => {
     await moverEtapa({ tipo: "usuario", id: usuario.id, nome: usuario.nome, papel: "ADMIN" }, processo.id, "PROPOSTA");
     const tarefas = await prisma.tarefa.findMany({ where: { processoId: processo.id }, include: { tipo: true } });
     const proposta = tarefas.find((tarefa) => tarefa.tipo.slug === "ENVIAR_PROPOSTA");
+    const regraAtual = await prisma.regraTarefa.findUniqueOrThrow({
+      where: { etapaSlug_tipoId: { etapaSlug: "PROPOSTA", tipoId: "ENVIAR_PROPOSTA" } },
+    });
     expect(proposta).toBeTruthy();
     const horas = (proposta!.vencimento.getTime() - Date.now()) / 3_600_000;
-    expect(horas).toBeGreaterThan(3.5);
-    expect(horas).toBeLessThan(4.5);
+    expect(horas).toBeGreaterThan(regraAtual.horasDepois - 0.5);
+    expect(horas).toBeLessThan(regraAtual.horasDepois + 0.5);
 
     await prisma.regraTarefa.update({
       where: { etapaSlug_tipoId: { etapaSlug: "PROPOSTA", tipoId: "ENVIAR_PROPOSTA" } },

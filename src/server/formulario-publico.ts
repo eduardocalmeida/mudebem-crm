@@ -274,6 +274,7 @@ export async function receberLeadPublico(entrada: unknown) {
             codigo: await proximoCodigo(tx),
             etapa: "LEADS_DE_ENTRADA",
             canal: "SITE",
+            responsavelId: null,
             clienteId,
             contatoId,
             formulario: "orcamento-site",
