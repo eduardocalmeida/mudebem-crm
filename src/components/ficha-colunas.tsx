@@ -29,6 +29,27 @@ export function FichaColunas({
     if (rolarTarefas) document.getElementById("tarefas-oportunidade")?.scrollIntoView({ block: "start" });
   }, [rolarTarefas]);
 
+  useEffect(() => {
+    function aoClicar(evento: MouseEvent) {
+      const alvo = evento.target instanceof Element ? evento.target.closest("a") : null;
+      if (!alvo) return;
+      const url = new URL(alvo.href, window.location.href);
+      if (url.pathname !== window.location.pathname) return;
+      const pedida = url.searchParams.get("aba");
+      if (!pedida) return;
+      const destino = pedida === "tarefas" ? "resumo" : pedida === "cte" || pedida === "nfse" ? "fiscal" : pedida;
+      if (destino !== "resumo" && destino !== "inventario" && destino !== "fiscal") return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      setAba(destino);
+      url.searchParams.set("aba", destino);
+      window.history.replaceState(null, "", url);
+      if (pedida === "tarefas") document.getElementById("tarefas-oportunidade")?.scrollIntoView({ block: "start" });
+    }
+    document.addEventListener("click", aoClicar, true);
+    return () => document.removeEventListener("click", aoClicar, true);
+  }, []);
+
   function escolher(id: string) {
     setAba(id);
     const url = new URL(window.location.href);

@@ -41,7 +41,9 @@ describe("conversa e vencimento", () => {
     expect(fio).toContain("bolha saida");
     expect(fio).toContain("bolha entrada");
     expect(fio).toContain("divisor-dia");
-    expect(ficha).toContain("Registro no histórico");
+    const compositor = readFileSync(new URL("../src/components/compositor-ficha.tsx", import.meta.url), "utf8");
+    expect(compositor).toContain("Registrar no histórico");
+    expect(compositor).toContain("Não envia WhatsApp");
     expect(ficha).not.toContain('name="direcao"');
     expect(ficha).not.toContain(">Saída<");
     expect(ficha).not.toContain(">Entrada<");

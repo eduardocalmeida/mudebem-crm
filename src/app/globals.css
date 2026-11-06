@@ -244,6 +244,16 @@ table { font-variant-numeric: lining-nums tabular-nums; }
 .selo { display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px; padding: 2px 8px; font-size: 0.78rem; background: white; white-space: nowrap; }
 .selo.exemplo { border-style: dashed; color: #6d5314; border-color: #d7b15a; background: #fff8e8; }
 .ficha { display: grid; grid-template-columns: minmax(0, 5fr) minmax(320px, 7fr); gap: 12px; align-items: start; }
+.ficha.ficha-persistente { grid-template-columns: minmax(320px, 0.92fr) minmax(360px, 1.08fr); align-items: stretch; }
+.ficha.ficha-persistente > aside { position: sticky; top: 8px; align-self: start; max-height: calc(100vh - 16px); overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.ficha.ficha-persistente .cartao.bloco { padding: 10px 12px; margin-bottom: 8px; box-shadow: none; background: #fff; }
+.ficha.ficha-persistente .campo span, .ficha.ficha-persistente h2, .ficha.ficha-persistente p { color: #101828; }
+.ficha.ficha-persistente .muted { color: #3d4450; }
+.compositor-unico { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+.compositor-unico .modos { display: flex; gap: 6px; }
+.compositor-unico .modos button { border: 1px solid var(--line); background: #F7F4EF; color: #101828; border-radius: 999px; padding: 6px 10px; cursor: pointer; font: inherit; }
+.compositor-unico .modos button.ativo { background: #101828; color: #F7F4EF; }
+.compositor-unico textarea { min-height: 72px; width: 100%; }
 .bloco { padding: 16px 18px; margin-bottom: 14px; }
 .painel-aba {
   padding: 20px 22px;
@@ -506,6 +516,8 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   .gaveta-secao { margin: 10px 0 0; color: var(--gold); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
   .conteudo { padding: 18px 14px 96px; }
   .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
+  .ficha.ficha-persistente { grid-template-columns: minmax(0, 1fr) minmax(220px, 38vw); }
+  .ficha.ficha-persistente > aside { max-height: 100vh; }
   .painel-aba { padding: 16px; }
   .barra-filtro-linha, .checks-etapa, .perda-compacta { grid-template-columns: 1fr; }
   .painel-filtro { width: 100vw; max-width: 100vw; height: 100%; max-height: 100%; border-radius: 0; }

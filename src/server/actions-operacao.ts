@@ -39,6 +39,32 @@ export async function criarTarefaAction(form: FormData) {
   redirect(voltar.startsWith("/tarefas") ? voltar : `/processos/${processoId}?aba=tarefas`);
 }
 
+export async function criarTarefaFichaAction(_estado: import("@/lib/estado").EstadoForm, form: FormData): Promise<import("@/lib/estado").EstadoForm> {
+  try {
+    const usuario = await exigirUsuario();
+    const processoId = String(form.get("processoId") || "");
+    const vencimento = instante(String(form.get("vencimento") || ""));
+    if (!vencimento) return { erro: "Informe o vencimento com data e hora." };
+    const titulo = String(form.get("titulo") || "").trim();
+    if (titulo.length < 3) return { erro: "Descreva a tarefa." };
+    await criarTarefa({
+      processoId,
+      tipoId: String(form.get("tipoId") || "ACOMPANHAR"),
+      titulo,
+      responsavelId: String(form.get("responsavelId") || usuario.id),
+      vencimento,
+      descricao: String(form.get("descricao") || "") || null,
+    });
+    revalidatePath("/tarefas");
+    revalidatePath(`/processos/${processoId}`);
+    return { ok: "Tarefa criada. Ela aparece no resumo." };
+  } catch (erro) {
+    unstable_rethrow(erro);
+    if (erro instanceof AppError) return { erro: erro.message };
+    return { erro: "Não foi possível criar a tarefa." };
+  }
+}
+
 export async function concluirTarefaAction(form: FormData) {
   await exigirUsuario();
   const id = String(form.get("id") || "");
@@ -73,7 +99,6 @@ export async function adicionarInventarioAction(form: FormData) {
     if (!(erro instanceof AppError)) throw erro;
   }
   revalidatePath(`/processos/${processoId}`);
-  redirect(`/processos/${processoId}?aba=inventario`);
 }
 
 export async function ajustarInventarioAction(form: FormData) {
@@ -87,7 +112,6 @@ export async function ajustarInventarioAction(form: FormData) {
     if (!(erro instanceof AppError)) throw erro;
   }
   revalidatePath(`/processos/${processoId}`);
-  redirect(`/processos/${processoId}?aba=inventario`);
 }
 
 export async function salvarValorInventarioAction(processoId: string, chave: string, texto: string) {
@@ -115,7 +139,7 @@ export async function atualizarVencimentoAction(form: FormData) {
   revalidatePath("/tarefas");
   revalidatePath(`/processos/${processoId}`);
   const voltar = String(form.get("voltar") || "");
-  redirect(voltar.startsWith("/tarefas") || voltar.startsWith("/processos/") ? voltar : `/processos/${processoId}?aba=resumo#tarefas-oportunidade`);
+  if (voltar.startsWith("/tarefas")) redirect(voltar);
 }
 
 export async function removerInventarioAction(form: FormData) {

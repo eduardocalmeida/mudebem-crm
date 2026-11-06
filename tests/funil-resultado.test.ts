@@ -80,6 +80,14 @@ describe("resultado comercial e pós-venda", () => {
     expect(colunas).not.toContain('rotulo: "Tarefas"');
     expect(colunas).toContain("hidden={aba !== painel.id}");
     expect(pagina).toContain("AbaTarefas");
+    expect(pagina).toContain("CompositorFicha");
     expect(pagina).toContain("MarcarPerdido");
+    const acoes = readFileSync(new URL("../src/server/actions-operacao.ts", import.meta.url), "utf8");
+    expect(acoes).not.toContain("?aba=inventario");
+    const compositor = readFileSync(new URL("../src/components/compositor-ficha.tsx", import.meta.url), "utf8");
+    expect(compositor).toContain("Bate-papo");
+    expect(compositor).toContain("Nota");
+    expect(compositor).toContain("Tarefa");
+    expect(compositor).toContain("Não envia WhatsApp");
   });
 });

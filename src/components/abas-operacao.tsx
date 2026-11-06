@@ -7,7 +7,6 @@ import {
   ajustarInventarioAction,
   atualizarVencimentoAction,
   concluirTarefaAction,
-  criarTarefaAction,
 } from "@/server/actions-operacao";
 import { listarCatalogo, obterInventario } from "@/server/inventario";
 import { listarTarefas, tarefaAtrasada } from "@/server/tarefas";
@@ -70,11 +69,7 @@ export async function AbaInventario({ processoId }: { processoId: string }) {
 }
 
 export async function AbaTarefas({ processoId, ancora = "" }: { processoId: string; ancora?: string }) {
-  const [tarefas, tipos, usuarios] = await Promise.all([
-    listarTarefas({ processoId }),
-    prisma.tipoTarefa.findMany({ where: { ativo: true }, orderBy: { rotulo: "asc" } }),
-    prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
-  ]);
+  const tarefas = await listarTarefas({ processoId });
   return (
     <section id="tarefas-oportunidade" className="cartao painel-aba" tabIndex={-1}>
       {ancora ? <span id={ancora} /> : null}
@@ -111,37 +106,7 @@ export async function AbaTarefas({ processoId, ancora = "" }: { processoId: stri
           </li>
         ))}
       </ul>
-      <form action={criarTarefaAction} className="grade-form">
-        <input type="hidden" name="processoId" value={processoId} />
-        <label>
-          Tipo
-          <select name="tipoId" defaultValue={tipos[0]?.id}>
-            {tipos.map((tipo) => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Título
-          <input name="titulo" required placeholder="Ligar para confirmar a coleta" />
-        </label>
-        <CampoVencimento obrigatorio />
-        <label>
-          Responsável
-          <select name="responsavelId">
-            {usuarios.map((usuario) => (
-              <option key={usuario.id} value={usuario.id}>
-                {usuario.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="btn" type="submit">
-          Criar tarefa
-        </button>
-      </form>
+      <p className="muted">Nova tarefa: use Tarefa no compositor do chat.</p>
     </section>
   );
 }

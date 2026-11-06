@@ -1,5 +1,7 @@
 "use server";
 
+import type { EstadoForm } from "@/lib/estado";
+import { AppError } from "@/lib/errors";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { CanalConversa } from "@prisma/client";
@@ -36,6 +38,38 @@ export async function registrarMensagemAction(form: FormData) {
   revalidatePath("/whatsapp");
   revalidatePath(`/comunicacao/${conversaId}`);
   redirect(destino(form, conversaId));
+}
+
+export async function registrarHistoricoFichaAction(_estado: EstadoForm, form: FormData): Promise<EstadoForm> {
+  try {
+    const usuario = await exigirUsuario();
+    const conversaId = String(form.get("conversaId") || "");
+    const processoId = String(form.get("processoId") || "");
+    const conteudo = String(form.get("conteudo") || "").trim();
+    if (!conversaId) return { erro: "Abra um canal antes de registrar no histórico." };
+    if (!conteudo) return { erro: "Escreva o que foi dito. Isso não envia a mensagem." };
+    const atual = await prisma.conversa.findUnique({ where: { id: conversaId }, select: { canal: true, processoId: true } });
+    if (!atual || atual.processoId !== processoId) return { erro: "Conversa não encontrada neste processo." };
+    await registrarMensagem({
+      conversaId,
+      conteudo,
+      canal: atual.canal,
+      direcao: "SAIDA",
+      remetente: usuario.nome,
+    });
+    revalidatePath(`/processos/${processoId}`);
+    return { ok: "Registro gravado no histórico. Nada foi enviado pelo canal." };
+  } catch (erro) {
+    if (erro instanceof AppError) return { erro: erro.message };
+    return { erro: "Não foi possível gravar o histórico." };
+  }
+}
+
+export async function abrirConversaFichaAction(form: FormData) {
+  const usuario = await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
+  await abrirConversaDoProcesso(processoId, usuario.id, canalDe(String(form.get("canal") || "")) ?? undefined);
+  revalidatePath(`/processos/${processoId}`);
 }
 
 export async function abrirConversaAction(form: FormData) {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormAcao } from "@/components/form-acao";
-import { FormAnexo, FormNota, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
+import { FormAnexo, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
 import { FichaColunas } from "@/components/ficha-colunas";
 import { FormPosVenda, MarcarPerdido } from "@/components/resultado-comercial";
 import { SeletorEtapa } from "@/components/seletor-etapa";
@@ -15,6 +15,7 @@ import { AppError } from "@/lib/errors";
 import { formatarData, formatarDataHora, formatarNumero } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
+import { CompositorFicha } from "@/components/compositor-ficha";
 import { FichaConversa } from "@/components/ficha-conversa";
 import { AbaFiscal } from "@/components/nfse-painel";
 import { obterProcesso } from "@/server/processos";
@@ -45,14 +46,21 @@ export default async function ProcessoPage({
   });
   if (!processo) notFound();
 
-  const [clientes, usuarios] = await Promise.all([
+  const [clientes, usuarios, tiposTarefa] = await Promise.all([
     prisma.cliente.findMany({
       orderBy: { nome: "asc" },
       include: { contatos: { orderBy: { nome: "asc" }, select: { id: true, nome: true, email: true, telefone: true, cargo: true, cpf: true, documento: true } } },
     }),
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
+    prisma.tipoTarefa.findMany({ where: { ativo: true }, orderBy: { rotulo: "asc" }, select: { id: true, rotulo: true } }),
   ]);
   const etapas = await carregarEtapas();
+  const fios = await prisma.conversa.findMany({
+    where: { processoId: processo.id },
+    orderBy: [{ status: "asc" }, { ultimaMensagemEm: "desc" }],
+    select: { id: true, status: true, whatsapp: { select: { id: true } } },
+  });
+  const fioAberto = fios.find((item) => item.id === consulta.fio) ?? fios.find((item) => item.status !== "FECHADA") ?? fios[0];
   const podePerder = validarTransicao(usuario.papel, processo.etapa, "PERDIDO", etapas) === null;
   const posVenda = lerResultado(processo.extras).posVenda;
   const destinos = destinosPossiveis(usuario.papel, processo.etapa, etapas).map((etapa) => ({
@@ -86,10 +94,14 @@ export default async function ProcessoPage({
         conversa={
           <>
             <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
-            <article className="cartao bloco">
-              <h2>Nota</h2>
-              <FormNota processoId={processo.id} />
-            </article>
+            <CompositorFicha
+              processoId={processo.id}
+              conversaId={fioAberto?.id ?? null}
+              whatsappId={fioAberto?.whatsapp?.id ?? null}
+              tipos={tiposTarefa}
+              usuarios={usuarios}
+              responsavelInicial={usuario.id}
+            />
             <article className="cartao bloco">
               <h2>Histórico</h2>
               <div className="timeline">
