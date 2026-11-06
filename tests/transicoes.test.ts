@@ -6,6 +6,8 @@ describe("transições da pipeline", () => {
     expect(validarTransicao("COMERCIAL", "LEADS_DE_ENTRADA", "PROPOSTA")).toBeNull();
     expect(validarTransicao("COMERCIAL", "NEGOCIACAO", "CONTRATO")).toBeNull();
     expect(validarTransicao("COMERCIAL", "PROPOSTA", "PERDIDO")).toBeNull();
+    expect(validarTransicao("COMERCIAL", "PROPOSTA", "GANHO")).toMatch(/execução/i);
+    expect(validarTransicao("ADMIN", "PROPOSTA", "GANHO")).toMatch(/execução/i);
     expect(validarTransicao("COMERCIAL", "LEADS_DE_ENTRADA", "EM_EXECUCAO")).toMatch(/comercial/i);
     expect(validarTransicao("COMERCIAL", "EM_EXECUCAO", "PERDIDO")).toMatch(/não pode/i);
   });
@@ -17,6 +19,9 @@ describe("transições da pipeline", () => {
     expect(validarTransicao("FINANCEIRO", "EM_EXECUCAO", "FATURADO_HAVER")).toBeNull();
     expect(validarTransicao("FINANCEIRO", "FATURADO_HAVER", "CONTAS_A_RECEBER")).toBeNull();
     expect(validarTransicao("FINANCEIRO", "CONTAS_A_RECEBER", "RECEBIDO")).toBeNull();
+    expect(validarTransicao("FINANCEIRO", "RECEBIDO", "POS_VENDA")).toBeNull();
+    expect(validarTransicao("OPERACAO", "RECEBIDO", "POS_VENDA")).toMatch(/pós-venda/i);
+    expect(validarTransicao("FINANCEIRO", "EM_EXECUCAO", "POS_VENDA")).toMatch(/financeiro/i);
     expect(validarTransicao("FINANCEIRO", "LEADS_DE_ENTRADA", "RECEBIDO")).toMatch(/financeiro/i);
   });
 

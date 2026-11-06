@@ -13,6 +13,16 @@ export type EtapaConfig = {
   terminal: boolean;
 };
 
+export const ETAPA_POS_VENDA: EtapaConfig = {
+  slug: "POS_VENDA",
+  rotulo: "Pós-venda",
+  resumo: "Satisfação depois do recebimento. A nota de 0 a 10 é opcional e não dispara pesquisa.",
+  cor: "#1f6b45",
+  ordem: 125,
+  grupo: "financeiro",
+  terminal: true,
+};
+
 export const ETAPAS_PADRAO: EtapaConfig[] = [
   { slug: "LEADS_DE_ENTRADA", rotulo: "Leads de entrada", resumo: "Lead recém-chegado, ainda sem contato qualificado.", cor: "#3d6b8c", ordem: 10, grupo: "comercial", terminal: false },
   { slug: "CONTATO_INICIAL", rotulo: "Contato inicial", resumo: "Primeiro retorno feito ao cliente.", cor: "#4d7ea8", ordem: 20, grupo: "comercial", terminal: false },
@@ -380,16 +390,26 @@ export function podeGerirClientes(autoridade: Autoridade): boolean {
   return autoridade === "API" || autoridade === "ADMIN" || autoridade === "COMERCIAL";
 }
 
+function catalogoComPosVenda(catalogo: EtapaConfig[]) {
+  return catalogo.some((etapa) => etapa.slug === ETAPA_POS_VENDA.slug) ? catalogo : [...catalogo, ETAPA_POS_VENDA];
+}
+
 export function validarTransicao(
   autoridade: Autoridade,
   deSlug: string,
   paraSlug: string,
   catalogo: EtapaConfig[] = ETAPAS_PADRAO,
 ): string | null {
-  const de = catalogo.find((etapa) => etapa.slug === deSlug);
-  const para = catalogo.find((etapa) => etapa.slug === paraSlug);
+  const lista = catalogoComPosVenda(catalogo);
+  const de = lista.find((etapa) => etapa.slug === deSlug);
+  const para = lista.find((etapa) => etapa.slug === paraSlug);
   if (!de || !para) return "Etapa inválida.";
   if (de.slug === para.slug) return "O processo já está nesta etapa.";
+  if (para.slug === "GANHO") return "Ganho não é uma etapa. Ele é registrado ao entrar em Em execução.";
+  if (de.slug === "RECEBIDO" && para.slug === "POS_VENDA") {
+    if (autoridade === "FINANCEIRO" || autoridade === "COMERCIAL" || autoridade === "ADMIN" || autoridade === "API") return null;
+    return "Seu papel não registra a pós-venda.";
+  }
   if (autoridade === "API" || autoridade === "ADMIN") return null;
   if (de.terminal) return "Só um administrador pode reabrir um processo encerrado.";
 
@@ -397,12 +417,8 @@ export function validarTransicao(
     if (autoridade === "COMERCIAL" && de.grupo === "comercial") return null;
     return "Seu papel não pode marcar este processo como perdido.";
   }
-  if (para.slug === "GANHO") {
-    if (autoridade === "COMERCIAL") return null;
-    return "Só o comercial marca o processo como ganho.";
-  }
 
-  const linha = fluxoEtapas(catalogo);
+  const linha = fluxoEtapas(lista);
   const indiceDe = linha.findIndex((etapa) => etapa.slug === de.slug);
   const indicePara = linha.findIndex((etapa) => etapa.slug === para.slug);
   if (indiceDe < 0 || indicePara < 0) return "Etapa inválida.";
@@ -437,5 +453,8 @@ export function validarTransicao(
 }
 
 export function destinosPossiveis(autoridade: Autoridade, de: string, catalogo: EtapaConfig[] = ETAPAS_PADRAO): string[] {
-  return catalogo.filter((etapa) => validarTransicao(autoridade, de, etapa.slug, catalogo) === null).map((etapa) => etapa.slug);
+  const lista = catalogoComPosVenda(catalogo);
+  return lista
+    .filter((etapa) => etapa.slug !== "GANHO" && etapa.slug !== "PERDIDO" && validarTransicao(autoridade, de, etapa.slug, lista) === null)
+    .map((etapa) => etapa.slug);
 }

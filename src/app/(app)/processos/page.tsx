@@ -41,7 +41,7 @@ export default async function ProcessosPage({
     }),
     carregarEtapas(),
   ]);
-  const etapasVisiveis = etapas.filter((etapa) => etapa.ativa);
+  const etapasVisiveis = etapas.filter((etapa) => etapa.ativa && etapa.slug !== "GANHO" && etapa.slug !== "PERDIDO");
 
   const colunas = etapasVisiveis.map((etapa) => ({
     id: etapa.slug,

@@ -2,9 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormAcao } from "@/components/form-acao";
 import { FormAnexo, FormNota, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
-import { RolarPara, SeletorEtapa } from "@/components/seletor-etapa";
+import { FichaColunas } from "@/components/ficha-colunas";
+import { FormPosVenda, MarcarPerdido } from "@/components/resultado-comercial";
+import { SeletorEtapa } from "@/components/seletor-etapa";
+import { validarTransicao } from "@/lib/domain";
+import { lerResultado } from "@/lib/resultado-comercial";
 import { lerVinculos } from "@/lib/contatos-oportunidade";
-import { SeloCanal, SeloEtapa, SeloExemplo } from "@/components/selos";
+import { SeloCanal } from "@/components/selos";
 import { camposDoPapel, destinosPossiveis, etapaPorId, rotuloEtapa } from "@/lib/domain";
 import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
@@ -49,6 +53,8 @@ export default async function ProcessoPage({
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
   ]);
   const etapas = await carregarEtapas();
+  const podePerder = validarTransicao(usuario.papel, processo.etapa, "PERDIDO", etapas) === null;
+  const posVenda = lerResultado(processo.extras).posVenda;
   const destinos = destinosPossiveis(usuario.papel, processo.etapa, etapas).map((etapa) => ({
     id: etapa,
     rotulo: rotuloEtapa(etapa, etapas),
@@ -58,12 +64,10 @@ export default async function ProcessoPage({
     <>
       <header className="pagina-cabeca">
         <div>
-          <p className="sobretitulo">Oportunidade</p>
           <h1>{processo.codigo}</h1>
           <p className="linha" style={{ justifyContent: "flex-start", marginTop: 8 }}>
-            <SeloEtapa etapa={processo.etapa} />
             <SeloCanal canal={processo.canal} />
-            {processo.exemplo ? <SeloExemplo /> : null}
+            {processo.modalidade ? <span className="selo">{processo.modalidade}</span> : null}
             <Link href={`/clientes/${processo.cliente.id}`}>{processo.cliente.nome}</Link>
           </p>
         </div>
@@ -74,22 +78,33 @@ export default async function ProcessoPage({
       {processo.exemplo ? (
         <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
       ) : null}
-      <nav className="abas">
-        {[
-          ["resumo", "Resumo"],
-          ["inventario", "Inventário"],
-          ["fiscal", "Fiscal"],
-        ].map(([idAba, rotulo]) => (
-          <Link key={idAba} className={aba === idAba || (idAba === "fiscal" && (aba === "cte" || aba === "nfse")) ? "ativa" : ""} href={`/processos/${processo.id}?aba=${idAba}`}>
-            {rotulo}
-          </Link>
-        ))}
-      </nav>
-      {aba === "inventario" ? <AbaInventario processoId={processo.id} /> : null}
-      {aba === "fiscal" || aba === "cte" || aba === "nfse" ? (
-        <AbaFiscal processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} admin={usuario.papel === "ADMIN"} />
-      ) : null}
-      {aba === "resumo" ? (
+      <FichaColunas
+        inicial={aba}
+        rolarTarefas={abaPedida === "tarefas"}
+        inventario={<AbaInventario processoId={processo.id} />}
+        fiscal={<AbaFiscal processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} admin={usuario.papel === "ADMIN"} />}
+        conversa={
+          <>
+            <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
+            <article className="cartao bloco">
+              <h2>Nota</h2>
+              <FormNota processoId={processo.id} />
+            </article>
+            <article className="cartao bloco">
+              <h2>Histórico</h2>
+              <div className="timeline">
+                {(processo.eventos ?? []).map((evento) => (
+                  <article key={evento.id}>
+                    <strong>{formatarDataHora(evento.criadoEm)}</strong>
+                    <div>{evento.mensagem}</div>
+                    <small className="muted">{evento.autor}</small>
+                  </article>
+                ))}
+              </div>
+            </article>
+          </>
+        }
+        resumo={
       <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>
       <AcoesDaEtapa etapa={processo.etapa} processoId={processo.id} acao={consulta.acao} etapas={etapas} />
@@ -105,9 +120,9 @@ export default async function ProcessoPage({
           </FormAcao>
         </article>
       ) : null}
-      <section className="ficha">
-        <div>
           <SeletorEtapa processoId={processo.id} atual={processo.etapa} rotuloAtual={rotuloEtapa(processo.etapa, etapas)} destinos={destinos} />
+          {podePerder ? <MarcarPerdido processoId={processo.id} /> : null}
+          {processo.etapa === "POS_VENDA" ? <FormPosVenda processoId={processo.id} nota={posVenda?.nota ?? null} comentario={posVenda?.comentario ?? null} /> : null}
           <article className="cartao bloco">
             <h2>Dados do processo</h2>
             <p className="muted">Responsável: {processo.responsavel?.nome ?? "não definido"}.</p>
@@ -189,31 +204,10 @@ export default async function ProcessoPage({
             </div>
             <FormAnexo processoId={processo.id} />
           </article>
-          <RolarPara id="tarefas-oportunidade" ativo={abaPedida === "tarefas"} />
           <AbaTarefas processoId={processo.id} />
-        </div>
-        <aside>
-          <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
-          <article className="cartao bloco">
-            <h2>Nota</h2>
-            <FormNota processoId={processo.id} />
-          </article>
-          <article className="cartao bloco">
-            <h2>Histórico</h2>
-            <div className="timeline">
-              {(processo.eventos ?? []).map((evento) => (
-                <article key={evento.id}>
-                  <strong>{formatarDataHora(evento.criadoEm)}</strong>
-                  <div>{evento.mensagem}</div>
-                  <small className="muted">{evento.autor}</small>
-                </article>
-              ))}
-            </div>
-          </article>
-        </aside>
-      </section>
       </>
-      ) : null}
+        }
+      />
     </>
   );
 }

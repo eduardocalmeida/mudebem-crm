@@ -20,6 +20,7 @@ export type FiltroLista = {
   seguroMax?: number;
   totalMin?: number;
   totalMax?: number;
+  resultado?: "ganho" | "perdido";
   pagina: number;
   porPagina: number;
   visao: "kanban" | "lista";
@@ -86,6 +87,10 @@ export function lerFiltro(params: URLSearchParams): FiltroLista {
   faixa(freteMin, freteMax, "Frete");
   faixa(seguroMin, seguroMax, "Seguro");
   faixa(totalMin, totalMax, "Valor total");
+  const resultadoBruto = params.get("resultado")?.trim() || undefined;
+  if (resultadoBruto && resultadoBruto !== "ganho" && resultadoBruto !== "perdido") {
+    throw new AppError("Resultado inválido. Use ganho ou perdido.", 400, "DADOS_INVALIDOS");
+  }
   const paginaBruta = Number(params.get("pagina") ?? "1");
   const tamanhoBruto = Number(params.get("porPagina") ?? "50");
   const visao = params.get("visao") === "lista" ? "lista" : "kanban";
@@ -110,6 +115,7 @@ export function lerFiltro(params: URLSearchParams): FiltroLista {
     seguroMax,
     totalMin,
     totalMax,
+    resultado: resultadoBruto as "ganho" | "perdido" | undefined,
     pagina: Number.isInteger(paginaBruta) && paginaBruta > 0 ? paginaBruta : 1,
     porPagina: Number.isInteger(tamanhoBruto) && tamanhoBruto > 0 ? Math.min(100, tamanhoBruto) : 50,
     visao,
@@ -140,6 +146,7 @@ export function parametrosDe(filtro: {
   seguroMax?: number;
   totalMin?: number;
   totalMax?: number;
+  resultado?: "ganho" | "perdido";
   pagina?: number;
 }) {
   const params = new URLSearchParams();
@@ -162,6 +169,7 @@ export function parametrosDe(filtro: {
     ["seguroMax", numeroParam(filtro.seguroMax)],
     ["totalMin", numeroParam(filtro.totalMin)],
     ["totalMax", numeroParam(filtro.totalMax)],
+    ["resultado", filtro.resultado],
     ["pagina", filtro.pagina && filtro.pagina > 1 ? String(filtro.pagina) : undefined],
   ];
   for (const [chave, valor] of entradas) {

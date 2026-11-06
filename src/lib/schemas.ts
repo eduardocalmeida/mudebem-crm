@@ -356,6 +356,12 @@ export const esquemaEtapa = z
   .object({
     etapa: z.string().trim().min(1, "Informe a etapa."),
     observacao: textoOpcional(2000).optional(),
+    motivoPerda: z
+      .object({
+        codigo: z.string().trim().min(1),
+        detalhe: z.string().trim().max(500).optional(),
+      })
+      .optional(),
   })
   .strict();
 

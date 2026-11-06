@@ -25,7 +25,7 @@ import {
   lerPatchProcesso,
   lerUsuario,
 } from "@/server/formulario";
-import { adicionarNota, atualizarProcesso, criarProcesso, moverEtapa } from "@/server/processos";
+import { adicionarNota, atualizarProcesso, criarProcesso, moverEtapa, registrarPosVenda } from "@/server/processos";
 import { atorDoUsuario, exigirUsuario } from "@/server/session";
 
 function falha(erro: unknown, reserva: string): EstadoForm {
@@ -128,6 +128,35 @@ export async function mudarEtapaAction(_estado: EstadoForm, form: FormData): Pro
     return { ok: "Etapa atualizada." };
   } catch (erro) {
     return falha(erro, "Não foi possível mover a etapa.");
+  }
+}
+
+export async function marcarPerdidoAction(_estado: EstadoForm, form: FormData): Promise<EstadoForm> {
+  const id = String(form.get("processoId") ?? "");
+  try {
+    const usuario = await exigirUsuario();
+    await moverEtapa(atorDoUsuario(usuario), id, "PERDIDO", null, {
+      codigo: String(form.get("motivoPerda") ?? ""),
+      detalhe: String(form.get("detalhe") ?? ""),
+    });
+    atualizarTelas(id);
+    return { ok: "Oportunidade marcada como perdida." };
+  } catch (erro) {
+    return falha(erro, "Não foi possível marcar a perda.");
+  }
+}
+
+export async function salvarPosVendaAction(_estado: EstadoForm, form: FormData): Promise<EstadoForm> {
+  const id = String(form.get("processoId") ?? "");
+  try {
+    const usuario = await exigirUsuario();
+    const bruto = String(form.get("nota") ?? "").trim();
+    const nota = bruto === "" ? null : Number(bruto);
+    await registrarPosVenda(atorDoUsuario(usuario), id, nota, String(form.get("comentario") ?? ""));
+    atualizarTelas(id);
+    return { ok: "Pós-venda registrada." };
+  } catch (erro) {
+    return falha(erro, "Não foi possível registrar a pós-venda.");
   }
 }
 

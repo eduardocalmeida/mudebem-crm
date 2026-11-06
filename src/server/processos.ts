@@ -11,6 +11,7 @@ import {
   type Etapa,
 } from "@/lib/domain";
 import { lerVinculos } from "@/lib/contatos-oportunidade";
+import { gravarResultado, rotuloMotivoPerda, validarMotivoPerda, validarNotaPosVenda, type CodigoPerda } from "@/lib/resultado-comercial";
 import { carregarEtapas } from "@/server/etapas";
 import { criarTarefasDaEtapa } from "@/server/tarefas";
 import { AppError } from "@/lib/errors";
@@ -247,6 +248,7 @@ export function whereDaLista(filtro: {
   seguroMax?: number;
   totalMin?: number;
   totalMax?: number;
+  resultado?: "ganho" | "perdido";
 }): Prisma.ProcessoWhereInput {
   const where: Prisma.ProcessoWhereInput = {};
   const etapas = filtro.etapas?.length ? filtro.etapas : filtro.etapa ? [filtro.etapa] : [];
@@ -303,6 +305,12 @@ export function whereDaLista(filtro: {
       ],
     });
   }
+  if (filtro.resultado === "ganho") {
+    and.push({ OR: [{ etapa: "GANHO" }, { extras: { path: ["resultado", "comercial"], equals: "GANHO" } }] });
+  }
+  if (filtro.resultado === "perdido") {
+    and.push({ OR: [{ etapa: "PERDIDO" }, { extras: { path: ["resultado", "comercial"], equals: "PERDIDO" } }] });
+  }
   if (and.length) where.AND = and;
   return where;
 }
@@ -326,6 +334,7 @@ export async function listarProcessos(filtro: {
   seguroMax?: number;
   totalMin?: number;
   totalMax?: number;
+  resultado?: "ganho" | "perdido";
   pagina?: number;
   porPagina?: number;
   limite?: number;
@@ -690,7 +699,13 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
   return obterProcesso(id, true);
 }
 
-export async function moverEtapa(ator: Ator, id: string, etapa: Etapa, observacao?: string | null) {
+export async function moverEtapa(
+  ator: Ator,
+  id: string,
+  etapa: Etapa,
+  observacao?: string | null,
+  motivoPerda?: { codigo: string; detalhe?: string | null },
+) {
   const processo = await prisma.processo.findUnique({ where: { id } });
   if (!processo) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
   const etapas = await carregarEtapas();
@@ -702,19 +717,34 @@ export async function moverEtapa(ator: Ator, id: string, etapa: Etapa, observaca
     const mesma = motivo.includes("já está");
     throw new AppError(motivo, mesma ? 400 : 403, mesma ? "DADOS_INVALIDOS" : "PROIBIDO");
   }
+  const erroMotivo = etapa === "PERDIDO" ? validarMotivoPerda(motivoPerda?.codigo ?? "", motivoPerda?.detalhe) : null;
+  if (erroMotivo) throw new AppError(erroMotivo, 400, "DADOS_INVALIDOS");
 
   const texto = observacao?.trim();
+  let mensagem = texto
+    ? `Etapa alterada de ${rotuloEtapa(processo.etapa)} para ${rotuloEtapa(etapa)}. ${texto}`
+    : `Etapa alterada de ${rotuloEtapa(processo.etapa)} para ${rotuloEtapa(etapa)}.`;
+  const dadosAtualizacao: Prisma.ProcessoUpdateInput = { etapa };
+  if (etapa === "EM_EXECUCAO") {
+    dadosAtualizacao.extras = gravarResultado(processo.extras, { comercial: "GANHO" }) as Prisma.InputJsonValue;
+    mensagem = `${mensagem} Resultado comercial: ganho.`;
+  }
+  if (etapa === "PERDIDO" && motivoPerda) {
+    dadosAtualizacao.extras = gravarResultado(processo.extras, {
+      comercial: "PERDIDO",
+      motivoPerda: { codigo: motivoPerda.codigo as CodigoPerda, detalhe: motivoPerda.detalhe?.trim() || null },
+    }) as Prisma.InputJsonValue;
+    mensagem = `${mensagem} Motivo: ${rotuloMotivoPerda(motivoPerda.codigo)}${motivoPerda.detalhe?.trim() ? ` — ${motivoPerda.detalhe.trim()}` : ""}.`;
+  }
   await prisma.$transaction([
-    prisma.processo.update({ where: { id }, data: { etapa } }),
+    prisma.processo.update({ where: { id }, data: dadosAtualizacao }),
     prisma.evento.create({
       data: {
         processoId: id,
         tipo: "MUDANCA_ETAPA",
         etapaDe: processo.etapa,
         etapaPara: etapa,
-        mensagem: texto
-          ? `Etapa alterada de ${rotuloEtapa(processo.etapa)} para ${rotuloEtapa(etapa)}. ${texto}`
-          : `Etapa alterada de ${rotuloEtapa(processo.etapa)} para ${rotuloEtapa(etapa)}.`,
+        mensagem,
         usuarioId: ator.tipo === "usuario" ? ator.id : null,
         origem: nomeAtor(ator),
       },
@@ -723,6 +753,33 @@ export async function moverEtapa(ator: Ator, id: string, etapa: Etapa, observaca
 
   await criarTarefasDaEtapa(id, etapa, processo.responsavelId);
   return { etapaAnterior: processo.etapa, processo: await obterProcesso(id, true) };
+}
+
+export async function registrarPosVenda(ator: Ator, id: string, nota: number | null, comentario: string | null) {
+  const erro = validarNotaPosVenda(nota);
+  if (erro) throw new AppError(erro, 400, "DADOS_INVALIDOS");
+  const texto = comentario?.trim() || null;
+  if (texto && texto.length > 2000) throw new AppError("O comentário pode ter no máximo 2000 caracteres.", 400, "DADOS_INVALIDOS");
+  const processo = await prisma.processo.findUnique({ where: { id } });
+  if (!processo) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
+  const administrador = ator.tipo === "usuario" && ator.papel === "ADMIN";
+  if (processo.etapa !== "POS_VENDA" && ator.tipo !== "api" && !administrador) {
+    throw new AppError("A nota de satisfação fica na etapa Pós-venda.", 403, "PROIBIDO");
+  }
+  const extras = gravarResultado(processo.extras, { posVenda: { nota, comentario: texto } });
+  await prisma.$transaction([
+    prisma.processo.update({ where: { id }, data: { extras: extras as Prisma.InputJsonValue } }),
+    prisma.evento.create({
+      data: {
+        processoId: id,
+        tipo: "NOTA",
+        mensagem: nota == null ? "Pós-venda registrada sem nota." : `Pós-venda registrada. Nota ${nota} de 10.`,
+        usuarioId: ator.tipo === "usuario" ? ator.id : null,
+        origem: nomeAtor(ator),
+      },
+    }),
+  ]);
+  return obterProcesso(id, true);
 }
 
 export async function adicionarNota(ator: Ator, id: string, texto: string) {

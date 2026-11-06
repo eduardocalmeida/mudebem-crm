@@ -1,4 +1,4 @@
-import { ETAPAS_PADRAO, type EtapaConfig, type GrupoEtapa } from "@/lib/domain";
+import { ETAPA_POS_VENDA, ETAPAS_PADRAO, type EtapaConfig, type GrupoEtapa } from "@/lib/domain";
 import { prisma } from "@/lib/prisma";
 
 export type EtapaSalva = EtapaConfig & { ativa: boolean };
@@ -27,7 +27,7 @@ export async function garantirEtapas() {
 export async function carregarEtapas(): Promise<EtapaSalva[]> {
   await garantirEtapas();
   const linhas = await prisma.etapaPipeline.findMany({ orderBy: { ordem: "asc" } });
-  return linhas.map((etapa) => ({
+  const saida = linhas.map((etapa) => ({
     slug: etapa.slug,
     rotulo: etapa.rotulo,
     resumo: etapa.resumo,
@@ -37,6 +37,10 @@ export async function carregarEtapas(): Promise<EtapaSalva[]> {
     terminal: etapa.terminal,
     ativa: etapa.ativa,
   }));
+  if (!saida.some((etapa) => etapa.slug === ETAPA_POS_VENDA.slug)) {
+    saida.push({ ...ETAPA_POS_VENDA, ativa: true });
+  }
+  return saida.sort((a, b) => a.ordem - b.ordem);
 }
 
 export function slugDaEtapa(rotulo: string) {

@@ -12,7 +12,7 @@ export async function POST(req: Request, contexto: Contexto) {
     const { id } = await contexto.params;
     const resultado = esquemaEtapa.safeParse(await lerJson(req));
     if (!resultado.success) throw erroZod(resultado.error);
-    return NextResponse.json(await moverEtapa(ator, id, resultado.data.etapa, resultado.data.observacao));
+    return NextResponse.json(await moverEtapa(ator, id, resultado.data.etapa, resultado.data.observacao, resultado.data.motivoPerda));
   } catch (erro) {
     return responderErro(erro);
   }

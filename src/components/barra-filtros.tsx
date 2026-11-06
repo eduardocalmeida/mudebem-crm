@@ -116,6 +116,14 @@ export function BarraFiltros({
               <input name="ate" form="filtros-oportunidades" defaultValue={filtro.dataColetaAte ? formatarData(filtro.dataColetaAte) : ""} placeholder="dd/mm/aaaa" inputMode="numeric" />
             </label>
             <label className="campo">
+              <span>Resultado comercial</span>
+              <select name="resultado" form="filtros-oportunidades" defaultValue={filtro.resultado ?? ""}>
+                <option value="">Todos</option>
+                <option value="ganho">Ganhos, inclusive registros antigos</option>
+                <option value="perdido">Perdidos, inclusive registros antigos</option>
+              </select>
+            </label>
+            <label className="campo">
               <span>Responsável</span>
               <select name="responsavelId" form="filtros-oportunidades" defaultValue={filtro.semResponsavel ? "nenhum" : filtro.responsavelId ?? ""}>
                 <option value="">Todos</option>
@@ -200,5 +208,6 @@ function chipsDoFiltro(filtro: FiltroLista, etapas: EtapaOpcao[], responsaveis: 
   faixa("total", "Total", filtro.totalMin, filtro.totalMax, { totalMin: undefined, totalMax: undefined });
   if (filtro.canal) chips.push({ chave: "canal", rotulo: filtro.canal, href: sem(filtro, { canal: undefined }) });
   if (filtro.etiqueta) chips.push({ chave: "etiqueta", rotulo: filtro.etiqueta, href: sem(filtro, { etiqueta: undefined }) });
+  if (filtro.resultado) chips.push({ chave: "resultado", rotulo: filtro.resultado === "ganho" ? "Ganhos" : "Perdidos", href: sem(filtro, { resultado: undefined }) });
   return chips;
 }

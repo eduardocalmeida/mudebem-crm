@@ -1,4 +1,5 @@
 import { rotuloCanal, type Canal } from "@/lib/domain";
+import { ehGanho, ehPerdido } from "@/lib/resultado-comercial";
 import { adicionarDias, hojeSaoPaulo, paraDataBanco } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { carregarEtapas } from "@/server/etapas";
@@ -31,7 +32,7 @@ export async function carregarPainel() {
   const desdeNovos = new Date(`${adicionarDias(hoje, -7)}T00:00:00-03:00`);
   const estaSemana = inicioSemana(hoje);
   const semanas = Array.from({ length: 8 }, (_, indice) => adicionarDias(estaSemana, -7 * (7 - indice)));
-  const foraDaColeta = ["PERDIDO", "GANHO", "RECEBIDO", "FATURADO_HAVER", "CONTAS_A_RECEBER"];
+  const foraDaColeta = ["PERDIDO", "GANHO", "RECEBIDO", "FATURADO_HAVER", "CONTAS_A_RECEBER", "POS_VENDA"];
 
   const [processos, coletas, vencidos, ganhosEvento, tarefasHoje, tarefasAtrasadas, agenda] = await Promise.all([
     prisma.processo.findMany({
@@ -43,6 +44,7 @@ export async function carregarPainel() {
         canal: true,
         etiqueta: true,
         criadoEm: true,
+        extras: true,
         responsavel: { select: { nome: true } },
       },
     }),
@@ -60,7 +62,10 @@ export async function carregarPainel() {
       orderBy: { dataVencimento: "asc" },
     }),
     prisma.evento.findMany({
-      where: { etapaPara: "GANHO", criadoEm: { gte: new Date(`${semanas[0]}T00:00:00-03:00`) } },
+      where: {
+        criadoEm: { gte: new Date(`${semanas[0]}T00:00:00-03:00`) },
+        OR: [{ etapaPara: "GANHO" }, { etapaPara: "EM_EXECUCAO", mensagem: { contains: "Resultado comercial: ganho" } }],
+      },
       select: { criadoEm: true },
     }),
     prisma.tarefa.count({ where: { concluidaEm: null, vencimento: { gte: inicioHoje, lt: fimHoje } } }),
@@ -74,7 +79,7 @@ export async function carregarPainel() {
   ]);
 
   const etapas = await carregarEtapas();
-  const porEtapa = etapas.filter((etapa) => etapa.ativa).map((etapa) => {
+  const porEtapa = etapas.filter((etapa) => etapa.ativa && etapa.slug !== "GANHO" && etapa.slug !== "PERDIDO").map((etapa) => {
     const itens = processos.filter((processo) => processo.etapa === etapa.slug);
     return {
       ...etapa,
@@ -83,7 +88,7 @@ export async function carregarPainel() {
     };
   });
 
-  const encerrados = new Set(["RECEBIDO", "PERDIDO", "GANHO"]);
+  const encerrados = new Set(["RECEBIDO", "PERDIDO", "GANHO", "POS_VENDA"]);
   const abertos = processos.filter((processo) => !encerrados.has(processo.etapa));
   const serie = semanas.map((inicioSemanaIso) => {
     const fimSemana = adicionarDias(inicioSemanaIso, 7);
@@ -118,8 +123,8 @@ export async function carregarPainel() {
     total: processos.length,
     abertos: abertos.length,
     novos: processos.filter((processo) => processo.criadoEm >= desdeNovos).length,
-    ganhos: processos.filter((processo) => processo.etapa === "GANHO").length,
-    perdidos: processos.filter((processo) => processo.etapa === "PERDIDO").length,
+    ganhos: processos.filter((processo) => ehGanho(processo.etapa, processo.extras)).length,
+    perdidos: processos.filter((processo) => ehPerdido(processo.etapa, processo.extras)).length,
     tarefasHoje,
     tarefasAtrasadas,
     valorPipeline: abertos.reduce((total, processo) => total + valorDe(processo.valorAprovado, processo.valorCotado), 0),
