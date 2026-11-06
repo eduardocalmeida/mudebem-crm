@@ -23,8 +23,7 @@ const CONFIG: { href: string; rotulo: string; icone: IconeNome }[] = [
   { href: "/inventario", rotulo: "Inventário", icone: "inventario" },
   { href: "/contratos", rotulo: "Contratos", icone: "contratos" },
   { href: "/importar", rotulo: "Importar", icone: "importar" },
-  { href: "/integracoes", rotulo: "Integrações", icone: "integracoes" },
-  { href: "/whatsapp/ajustes", rotulo: "Números e conexão", icone: "comunicacao" },
+  { href: "/integracoes", rotulo: "Conexões e APIs", icone: "integracoes" },
 ];
 
 export function BarraLateral({

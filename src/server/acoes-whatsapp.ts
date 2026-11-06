@@ -151,7 +151,7 @@ export async function sincronizarHistoricoWhatsapp(_estado: EstadoForm, form: Fo
     const usuario = await exigirUsuario();
     if (usuario.papel !== "ADMIN") throw new AppError("Só um administrador pede o histórico.", 403, "PROIBIDO");
     await solicitarSincronismo(id);
-    revalidatePath("/whatsapp/ajustes");
+    revalidatePath("/integracoes");
     revalidatePath("/whatsapp");
     return { ok: "Histórico pedido. As conversas antigas chegam pelo webhook." };
   } catch (erro) {
@@ -167,7 +167,7 @@ export async function alternarNumeroWhatsapp(_estado: EstadoForm, form: FormData
     const numero = await prisma.numeroWhatsapp.findUnique({ where: { id } });
     if (!numero) throw new AppError("Número não encontrado.", 404, "NAO_ENCONTRADO");
     await prisma.numeroWhatsapp.update({ where: { id }, data: { ativo: !numero.ativo } });
-    revalidatePath("/whatsapp/ajustes");
+    revalidatePath("/integracoes");
     return { ok: numero.ativo ? "Número desativado." : "Número reativado." };
   } catch (erro) {
     return falha(erro, "Não foi possível atualizar o número.");

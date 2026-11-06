@@ -321,6 +321,14 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .secao-form legend { font-weight: 650; margin-bottom: 8px; padding: 0; }
 .conversa-lateral { display: flex; flex-direction: column; gap: 14px; }
 .ficha-form { display: flex; flex-direction: column; gap: 4px; }
+.conexoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.conexoes .cartao h2 { margin: 0; }
+.conexoes .item-lista { flex-wrap: wrap; align-items: center; }
+.conexoes .linha { flex-wrap: wrap; }
+.selo-status { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 10px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.selo-status.conectado { background: var(--ok-soft); color: var(--ok); }
+.selo-status.pendente { background: #f8f1dc; color: #6d5314; }
+.selo-status.falta { background: var(--danger-soft); color: var(--danger); }
 .fio-curto { max-height: 320px; }
 .portal { max-width: 1100px; margin: 0 auto; padding: 28px 16px 64px; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; }
 .portal.largo { display: block; max-width: 1200px; }
