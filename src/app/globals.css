@@ -239,7 +239,18 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .paginacao { display: flex; gap: 10px; align-items: center; margin-top: 14px; }
 .caixa { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 14px; align-items: start; }
 .conversas { max-height: calc(100vh - 190px); overflow: auto; }
-.conversa-item { display: block; padding: 12px 14px; border-bottom: 1px solid var(--line); text-decoration: none; }
+.conversa-item { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-bottom: 1px solid var(--line); text-decoration: none; }
+.conversa-item > div { min-width: 0; flex: 1; }
+.icone-canal { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--paper-deep); color: var(--ink); flex: none; border: 0; padding: 0; }
+.icone-canal.whatsapp { color: var(--ok); }
+.icone-canal.instagram { color: #8a6238; }
+.icone-canal.email { color: var(--ink); }
+.linha-icone, .canais-fio { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.canais-fio a, .canais-fio button { text-decoration: none; }
+.canais-fio a.ativo .icone-canal { outline: 2px solid var(--gold); }
+.canais-fio form { margin: 0; }
+.canal-novo { border: 0; background: transparent; padding: 0; cursor: pointer; opacity: 0.55; }
+.canal-novo:hover { opacity: 1; }
 .conversa-item.ativa { background: var(--paper-deep); }
 .conversa-item.nao-lida strong { color: var(--ink); }
 .fio { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 390px); overflow: auto; padding: 4px; }

@@ -16,6 +16,7 @@ const TIPOS: Record<TipoMensagemWhatsapp, "TEXTO" | "AUDIO" | "IMAGEM" | "VIDEO"
 
 export function rotuloCanalConversa(canal: CanalConversa) {
   if (canal === "WHATSAPP") return "WhatsApp";
+  if (canal === "INSTAGRAM") return "Instagram";
   if (canal === "EMAIL") return "E-mail";
   if (canal === "TELEFONE") return "Telefone";
   return "Outro";
@@ -140,9 +141,9 @@ export async function obterConversa(id: string) {
   return conversa;
 }
 
-export async function abrirConversaDoProcesso(processoId: string, responsavelId: string | null) {
+export async function abrirConversaDoProcesso(processoId: string, responsavelId: string | null, canal?: CanalConversa) {
   const aberta = await prisma.conversa.findFirst({
-    where: { processoId, status: { not: "FECHADA" } },
+    where: { processoId, status: { not: "FECHADA" }, ...(canal ? { canal } : {}) },
     orderBy: { atualizadoEm: "desc" },
   });
   if (aberta) return aberta;
@@ -150,7 +151,7 @@ export async function abrirConversaDoProcesso(processoId: string, responsavelId:
   return prisma.conversa.create({
     data: {
       numero: await proximoNumeroConversa(),
-      canal: "OUTRO",
+      canal: canal ?? "OUTRO",
       processoId,
       contatoId: processo?.contatoId,
       responsavelId: processo?.responsavelId ?? responsavelId,

@@ -24,7 +24,7 @@ export default async function ProcessoPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ aba?: string; aviso?: string; secao?: string; acao?: string }>;
+  searchParams: Promise<{ aba?: string; aviso?: string; secao?: string; acao?: string; fio?: string }>;
 }) {
   const usuario = await exigirUsuario();
   const { id } = await params;
@@ -200,7 +200,7 @@ export default async function ProcessoPage({
           </article>
         </div>
         <aside>
-          <FichaConversa processoId={processo.id} usuarioId={usuario.id} />
+          <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
           <article className="cartao bloco">
             <h2>Mover etapa</h2>
             <FormEtapa processoId={processo.id} destinos={destinos} />

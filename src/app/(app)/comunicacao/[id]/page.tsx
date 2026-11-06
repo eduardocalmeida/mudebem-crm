@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { IconeCanal } from "@/components/icone-canal";
 import { formatarDataHora } from "@/lib/format";
 import { registrarMensagemAction, statusConversaAction } from "@/server/actions-conversa";
-import { obterConversa, rotuloCanalConversa, rotuloStatusConversa } from "@/server/conversas";
+import { obterConversa, rotuloStatusConversa } from "@/server/conversas";
 import { exigirUsuario } from "@/server/session";
 
 export default async function ConversaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,10 +16,11 @@ export default async function ConversaPage({ params }: { params: Promise<{ id: s
     <>
       <header className="pagina-cabeca">
         <div>
-          <p className="sobretitulo">{conversa.numero}</p>
-          <h1>{conversa.contato?.nome || conversa.processo?.titulo || "Conversa"}</h1>
+          <p className="sobretitulo linha-icone">{conversa.numero} <IconeCanal canal={conversa.canal} /></p>
+          <h1>{conversa.processo?.titulo || conversa.contato?.nome || "Conversa"}</h1>
           <p className="muted">
-            {rotuloCanalConversa(conversa.canal)} · {rotuloStatusConversa(conversa.status)}
+            {rotuloStatusConversa(conversa.status)}
+            {conversa.processo ? ` · ${conversa.processo.codigo}` : ""}
             {conversa.responsavel ? ` · ${conversa.responsavel.nome}` : ""}
           </p>
         </div>
@@ -33,22 +35,14 @@ export default async function ConversaPage({ params }: { params: Promise<{ id: s
           {conversa.mensagens.length === 0 ? <p className="muted">Nenhuma mensagem ainda.</p> : null}
           {conversa.mensagens.map((mensagem) => (
             <div key={mensagem.id} className={mensagem.direcao === "SAIDA" ? "bolha saida" : "bolha"}>
-              <strong>{mensagem.remetente || rotuloCanalConversa(mensagem.canal)}</strong>
+              <strong className="linha-icone"><IconeCanal canal={mensagem.canal} /> {mensagem.remetente || "Mensagem"}</strong>
               <div>{mensagem.conteudo}</div>
-              <small className="muted">{formatarDataHora(mensagem.criadaEm)} · {rotuloCanalConversa(mensagem.canal)}</small>
+              <small className="muted">{formatarDataHora(mensagem.criadaEm)}</small>
             </div>
           ))}
         </div>
         <form action={registrarMensagemAction} className="grade-form uma">
           <input type="hidden" name="conversaId" value={conversa.id} />
-          <label className="campo">
-            <span>Canal</span>
-            <select name="canal" defaultValue={conversa.canal === "WHATSAPP" ? "TELEFONE" : conversa.canal}>
-              <option value="TELEFONE">Telefone</option>
-              <option value="EMAIL">E-mail</option>
-              <option value="OUTRO">Outro</option>
-            </select>
-          </label>
           <label className="campo">
             <span>Direção</span>
             <select name="direcao" defaultValue="SAIDA">
