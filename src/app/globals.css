@@ -83,8 +83,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer;
 }
 .menu a.ativo, .menu a:hover, .menu button.ativo, .menu button:hover { background: rgba(184, 152, 112, 0.18); }
-.menu a.ativo, .menu button.ativo { box-shadow: inset 3px 0 0 var(--gold); }
-.submenu-config { display: flex; flex-direction: column; gap: 2px; margin-left: 12px; }
+.menu a.ativo, .menu button.ativo { background: var(--paper-deep); box-shadow: none; }
+.submenu-config { display: none; flex-direction: column; gap: 2px; }
 .menu a em { margin-left: auto; }
 .icone { flex: none; }
 .menu-secao { display: flex; flex-direction: column; gap: 4px; }
@@ -99,17 +99,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-sair span { display: inline-block; max-width: 0; opacity: 0; overflow: hidden; }
 .quem-texto { max-width: 0; opacity: 0; overflow: hidden; }
 @media (min-width: 801px) {
-  .barra:hover, .barra:focus-within, .barra.config-aberta {
+  .barra:hover, .barra:focus-within {
     width: 268px;
     background: rgba(247, 244, 239, 0.94);
     box-shadow: 18px 0 40px -28px rgba(16, 24, 40, 0.45);
   }
-  .barra:hover .marca, .barra:focus-within .marca, .barra.config-aberta .marca { width: 210px; }
-  .barra:hover .secao-rotulo, .barra:focus-within .secao-rotulo, .barra.config-aberta .secao-rotulo { height: auto; margin: 14px 8px 6px; opacity: 1; }
-  .barra:hover .quem-texto, .barra:focus-within .quem-texto, .barra.config-aberta .quem-texto,
-  .barra:hover .menu .rotulo, .barra:focus-within .menu .rotulo, .barra.config-aberta .menu .rotulo { max-width: 180px; opacity: 1; }
-  .barra:hover .btn-sair, .barra:focus-within .btn-sair, .barra.config-aberta .btn-sair { width: 100%; max-width: none; }
-  .barra:hover .btn-sair span, .barra:focus-within .btn-sair span, .barra.config-aberta .btn-sair span { max-width: 80px; opacity: 1; }
+  .barra:hover .marca, .barra:focus-within .marca { width: 210px; }
+  .barra:hover .secao-rotulo, .barra:focus-within .secao-rotulo { height: auto; margin: 16px 12px 4px; opacity: 1; }
+  .barra:hover .submenu-config, .barra:focus-within .submenu-config { display: flex; }
+  .barra:hover .quem-texto, .barra:focus-within .quem-texto,
+  .barra:hover .menu .rotulo, .barra:focus-within .menu .rotulo { max-width: 180px; opacity: 1; }
+  .barra:hover .btn-sair, .barra:focus-within .btn-sair { width: 100%; max-width: none; }
+  .barra:hover .btn-sair span, .barra:focus-within .btn-sair span { max-width: 80px; opacity: 1; }
 }
 .nav-base, .gaveta, .cortina, .atalho-mais { display: none; }
 .fato small { display: block; overflow-wrap: anywhere; }
@@ -384,6 +385,7 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
     left: 12px; right: 12px; bottom: 84px; max-height: 70vh; overflow: auto; padding: 14px;
   }
   .gaveta a, .gaveta button { min-height: 44px; display: flex; align-items: center; text-decoration: none; width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+  .gaveta-secao { margin: 10px 0 0; color: var(--gold); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 650; }
   .conteudo { padding: 18px 14px 96px; }
   .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .topo-lead, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
   .kpi-grade { grid-template-columns: 1fr 1fr; }
