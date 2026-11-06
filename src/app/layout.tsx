@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Fraunces, Outfit } from "next/font/google";
+import { Roboto_Serif } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
+const texto = Roboto_Serif({
+  subsets: ["latin"],
+  display: "swap",
+  weight: "variable",
+  variable: "--font-texto",
+  fallback: ["Segoe UI", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   title: { default: "Mude Bem CRM", template: "%s · Mude Bem" },
@@ -15,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className={`${outfit.variable} ${fraunces.variable}`}>{children}</body>
+      <body className={texto.variable}>{children}</body>
     </html>
   );
 }

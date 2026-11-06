@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DndContext, PointerSensor, KeyboardSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
@@ -8,6 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { validarTransicao, type EtapaConfig, type Papel } from "@/lib/domain";
 import { moverEtapaAction } from "@/server/actions";
 import { SeloExemplo } from "@/components/selos";
+import { alvoInterativo, LIMIAR_ARRASTE_PX } from "@/lib/kanban-arraste";
 
 export type CartaoKanban = {
   id: string;
@@ -36,8 +37,9 @@ export function QuadroKanban({
   const [erro, setErro] = useState<string | null>(null);
   const [movendo, setMovendo] = useState<string | null>(null);
   const router = useRouter();
+  const arrastou = useRef(false);
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: LIMIAR_ARRASTE_PX } }),
     useSensor(KeyboardSensor),
   );
 
@@ -84,7 +86,23 @@ export function QuadroKanban({
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={aoSoltar}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={() => {
+        arrastou.current = true;
+      }}
+      onDragCancel={() => {
+        setTimeout(() => {
+          arrastou.current = false;
+        }, 50);
+      }}
+      onDragEnd={(event) => {
+        void aoSoltar(event);
+        setTimeout(() => {
+          arrastou.current = false;
+        }, 50);
+      }}
+    >
       {erro ? (
         <p className="alerta" role="alert">
           {erro}
@@ -92,14 +110,14 @@ export function QuadroKanban({
       ) : null}
       <div className="quadro" aria-label="Quadro de processos por etapa">
         {itens.map((coluna) => (
-          <ColunaKanban key={coluna.id} coluna={coluna} movendo={movendo} />
+          <ColunaKanban key={coluna.id} coluna={coluna} movendo={movendo} arrastou={arrastou} />
         ))}
       </div>
     </DndContext>
   );
 }
 
-function ColunaKanban({ coluna, movendo }: { coluna: Coluna; movendo: string | null }) {
+function ColunaKanban({ coluna, movendo, arrastou }: { coluna: Coluna; movendo: string | null; arrastou: MutableRefObject<boolean> }) {
   const { setNodeRef, isOver } = useDroppable({ id: coluna.id });
   return (
     <section ref={setNodeRef} className={isOver ? "coluna sobre" : "coluna"} aria-label={coluna.rotulo}>
@@ -110,7 +128,7 @@ function ColunaKanban({ coluna, movendo }: { coluna: Coluna; movendo: string | n
       </header>
       <div className="coluna-corpo">
         {coluna.cartoes.map((cartao) => (
-          <Cartao key={cartao.id} cartao={cartao} movendo={movendo === cartao.id} />
+          <Cartao key={cartao.id} cartao={cartao} movendo={movendo === cartao.id} arrastou={arrastou} />
         ))}
         {coluna.cartoes.length === 0 ? <p className="vazio-coluna">Nenhum processo</p> : null}
       </div>
@@ -118,7 +136,8 @@ function ColunaKanban({ coluna, movendo }: { coluna: Coluna; movendo: string | n
   );
 }
 
-function Cartao({ cartao, movendo }: { cartao: CartaoKanban; movendo: boolean }) {
+function Cartao({ cartao, movendo, arrastou }: { cartao: CartaoKanban; movendo: boolean; arrastou: MutableRefObject<boolean> }) {
+  const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: cartao.id });
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
   return (
@@ -127,24 +146,31 @@ function Cartao({ cartao, movendo }: { cartao: CartaoKanban; movendo: boolean })
       style={style}
       data-codigo={cartao.codigo}
       className={`cartao-processo${isDragging ? " arrastando" : ""}${movendo ? " salvando" : ""}`}
+      onPointerDown={(evento) => {
+        if (evento.button !== 0 || alvoInterativo(evento.target)) return;
+        listeners?.onPointerDown?.(evento);
+      }}
+      onClick={(evento) => {
+        if (arrastou.current || isDragging || alvoInterativo(evento.target)) return;
+        router.push(`/processos/${cartao.id}`);
+      }}
     >
-      <button type="button" className="alca" aria-label={`Arrastar ${cartao.codigo}`} {...listeners} {...attributes}>
-        Arrastar
+      <button type="button" className="arraste-teclado" aria-label={`Arrastar ${cartao.codigo}`} {...listeners} {...attributes}>
+        Arrastar {cartao.codigo}
       </button>
       <Link href={`/processos/${cartao.id}`}>
-        <div className="codigo">{cartao.codigo}</div>
-        <strong>{cartao.titulo}</strong>
-        <div className="muted">{cartao.cliente}</div>
-        <div className="rota">{cartao.rota}</div>
-        <div className="cartao-meta">
-          <span>{cartao.valor}</span>
-          <span>{cartao.coleta ?? "sem coleta"}</span>
-        </div>
-        <div className="cartao-meta">
-          <span>{cartao.responsavel ?? "Sem responsável"}</span>
-          {cartao.exemplo ? <SeloExemplo /> : null}
-        </div>
+        <strong>{cartao.codigo}</strong>
       </Link>
+      <div className="muted">{cartao.cliente}</div>
+      <div className="rota">{cartao.rota}</div>
+      <div className="cartao-meta">
+        <span>{cartao.valor}</span>
+        <span>{cartao.coleta ?? "sem coleta"}</span>
+      </div>
+      <div className="cartao-meta">
+        <span>{cartao.responsavel ?? "Sem responsável"}</span>
+        {cartao.exemplo ? <SeloExemplo /> : null}
+      </div>
     </article>
   );
 }

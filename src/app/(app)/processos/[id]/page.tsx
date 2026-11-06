@@ -53,8 +53,8 @@ export default async function ProcessoPage({
     <>
       <header className="pagina-cabeca">
         <div>
-          <p className="sobretitulo">{processo.codigo}</p>
-          <h1>{processo.titulo}</h1>
+          <p className="sobretitulo">Oportunidade</p>
+          <h1>{processo.codigo}</h1>
           <p className="linha" style={{ justifyContent: "flex-start", marginTop: 8 }}>
             <SeloEtapa etapa={processo.etapa} />
             <SeloCanal canal={processo.canal} />
@@ -113,7 +113,7 @@ export default async function ProcessoPage({
           </small>
           <div className="muted">
             Coleta {formatarData(processo.dataColeta)} · entrega {formatarData(processo.dataEntrega)}
-            {processo.dataPretendida ? ` · pretendida ${formatarData(processo.dataPretendida)}` : ""}
+            {processo.dataPrevista || processo.dataPretendida ? ` · prevista ${formatarData(processo.dataPrevista ?? processo.dataPretendida)}` : ""}
           </div>
         </article>
       </section>
@@ -127,6 +127,7 @@ export default async function ProcessoPage({
             <FormProcesso
               modo="editar"
               processoId={processo.id}
+              etapaSlug={processo.etapa}
               campos={camposDoPapel(usuario.papel)}
               clientes={clientes}
               usuarios={usuarios}
@@ -160,7 +161,7 @@ export default async function ProcessoPage({
                 dataPretendida: processo.dataPretendida ? formatarData(processo.dataPretendida) : "",
                 dataColeta: processo.dataColeta ? formatarData(processo.dataColeta) : "",
                 dataEntrega: processo.dataEntrega ? formatarData(processo.dataEntrega) : "",
-                dataPrevista: processo.dataPrevista ? formatarData(processo.dataPrevista) : "",
+                dataPrevista: processo.dataPrevista || processo.dataPretendida ? formatarData(processo.dataPrevista ?? processo.dataPretendida) : "",
                 dataEmissao: processo.dataEmissao ? formatarData(processo.dataEmissao) : "",
                 diasParaColetar: processo.diasParaColetar == null ? "" : String(processo.diasParaColetar),
                 diasParaViagem: processo.diasParaViagem == null ? "" : String(processo.diasParaViagem),

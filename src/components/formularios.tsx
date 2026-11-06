@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CANAIS, PAPEIS, type Campo, type Etapa } from "@/lib/domain";
-import { UFS } from "@/lib/format";
+import { interpretarData, UFS } from "@/lib/format";
 import type { EstadoForm } from "@/lib/estado";
 import {
   anexoAction,
@@ -20,11 +20,16 @@ import {
   alternarUsuarioAction,
 } from "@/server/actions";
 import { FormAcao } from "@/components/form-acao";
+import { BuscaContato, type ContatoOpcao } from "@/components/busca-contato";
+import { EnderecoFicha, type PartesEndereco } from "@/components/endereco-ficha";
 
-type ContatoOpcao = { id: string; nome: string };
-type ClienteOpcao = { id: string; nome: string; contatos: ContatoOpcao[] };
+type ContatoOpcaoForm = ContatoOpcao;
+type ClienteOpcao = { id: string; nome: string; contatos: ContatoOpcaoForm[] };
 type UsuarioOpcao = { id: string; nome: string };
-type Valores = Partial<Record<Campo, string>>;
+type Valores = Partial<Record<Campo, string>> & {
+  origemPartes?: PartesEndereco;
+  destinoPartes?: PartesEndereco;
+};
 
 export function FormProcesso({
   modo,
@@ -33,6 +38,7 @@ export function FormProcesso({
   usuarios,
   valores,
   processoId,
+  etapaSlug,
 }: {
   modo: "criar" | "editar";
   campos: Campo[];
@@ -40,6 +46,7 @@ export function FormProcesso({
   usuarios: UsuarioOpcao[];
   valores?: Valores;
   processoId?: string;
+  etapaSlug?: string;
 }) {
   const inicial = valores?.clienteId || clientes[0]?.id || "";
   const [clienteId, setClienteId] = useState(inicial);
@@ -55,11 +62,29 @@ export function FormProcesso({
   return (
     <FormAcao acao={acao} className="ficha-form">
       {processoId ? <input type="hidden" name="processoId" value={processoId} /> : null}
-      {algum("titulo", "canal", "clienteId", "contatoId", "colaborador", "responsavelId") ? (
+      {algum(...comercial) ? (
+      <article className="cartao bloco">
+      <fieldset className="secao-form">
+        <legend>Comercial</legend>
+        <div className="grade-form">
+      {mostra("modalidade") ? <CampoModalidade valor={valores?.modalidade} /> : null}
+      {mostra("volume") ? <Campo nome="volume" rotulo="Volume" valor={valores?.volume} /> : null}
+      {mostra("validadeProposta") ? <Campo nome="validadeProposta" rotulo="Validade da proposta" tipo="date" valor={valores?.validadeProposta} /> : null}
+      {mostra("valorAprovado") ? <Campo nome="valorAprovado" rotulo="Valor aprovado (R$)" valor={valores?.valorAprovado} /> : null}
+      {mostra("valorCotado") ? <Campo nome="valorCotado" rotulo="Valor cotado (R$)" valor={valores?.valorCotado} /> : null}
+      {mostra("valorFrete") ? <Campo nome="valorFrete" rotulo="Frete (R$)" valor={valores?.valorFrete} /> : null}
+      {mostra("valorSeguro") ? <Campo nome="valorSeguro" rotulo="Seguro (R$)" valor={valores?.valorSeguro} /> : null}
+      {mostra("formaPagamento") ? <Campo nome="formaPagamento" rotulo="Forma de pagamento" valor={valores?.formaPagamento} /> : null}
+      {mostra("fonte") ? <Campo nome="fonte" rotulo="Fonte" valor={valores?.fonte} /> : null}
+        </div>
+      </fieldset>
+      </article>
+      ) : null}
+      {algum("canal", "clienteId", "contatoId", "colaborador", "responsavelId") ? (
+      <article className="cartao bloco">
       <fieldset className="secao-form">
         <legend>Cadastro</legend>
         <div className="grade-form">
-      {mostra("titulo") ? <Campo nome="titulo" rotulo="Título" valor={valores?.titulo} className="largo" obrigatorio /> : null}
       {mostra("canal") ? (
         <label className="campo">
           <span>Canal de origem</span>
@@ -85,20 +110,10 @@ export function FormProcesso({
         </label>
       ) : null}
       {mostra("contatoId") ? (
-        <label className="campo">
-          <span>Contato</span>
-          <select key={clienteId} name="contatoId" defaultValue={valores?.contatoId || ""}>
-            <option value="">Sem contato definido</option>
-            {contatos.map((contato) => (
-              <option key={contato.id} value={contato.id}>
-                {contato.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        <BuscaContato key={clienteId} contatos={contatos} contatoId={valores?.contatoId || ""} podeCadastrar />
       ) : null}
       {mostra("colaborador") ? <Campo nome="colaborador" rotulo="Colaborador em mudança" valor={valores?.colaborador} /> : null}
-      {mostra("responsavelId") ? (
+      {mostra("responsavelId") && modo === "editar" ? (
         <label className="campo">
           <span>Responsável</span>
           <select name="responsavelId" defaultValue={valores?.responsavelId || ""}>
@@ -113,27 +128,45 @@ export function FormProcesso({
       ) : null}
         </div>
       </fieldset>
+      </article>
       ) : null}
-      {algum(...operacao) ? (
+      {mostra("origemEndereco") || mostra("origemCidade") ? (
+        <article className="cartao bloco">
+          <h2>Endereço de origem</h2>
+          <EnderecoFicha lado="origem" titulo="Origem" partes={valores?.origemPartes || { logradouro: valores?.origemEndereco }} cidade={valores?.origemCidade || ""} uf={valores?.origemUf || ""} referencia={valores?.origemReferencia || ""} imovel={valores?.origemImovel || ""} andar={valores?.origemAndar || ""} elevador={valores?.origemElevador || ""} />
+        </article>
+      ) : null}
+      {mostra("destinoEndereco") || mostra("destinoCidade") ? (
+        <article className="cartao bloco">
+          <h2>Endereço de destino</h2>
+          <EnderecoFicha lado="destino" titulo="Destino" partes={valores?.destinoPartes || { logradouro: valores?.destinoEndereco }} cidade={valores?.destinoCidade || ""} uf={valores?.destinoUf || ""} referencia={valores?.destinoReferencia || ""} imovel={valores?.destinoImovel || ""} andar={valores?.destinoAndar || ""} elevador={valores?.destinoElevador || ""} />
+        </article>
+      ) : null}
+      {algum("dataPrevista", "dataColeta", "dataEntrega") ? (
+        <article className="cartao bloco">
+          <h2>Cronograma</h2>
+          <div className="grade-form">
+            {mostra("dataPrevista") || mostra("dataPretendida") ? <Campo nome="dataPrevista" rotulo="Data prevista" tipo="date" valor={valores?.dataPrevista || valores?.dataPretendida} /> : null}
+            {mostra("dataColeta") ? <Campo nome="dataColeta" rotulo="Data de coleta" tipo="date" valor={valores?.dataColeta} /> : null}
+            {mostra("dataEntrega") ? <Campo nome="dataEntrega" rotulo="Data de entrega" tipo="date" valor={valores?.dataEntrega} /> : null}
+          </div>
+        </article>
+      ) : null}
+      {etapaSlug === "PROPOSTA" && algum("diasParaColetar", "diasParaViagem") ? (
+        <article className="cartao bloco">
+          <h2>Cronograma da proposta</h2>
+          <p className="muted">Duração em dias. As datas de coleta e entrega ficam no cronograma, com o dia do mês.</p>
+          <div className="grade-form">
+            {mostra("diasParaColetar") ? <Campo nome="diasParaColetar" rotulo="Dias para coletar" valor={valores?.diasParaColetar} /> : null}
+            {mostra("diasParaViagem") ? <Campo nome="diasParaViagem" rotulo="Dias para viagem" valor={valores?.diasParaViagem} /> : null}
+          </div>
+        </article>
+      ) : null}
+      {algum("embalagemNecessaria", "itensEspeciais", "numeroCte", "inventario") ? (
+      <article className="cartao bloco">
       <fieldset className="secao-form">
         <legend>Operação</legend>
         <div className="grade-form">
-      {mostra("origemEndereco") ? <Campo nome="origemEndereco" rotulo="Endereço de origem" valor={valores?.origemEndereco} className="largo" /> : null}
-      {mostra("origemCidade") ? <Campo nome="origemCidade" rotulo="Cidade de origem" valor={valores?.origemCidade} /> : null}
-      {mostra("origemUf") ? <Uf nome="origemUf" rotulo="UF de origem" valor={valores?.origemUf} /> : null}
-      {mostra("origemReferencia") ? <Campo nome="origemReferencia" rotulo="Ponto de referência de origem" valor={valores?.origemReferencia} /> : null}
-      {mostra("origemAndar") ? <Campo nome="origemAndar" rotulo="Andar de origem" valor={valores?.origemAndar} /> : null}
-      {mostra("origemElevador") ? <Campo nome="origemElevador" rotulo="Elevador de origem" valor={valores?.origemElevador} /> : null}
-      {mostra("origemImovel") ? <Campo nome="origemImovel" rotulo="Imóvel de origem" valor={valores?.origemImovel} /> : null}
-      {mostra("destinoEndereco") ? <Campo nome="destinoEndereco" rotulo="Endereço de destino" valor={valores?.destinoEndereco} className="largo" /> : null}
-      {mostra("destinoCidade") ? <Campo nome="destinoCidade" rotulo="Cidade de destino" valor={valores?.destinoCidade} /> : null}
-      {mostra("destinoUf") ? <Uf nome="destinoUf" rotulo="UF de destino" valor={valores?.destinoUf} /> : null}
-      {mostra("destinoReferencia") ? <Campo nome="destinoReferencia" rotulo="Ponto de referência de destino" valor={valores?.destinoReferencia} /> : null}
-      {mostra("destinoAndar") ? <Campo nome="destinoAndar" rotulo="Andar de destino" valor={valores?.destinoAndar} /> : null}
-      {mostra("destinoElevador") ? <Campo nome="destinoElevador" rotulo="Elevador de destino" valor={valores?.destinoElevador} /> : null}
-      {mostra("destinoImovel") ? <Campo nome="destinoImovel" rotulo="Imóvel de destino" valor={valores?.destinoImovel} /> : null}
-      {mostra("descricaoColeta") ? <Campo nome="descricaoColeta" rotulo="Coleta" valor={valores?.descricaoColeta} /> : null}
-      {mostra("descricaoEntrega") ? <Campo nome="descricaoEntrega" rotulo="Entrega" valor={valores?.descricaoEntrega} /> : null}
       {mostra("embalagemNecessaria") ? (
         <label className="campo">
           <span>Embalagem necessária</span>
@@ -145,12 +178,6 @@ export function FormProcesso({
         </label>
       ) : null}
       {mostra("itensEspeciais") ? <Campo nome="itensEspeciais" rotulo="Itens especiais" valor={valores?.itensEspeciais} className="largo" /> : null}
-      {mostra("dataPretendida") ? <Campo nome="dataPretendida" rotulo="Data pretendida" tipo="date" valor={valores?.dataPretendida} /> : null}
-      {mostra("dataColeta") ? <Campo nome="dataColeta" rotulo="Data da coleta" tipo="date" valor={valores?.dataColeta} /> : null}
-      {mostra("dataEntrega") ? <Campo nome="dataEntrega" rotulo="Data da entrega" tipo="date" valor={valores?.dataEntrega} /> : null}
-      {mostra("dataPrevista") ? <Campo nome="dataPrevista" rotulo="Data prevista" tipo="date" valor={valores?.dataPrevista} /> : null}
-      {mostra("diasParaColetar") ? <Campo nome="diasParaColetar" rotulo="Dias para coletar" valor={valores?.diasParaColetar} /> : null}
-      {mostra("diasParaViagem") ? <Campo nome="diasParaViagem" rotulo="Dias para viagem" valor={valores?.diasParaViagem} /> : null}
       {mostra("numeroCte") ? <Campo nome="numeroCte" rotulo="CT-e" valor={valores?.numeroCte} /> : null}
       {mostra("inventario") ? (
         <label className="campo largo">
@@ -160,24 +187,10 @@ export function FormProcesso({
       ) : null}
         </div>
       </fieldset>
-      ) : null}
-      {algum(...comercial) ? (
-      <fieldset className="secao-form">
-        <legend>Comercial</legend>
-        <div className="grade-form">
-      {mostra("modalidade") ? <Campo nome="modalidade" rotulo="Modalidade" valor={valores?.modalidade} /> : null}
-      {mostra("volume") ? <Campo nome="volume" rotulo="Volume" valor={valores?.volume} /> : null}
-      {mostra("validadeProposta") ? <Campo nome="validadeProposta" rotulo="Validade da proposta" tipo="date" valor={valores?.validadeProposta} /> : null}
-      {mostra("valorAprovado") ? <Campo nome="valorAprovado" rotulo="Valor aprovado (R$)" valor={valores?.valorAprovado} /> : null}
-      {mostra("valorCotado") ? <Campo nome="valorCotado" rotulo="Valor cotado (R$)" valor={valores?.valorCotado} /> : null}
-      {mostra("valorFrete") ? <Campo nome="valorFrete" rotulo="Frete (R$)" valor={valores?.valorFrete} /> : null}
-      {mostra("valorSeguro") ? <Campo nome="valorSeguro" rotulo="Seguro (R$)" valor={valores?.valorSeguro} /> : null}
-      {mostra("formaPagamento") ? <Campo nome="formaPagamento" rotulo="Forma de pagamento" valor={valores?.formaPagamento} /> : null}
-      {mostra("fonte") ? <Campo nome="fonte" rotulo="Fonte" valor={valores?.fonte} /> : null}
-        </div>
-      </fieldset>
+      </article>
       ) : null}
       {algum(...financeiro) ? (
+      <article className="cartao bloco">
       <fieldset className="secao-form">
         <legend>Financeiro</legend>
         <div className="grade-form">
@@ -188,11 +201,40 @@ export function FormProcesso({
       {mostra("dataRecebimento") ? <Campo nome="dataRecebimento" rotulo="Recebimento" tipo="date" valor={valores?.dataRecebimento} /> : null}
         </div>
       </fieldset>
+      </article>
       ) : null}
+      {modo === "criar" && mostra("responsavelId") ? <p className="muted">Você será o responsável desta oportunidade.</p> : null}
       <button className="btn primario" type="submit">
         {modo === "criar" ? "Criar processo" : "Salvar alterações"}
       </button>
     </FormAcao>
+  );
+}
+
+const MODALIDADES = [
+  "Intermunicipal exclusiva",
+  "Local",
+  "Interestadual exclusiva",
+  "Interestadual compartilhada",
+  "Internacional",
+];
+
+function CampoModalidade({ valor }: { valor?: string }) {
+  const atual = valor || "";
+  const conhecida = !atual || MODALIDADES.includes(atual);
+  return (
+    <label className="campo">
+      <span>Modalidade</span>
+      <select name="modalidade" defaultValue={atual}>
+        <option value="">Selecione</option>
+        {conhecida ? null : <option value={atual}>{atual}</option>}
+        {MODALIDADES.map((item) => (
+          <option key={item} value={item}>
+            {item}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -216,10 +258,8 @@ function Campo({
       <span>{rotulo}</span>
       <input
         name={nome}
-        type={tipo === "date" ? "text" : tipo}
-        inputMode={tipo === "date" ? "numeric" : undefined}
-        placeholder={tipo === "date" ? "dd/mm/aaaa" : undefined}
-        defaultValue={valor || ""}
+        type={tipo === "date" ? "date" : tipo}
+        defaultValue={tipo === "date" ? (valor ? (interpretarData(valor) ?? "") : "") : valor || ""}
         required={obrigatorio}
       />
     </label>

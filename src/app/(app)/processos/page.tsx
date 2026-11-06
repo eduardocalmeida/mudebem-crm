@@ -197,11 +197,9 @@ export default async function ProcessosPage({
                   </td>
                   <td>
                     <Link href={`/processos/${processo.id}`}>
-                      <strong>{processo.titulo}</strong>
+                      <strong>{processo.cliente.nome}</strong>
                     </Link>
-                    <div className="muted">
-                      {processo.cliente.nome} · {rotuloCanal(processo.canal)}
-                    </div>
+                    <div className="muted">{rotuloCanal(processo.canal)}</div>
                   </td>
                   <td>
                     <SeloEtapa etapa={processo.etapa} />

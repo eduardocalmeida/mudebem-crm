@@ -20,7 +20,7 @@ export async function AbaInventario({ processoId }: { processoId: string }) {
     grupos.set(item.categoria, lista);
   }
   return (
-    <section className="cartao">
+    <section className="cartao painel-aba">
       <h2>Inventário</h2>
       <p className="muted">
         {inventario.totais.quantidade} itens · <strong>{inventario.volume}</strong>. Esse total alimenta o campo Volume do processo.
@@ -124,7 +124,7 @@ export async function AbaTarefas({ processoId }: { processoId: string }) {
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
   ]);
   return (
-    <section className="cartao">
+    <section className="cartao painel-aba">
       <h2>Tarefas</h2>
       <ul className="lista-tarefas">
         {tarefas.map((tarefa) => (

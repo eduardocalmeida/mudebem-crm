@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { atualizarRegraTarefaAction, criarTarefaAction } from "@/server/actions-operacao";
+import { criarTarefaAction } from "@/server/actions-operacao";
 import { formatarData, formatarDataHora } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { garantirTarefasPadrao, listarTarefas, tarefaAtrasada } from "@/server/tarefas";
@@ -44,7 +44,7 @@ function rota(processo: { origemCidade: string | null; origemUf: string | null; 
   if (processo.origemCidade || processo.destinoCidade) {
     return `${processo.origemCidade || "—"}${processo.origemUf ? `/${processo.origemUf}` : ""} → ${processo.destinoCidade || "—"}${processo.destinoUf ? `/${processo.destinoUf}` : ""}`;
   }
-  return processo.titulo || processo.codigo;
+  return "";
 }
 
 function classeTipo(slug: string, atrasada: boolean) {
@@ -68,9 +68,6 @@ export default async function TarefasPage({
 }) {
   const usuario = await exigirUsuario();
   await garantirTarefasPadrao();
-  const regras = usuario.papel === "ADMIN"
-    ? await prisma.regraTarefa.findMany({ include: { tipo: true }, orderBy: { etapaSlug: "asc" } })
-    : [];
   const consulta = await searchParams;
   const visao = consulta.visao === "lista" || consulta.visao === "semana" || consulta.visao === "dia" || consulta.visao === "mes" ? consulta.visao : "quadro";
   const quem = consulta.quem === "equipe" ? "equipe" : "eu";
@@ -130,7 +127,7 @@ export default async function TarefasPage({
             <select name="processoId" required defaultValue="">
               <option value="" disabled>Escolha o lead</option>
               {processos.map((processo) => (
-                <option key={processo.id} value={processo.id}>{processo.codigo} · {processo.titulo}</option>
+                <option key={processo.id} value={processo.id}>{processo.codigo}</option>
               ))}
             </select>
           </label>
@@ -156,25 +153,6 @@ export default async function TarefasPage({
       {visao === "lista" ? <Lista tarefas={tarefas} ancora={ancora} /> : null}
       {visao === "semana" || visao === "dia" ? <Semana tarefas={tarefas} inicio={inicioSem} somente={visao === "dia" ? ancora : null} /> : null}
       {visao === "mes" ? <Mes tarefas={tarefas} ancora={ancora} /> : null}
-
-      {regras.length > 0 ? (
-        <section className="cartao bloco">
-          <h2>Tarefas criadas ao mudar de etapa</h2>
-          {regras.map((regra) => (
-            <form key={regra.id} action={atualizarRegraTarefaAction} className="linha">
-              <input type="hidden" name="id" value={regra.id} />
-              <strong>{regra.etapaSlug}</strong>
-              <span className="muted">{regra.tipo.rotulo}</span>
-              <input name="titulo" defaultValue={regra.titulo} />
-              <input name="horasDepois" type="number" min={0} defaultValue={regra.horasDepois} />
-              <label className="check">
-                <input type="checkbox" name="ativa" defaultChecked={regra.ativa} /> Ativa
-              </label>
-              <button className="btn secundario" type="submit">Salvar</button>
-            </form>
-          ))}
-        </section>
-      ) : null}
     </>
   );
 }
@@ -183,8 +161,8 @@ function Cartao({ tarefa, agora }: { tarefa: TarefaCard; agora: Date }) {
   const atrasada = tarefaAtrasada(tarefa.vencimento, tarefa.concluidaEm, agora);
   return (
     <Link href={`/processos/${tarefa.processo.id}?aba=tarefas`} className={`cartao-agenda ${classeTipo(tarefa.tipo.slug, atrasada)}`}>
-      <strong>{tarefa.processo.titulo}</strong>
-      <span className="muted">{tarefa.processo.codigo} · {rota(tarefa.processo)}</span>
+      <strong>{tarefa.processo.codigo}</strong>
+      <span className="muted">{rota(tarefa.processo)}</span>
       <span className="tipo">{tarefa.tipo.rotulo}</span>
       <span>{tarefa.titulo}</span>
       <small>{formatarDataHora(tarefa.vencimento)} · {tarefa.responsavel?.nome || "sem responsável"}</small>

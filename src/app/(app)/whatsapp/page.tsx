@@ -27,7 +27,7 @@ export default async function WhatsappPage() {
               <IconeCanal canal={conversa.canal} />
               <div>
                 <div className="linha">
-                  <strong>{conversa.processo?.titulo || conversa.contato?.nome || conversa.whatsapp?.nomeContato || "Sem lead"}</strong>
+                  <strong>{conversa.processo?.codigo || conversa.contato?.nome || conversa.whatsapp?.nomeContato || "Sem lead"}</strong>
                   <span className="muted">{conversa.ultimaMensagemEm ? formatarDataHora(conversa.ultimaMensagemEm) : ""}</span>
                 </div>
                 <div className="muted">{conversa.numero} · {rotuloStatusConversa(conversa.status)}{conversa.processo ? ` · ${conversa.processo.codigo}` : ""}</div>

@@ -142,14 +142,24 @@ const clienteNovo = z
 
 const camposProcesso = {
   colaborador: textoOpcional(120),
-  origemEndereco: textoOpcional(180),
+  origemEndereco: textoOpcional(300),
+  origemCep: textoOpcional(12),
+  origemLogradouro: textoOpcional(120),
+  origemNumero: textoOpcional(20),
+  origemComplemento: textoOpcional(80),
+  origemBairro: textoOpcional(80),
   origemCidade: textoOpcional(80),
   origemUf: ufOpcional,
   origemReferencia: textoOpcional(180),
   origemAndar: textoOpcional(40),
   origemElevador: textoOpcional(40),
   origemImovel: textoOpcional(80),
-  destinoEndereco: textoOpcional(180),
+  destinoEndereco: textoOpcional(300),
+  destinoCep: textoOpcional(12),
+  destinoLogradouro: textoOpcional(120),
+  destinoNumero: textoOpcional(20),
+  destinoComplemento: textoOpcional(80),
+  destinoBairro: textoOpcional(80),
   destinoCidade: textoOpcional(80),
   destinoUf: ufOpcional,
   destinoReferencia: textoOpcional(180),
@@ -212,7 +222,19 @@ const camposProcesso = {
 
 export const esquemaCriarProcesso = z
   .object({
-    titulo: z.string().trim().min(3, "O título precisa de ao menos 3 caracteres.").max(180),
+    titulo: z
+      .string()
+      .trim()
+      .max(180)
+      .optional()
+      .transform((valor, ctx) => {
+        if (!valor) return undefined;
+        if (valor.length < 3) {
+          ctx.addIssue({ code: "custom", message: "O título precisa de ao menos 3 caracteres." });
+          return z.NEVER;
+        }
+        return valor;
+      }),
     canal,
     etapa: etapaOpcional.optional(),
     clienteId: idOpcional.optional(),

@@ -362,6 +362,7 @@ const FORA_DA_FICHA = new Set<Campo>([
   "linkRecibo",
   "valorTransporte",
   "valorTotal",
+  "titulo",
 ]);
 
 export function camposDoPapel(papel: Papel): Campo[] {

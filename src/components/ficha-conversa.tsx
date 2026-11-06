@@ -48,29 +48,32 @@ export async function FichaConversa({ processoId, usuarioId, fio }: { processoId
               <Link href={`/comunicacao/${aberta.id}`}>Abrir o fio</Link>
               {aberta.whatsapp ? <> · <Link href={`/whatsapp/${aberta.whatsapp.id}`}>Responder</Link></> : null}
             </p>
-            <div className="fio fio-curto">
+            <div className="fio fio-curto" aria-label="Mensagens da conversa">
               {aberta.mensagens.length === 0 ? <p className="muted">Nenhuma mensagem ainda.</p> : null}
               {aberta.mensagens.map((mensagem) => (
                 <div key={mensagem.id} className={mensagem.direcao === "SAIDA" ? "bolha saida" : "bolha"}>
-                  <strong className="linha-icone"><IconeCanal canal={mensagem.canal} /> {mensagem.remetente || "Mensagem"}</strong>
-                  <div>{mensagem.conteudo}</div>
-                  <small className="muted">{formatarDataHora(mensagem.criadaEm)}</small>
+                  <div className="bolha-meta">
+                    <strong className="linha-icone"><IconeCanal canal={mensagem.canal} /> {mensagem.remetente || (mensagem.direcao === "SAIDA" ? "Saída" : "Entrada")}</strong>
+                    <span className="muted">{mensagem.direcao === "SAIDA" ? "Saída" : "Entrada"}</span>
+                    <time className="muted" dateTime={mensagem.criadaEm.toISOString()}>{formatarDataHora(mensagem.criadaEm)}</time>
+                  </div>
+                  <p>{mensagem.conteudo}</p>
                 </div>
               ))}
             </div>
-            <form action={registrarMensagemAction} className="grade-form uma">
+            <form action={registrarMensagemAction} className="compositor">
               <input type="hidden" name="conversaId" value={aberta.id} />
               <input type="hidden" name="processoId" value={processoId} />
               <label className="campo">
                 <span>Direção</span>
-                <select name="direcao" defaultValue="SAIDA">
+                <select name="direcao" defaultValue="SAIDA" aria-label="Direção da mensagem">
                   <option value="SAIDA">Saída</option>
                   <option value="ENTRADA">Entrada</option>
                 </select>
               </label>
-              <label className="campo largo">
+              <label className="campo">
                 <span>Mensagem</span>
-                <textarea name="conteudo" required placeholder="Registre o que foi dito" />
+                <textarea name="conteudo" required placeholder="Escreva a mensagem" />
               </label>
               <button className="btn primario" type="submit">Registrar</button>
             </form>

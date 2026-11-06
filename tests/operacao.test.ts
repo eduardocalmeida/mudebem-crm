@@ -45,7 +45,26 @@ describe("tarefas, inventário e CT-e", () => {
 
     await moverEtapa({ tipo: "usuario", id: usuario.id, nome: usuario.nome, papel: "ADMIN" }, processo.id, "PROPOSTA");
     const tarefas = await prisma.tarefa.findMany({ where: { processoId: processo.id }, include: { tipo: true } });
-    expect(tarefas.map((tarefa) => tarefa.tipo.slug)).toContain("ENVIAR_PROPOSTA");
+    const proposta = tarefas.find((tarefa) => tarefa.tipo.slug === "ENVIAR_PROPOSTA");
+    expect(proposta).toBeTruthy();
+    const horas = (proposta!.vencimento.getTime() - Date.now()) / 3_600_000;
+    expect(horas).toBeGreaterThan(3.5);
+    expect(horas).toBeLessThan(4.5);
+
+    await prisma.regraTarefa.update({
+      where: { etapaSlug_tipoId: { etapaSlug: "PROPOSTA", tipoId: "ENVIAR_PROPOSTA" } },
+      data: { horasDepois: 6, titulo: "Enviar a proposta revisada", ativa: true },
+    });
+    const outro = await prisma.processo.create({
+      data: { codigo: "MB-OP-1B", titulo: "Segunda mudança", canal: "EMAIL", clienteId: cliente.id },
+    });
+    const antes = Date.now();
+    await moverEtapa({ tipo: "usuario", id: usuario.id, nome: usuario.nome, papel: "ADMIN" }, outro.id, "PROPOSTA");
+    const salva = await prisma.tarefa.findFirst({ where: { processoId: outro.id, tipoId: "ENVIAR_PROPOSTA" } });
+    expect(salva?.titulo).toBe("Enviar a proposta revisada");
+    const prazo = (salva!.vencimento.getTime() - antes) / 3_600_000;
+    expect(prazo).toBeGreaterThan(5.5);
+    expect(prazo).toBeLessThan(6.5);
   });
 
   it("soma o inventário e grava o volume do processo", async () => {

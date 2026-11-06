@@ -24,7 +24,7 @@ export async function AbaFiscal({
   const escolha = await lerEscolhaFiscal(processoId);
   return (
     <section>
-      <form action={escolherDocumentoAction} className="cartao bloco">
+      <form action={escolherDocumentoAction} className="cartao painel-aba">
         <h2>Documento fiscal</h2>
         <p className="muted">
           {escolha.sugerido === "NFSE"
@@ -58,7 +58,7 @@ async function Nota({ processoId, admin }: { processoId: string; admin: boolean 
   const iss = valorDoIss(nfse.valorServicos == null ? null : Number(nfse.valorServicos), nfse.aliquotaIss == null ? null : Number(nfse.aliquotaIss));
   const moeda = (valor: { toString(): string } | number | null) => (valor == null ? "" : Number(valor).toFixed(2).replace(".", ","));
   return (
-    <section className="cartao">
+    <section className="cartao painel-aba">
       <h2>NFS-e · {nfse.status}</h2>
       <p className="muted">
         Prestador: {nfse.prestadorNome || "cadastro da conta WebmaniaBR"}

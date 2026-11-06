@@ -248,11 +248,13 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
   const id = await prisma.$transaction(async (tx) => {
     const clienteId = await resolverCliente(tx, dados.clienteId, dados.cliente);
     const contatoId = await resolverContato(tx, clienteId, dados.contatoId, dados.contato);
-    await exigirResponsavel(tx, dados.responsavelId);
+    const codigo = await proximoCodigo(tx);
+    const responsavelId = ator.tipo === "usuario" ? ator.id : dados.responsavelId ?? null;
+    await exigirResponsavel(tx, responsavelId);
     const criado = await tx.processo.create({
       data: {
-        codigo: await proximoCodigo(tx),
-        titulo: dados.titulo,
+        codigo,
+        titulo: dados.titulo || codigo,
         etapa,
         canal: dados.canal,
         clienteId,
@@ -321,7 +323,7 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
         numeroNf: dados.numeroNf ?? null,
         dataVencimento: paraDataBanco(dados.dataVencimento),
         dataRecebimento: paraDataBanco(dados.dataRecebimento),
-        responsavelId: dados.responsavelId ?? null,
+        responsavelId,
       },
     });
     await tx.evento.create({

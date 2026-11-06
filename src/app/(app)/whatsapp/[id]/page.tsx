@@ -71,7 +71,7 @@ export default async function ConversaPage({ params }: { params: Promise<{ id: s
             {conversa.processo ? (
               <p>
                 <Link href={`/processos/${conversa.processo.id}`}>
-                  {conversa.processo.codigo} · {conversa.processo.titulo}
+                  {conversa.processo.codigo}
                 </Link>
                 <br />
                 <SeloEtapa etapa={conversa.processo.etapa} />

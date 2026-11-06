@@ -114,6 +114,7 @@ export async function atualizarRegraTarefaAction(form: FormData) {
     },
   });
   revalidatePath("/tarefas");
+  revalidatePath("/etapas");
 }
 
 function texto(form: FormData, nome: string) {

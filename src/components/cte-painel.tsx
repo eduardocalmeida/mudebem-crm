@@ -24,7 +24,7 @@ export async function AbaCte({ processoId, aviso, secao }: { processoId: string;
   const ativa = SECOES_CTE.some(([id]) => id === secao) ? secao! : "identificacao";
   const pedido = montarPayloadWebmania(rascunho);
   return (
-    <section className="cartao">
+    <section className="cartao painel-aba">
       <h2>CT-e</h2>
       <p className="muted">
         Rascunho no formato da tela da Martins. O envio usa a WebmaniaBR e ainda não sai deste servidor. O certificado A1 fica no painel deles.

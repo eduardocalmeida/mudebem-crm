@@ -1,6 +1,7 @@
 import type { ZodError } from "zod";
 import { camposDoPapel, CAMPOS, type Papel } from "@/lib/domain";
 import { AppError, mensagemZod } from "@/lib/errors";
+import { montarEndereco } from "@/server/formulario-publico";
 import {
   esquemaChave,
   esquemaCliente,
@@ -32,6 +33,45 @@ function validar<T>(resultado: { success: true; data: T } | { success: false; er
   return resultado.data;
 }
 
+function completarFicha(form: FormData, papel: Papel, bruto: Record<string, string>) {
+  const podeEndereco = papel === "ADMIN" || camposDoPapel(papel).includes("origemEndereco");
+  const podeContato = papel === "ADMIN" || camposDoPapel(papel).includes("contatoId");
+  if (podeEndereco) {
+    for (const lado of ["origem", "destino"] as const) {
+      const partes = {
+        cep: texto(form, `${lado}Cep`),
+        logradouro: texto(form, `${lado}Logradouro`),
+        numero: texto(form, `${lado}Numero`),
+        complemento: texto(form, `${lado}Complemento`),
+        bairro: texto(form, `${lado}Bairro`),
+      };
+      if (Object.values(partes).some((valor) => valor !== undefined)) {
+        bruto[`${lado}Cep`] = partes.cep ?? "";
+        bruto[`${lado}Logradouro`] = partes.logradouro ?? "";
+        bruto[`${lado}Numero`] = partes.numero ?? "";
+        bruto[`${lado}Complemento`] = partes.complemento ?? "";
+        bruto[`${lado}Bairro`] = partes.bairro ?? "";
+        bruto[`${lado}Endereco`] = montarEndereco({ endereco: bruto[`${lado}Endereco`], ...partes }) ?? "";
+      }
+    }
+  }
+  if (podeContato && texto(form, "contatoNome")?.trim()) {
+    delete bruto.contatoId;
+    return {
+      ...bruto,
+      contato: {
+        nome: texto(form, "contatoNome"),
+        email: texto(form, "contatoEmail"),
+        telefone: texto(form, "contatoTelefone"),
+        cargo: texto(form, "contatoCargo"),
+        cpf: texto(form, "contatoCpf"),
+        documento: texto(form, "contatoDocumento"),
+      },
+    };
+  }
+  return bruto;
+}
+
 export function lerCriarProcesso(form: FormData, papel: Papel) {
   const bruto = objeto(form, CAMPOS);
   if (papel !== "ADMIN") {
@@ -40,7 +80,7 @@ export function lerCriarProcesso(form: FormData, papel: Papel) {
       if (!permitidos.has(chave)) delete bruto[chave];
     }
   }
-  return validar(esquemaCriarProcesso.safeParse(bruto));
+  return validar(esquemaCriarProcesso.safeParse(completarFicha(form, papel, bruto)));
 }
 
 export function lerPatchProcesso(form: FormData, papel: Papel) {
@@ -51,7 +91,7 @@ export function lerPatchProcesso(form: FormData, papel: Papel) {
       if (!permitidos.has(chave)) delete bruto[chave];
     }
   }
-  return validar(esquemaPatchProcesso.safeParse(bruto));
+  return validar(esquemaPatchProcesso.safeParse(completarFicha(form, papel, bruto)));
 }
 
 const CHAVES_CLIENTE = ["nome", "cnpj", "email", "telefone", "endereco", "cidade", "uf", "observacoes"] as const;

@@ -81,9 +81,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
               {cliente.processos.map((processo) => (
                 <Link key={processo.id} href={`/processos/${processo.id}`} className="item-lista">
                   <span>
-                    {processo.codigo}
-                    <br />
-                    <strong>{processo.titulo}</strong>
+                    <strong>{processo.codigo}</strong>
                   </span>
                   <SeloEtapa etapa={processo.etapa} />
                 </Link>

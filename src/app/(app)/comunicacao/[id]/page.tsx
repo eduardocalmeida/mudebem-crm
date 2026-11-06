@@ -17,10 +17,9 @@ export default async function ConversaPage({ params }: { params: Promise<{ id: s
       <header className="pagina-cabeca">
         <div>
           <p className="sobretitulo linha-icone">{conversa.numero} <IconeCanal canal={conversa.canal} /></p>
-          <h1>{conversa.processo?.titulo || conversa.contato?.nome || "Conversa"}</h1>
+          <h1>{conversa.processo?.codigo || conversa.contato?.nome || "Conversa"}</h1>
           <p className="muted">
             {rotuloStatusConversa(conversa.status)}
-            {conversa.processo ? ` · ${conversa.processo.codigo}` : ""}
             {conversa.responsavel ? ` · ${conversa.responsavel.nome}` : ""}
           </p>
         </div>
