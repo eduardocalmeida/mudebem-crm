@@ -361,8 +361,6 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .semana-coluna { position: relative; border-left: 1px solid var(--line); }
 .semana-linha { border-top: 1px solid rgba(226, 217, 207, 0.85); }
 .check { display: flex; align-items: center; gap: 8px; }
-.topo-lead { display: grid; grid-template-columns: minmax(220px, 320px); gap: 14px; margin-bottom: 14px; }
-.valor-principal b { display: block; font-size: 2rem; letter-spacing: 0.01em; margin: 4px 0; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
 .acoes-etapa { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
 .acoes-etapa .faixa-exemplo { flex-basis: 100%; margin: 0; }
 .secao-form { border: 0; margin: 0 0 18px; padding: 0; min-width: 0; }
@@ -492,7 +490,7 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
   .gaveta a, .gaveta button { min-height: 44px; display: flex; align-items: center; text-decoration: none; width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
   .gaveta-secao { margin: 10px 0 0; color: var(--gold); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
   .conteudo { padding: 18px 14px 96px; }
-  .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .topo-lead, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
+  .grade-stats, .kpi-grade, .layout-painel, .dash-grade, .dash-grade.tres, .ficha, .fatos, .login, .grade-form, .grade-form.uma, .rota-grande, .picker, .linha-item, .portal { grid-template-columns: 1fr; }
   .painel-aba { padding: 16px; }
   .linha-inventario { grid-template-columns: minmax(0, 1fr) auto auto auto; }
   .linha-inventario .valor-linha { grid-column: 1 / -1; }

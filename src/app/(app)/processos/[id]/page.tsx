@@ -8,7 +8,7 @@ import { SeloCanal, SeloEtapa, SeloExemplo } from "@/components/selos";
 import { camposDoPapel, destinosPossiveis, etapaPorId, rotuloEtapa } from "@/lib/domain";
 import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
-import { formatarBRL, formatarData, formatarDataHora, formatarNumero } from "@/lib/format";
+import { formatarData, formatarDataHora, formatarNumero } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
 import { FichaConversa } from "@/components/ficha-conversa";
@@ -92,21 +92,6 @@ export default async function ProcessoPage({
       {aba === "resumo" ? (
       <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>
-      <section className="topo-lead">
-        <article className="cartao bloco valor-principal">
-          <span className="muted">Valor</span>
-          <b>{formatarBRL(processo.valorAprovado ?? processo.valorCotado)}</b>
-          <small className="muted">
-            {processo.valorAprovado != null ? "aprovado" : "cotado"}
-            {" · "}frete {formatarBRL(processo.valorFrete)}
-            {" · "}seguro {formatarBRL(processo.valorSeguro)}
-          </small>
-          <div className="muted">
-            Coleta {formatarData(processo.dataColeta)} · entrega {formatarData(processo.dataEntrega)}
-            {processo.dataPrevista || processo.dataPretendida ? ` · prevista ${formatarData(processo.dataPrevista ?? processo.dataPretendida)}` : ""}
-          </div>
-        </article>
-      </section>
       <AcoesDaEtapa etapa={processo.etapa} processoId={processo.id} acao={consulta.acao} etapas={etapas} />
       {consulta.acao === "proposta" ? (
         <article className="cartao bloco">

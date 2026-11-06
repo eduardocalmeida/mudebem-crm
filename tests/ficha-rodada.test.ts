@@ -85,7 +85,8 @@ describe("ficha da oportunidade", () => {
     expect(pagina).not.toContain("rota-grande");
     expect(pagina).not.toContain("Mover etapa");
     expect(pagina).toContain("SeletorEtapa");
-    expect(pagina).toContain("valor-principal");
+    expect(pagina).not.toContain("valor-principal");
+    expect(pagina).not.toContain("formatarBRL");
     expect(pagina).not.toContain('["tarefas", "Tarefas"]');
     expect(formulario).toContain("EnderecoFicha");
     expect(seletor).not.toContain("observacao");
