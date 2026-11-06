@@ -12,7 +12,7 @@ export default async function WhatsappPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const usuario = await exigirUsuario();
+  await exigirUsuario();
   const sp = await searchParams;
   const naoLidas = sp.naoLidas === "sim";
   const caixa = sp.caixa === "meta";
@@ -31,12 +31,9 @@ export default async function WhatsappPage({
           <h1>Comunicação</h1>
           <p className="muted">Fios abertos de todos os canais. O WhatsApp da Meta continua na caixa própria.</p>
         </div>
-        <div className="linha">
-          {usuario.papel === "ADMIN" ? <Link className="btn secundario" href="/whatsapp/ajustes">Números e conexão</Link> : null}
-          <Link className="btn secundario" href={caixa ? "/whatsapp" : "/whatsapp?caixa=meta"}>
-            {caixa ? "Inbox" : "Caixa WhatsApp"}
-          </Link>
-        </div>
+        <Link className="btn secundario" href={caixa ? "/whatsapp" : "/whatsapp?caixa=meta"}>
+          {caixa ? "Inbox" : "Caixa WhatsApp"}
+        </Link>
       </header>
       {caixa ? null : (
         <nav className="abas" aria-label="Canais">

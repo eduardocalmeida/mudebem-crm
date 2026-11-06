@@ -24,6 +24,7 @@ const CONFIG: { href: string; rotulo: string; icone: IconeNome }[] = [
   { href: "/contratos", rotulo: "Contratos", icone: "contratos" },
   { href: "/importar", rotulo: "Importar", icone: "importar" },
   { href: "/integracoes", rotulo: "Integrações", icone: "integracoes" },
+  { href: "/whatsapp/ajustes", rotulo: "Números e conexão", icone: "comunicacao" },
 ];
 
 export function BarraLateral({
@@ -40,6 +41,9 @@ export function BarraLateral({
   const ativo = (href: string) => {
     if (href === "/processos") {
       return caminho === "/processos" || (caminho.startsWith("/processos/") && !caminho.startsWith("/processos/novo"));
+    }
+    if (href === "/whatsapp") {
+      return (caminho === "/whatsapp" || caminho.startsWith("/whatsapp/")) && !caminho.startsWith("/whatsapp/ajustes");
     }
     return caminho === href || caminho.startsWith(`${href}/`);
   };

@@ -23,12 +23,12 @@ export default async function AjustesWhatsappPage() {
     <>
       <header className="pagina-cabeca">
         <div>
-          <p className="sobretitulo">Meta</p>
+          <p className="sobretitulo">Configuração</p>
           <h1>Números e conexão</h1>
           <p className="muted">Um app e um WABA. O número que está no aplicativo entra por Embedded Signup, com coexistência.</p>
         </div>
-        <Link className="btn secundario" href="/whatsapp">
-          Voltar à inbox
+        <Link className="btn secundario" href="/integracoes">
+          Voltar às integrações
         </Link>
       </header>
       <section className="cartao bloco">
