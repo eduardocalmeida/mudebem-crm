@@ -5,7 +5,8 @@ import { redirect, unstable_rethrow } from "next/navigation";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { adicionarItens, removerItem } from "@/server/inventario";
-import { emitirCte } from "@/server/cte/cte";
+import { cancelarCte, corrigirCte, duplicarCte, emitirCte, obterOuPreencherCte, repreencherCte, atualizarRascunho } from "@/server/cte/cte";
+import { lerRascunho, type AtorCte } from "@/server/cte/rascunho";
 import { criarTarefa } from "@/server/tarefas";
 import { exigirUsuario } from "@/server/session";
 
@@ -114,16 +115,175 @@ export async function atualizarRegraTarefaAction(form: FormData) {
   revalidatePath("/tarefas");
 }
 
+function texto(form: FormData, nome: string) {
+  const valor = String(form.get(nome) || "").trim();
+  return valor || null;
+}
+
+function numeroCampo(form: FormData, nome: string) {
+  const bruto = String(form.get(nome) || "").trim();
+  const valor = bruto.includes(",") ? bruto.replace(/\./g, "").replace(",", ".") : bruto;
+  if (!valor) return null;
+  const convertido = Number(valor);
+  return Number.isFinite(convertido) ? convertido : null;
+}
+
+function atorDoFormulario(form: FormData, prefixo: string): AtorCte {
+  return {
+    nome: texto(form, `${prefixo}Nome`) || "",
+    documento: texto(form, `${prefixo}Documento`),
+    ie: texto(form, `${prefixo}Ie`),
+    email: texto(form, `${prefixo}Email`),
+    telefone: texto(form, `${prefixo}Telefone`),
+    endereco: texto(form, `${prefixo}Endereco`),
+    numero: texto(form, `${prefixo}Numero`),
+    complemento: texto(form, `${prefixo}Complemento`),
+    bairro: texto(form, `${prefixo}Bairro`),
+    cep: texto(form, `${prefixo}Cep`),
+    cidade: texto(form, `${prefixo}Cidade`),
+    uf: texto(form, `${prefixo}Uf`),
+  };
+}
+
+function destinoCte(processoId: string, secao: string, aviso?: string) {
+  const url = `/processos/${processoId}?aba=cte&secao=${secao}`;
+  return aviso ? `${url}&aviso=${encodeURIComponent(aviso)}` : url;
+}
+
+export async function salvarCteAction(form: FormData) {
+  await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
+  const cteId = String(form.get("cteId") || "");
+  const secao = String(form.get("secao") || "identificacao");
+  const atual = await prisma.cte.findUnique({ where: { id: cteId } });
+  if (!atual) redirect(destinoCte(processoId, secao));
+  const rascunho = lerRascunho(atual.rascunho);
+  if (secao === "identificacao") {
+    rascunho.finalidade = Number(form.get("finalidade") || 0);
+    rascunho.tipoServico = Number(form.get("tipoServico") || 0);
+    rascunho.modal = String(form.get("modal") || "01");
+    rascunho.cfop = texto(form, "cfop");
+    rascunho.naturezaOperacao = texto(form, "naturezaOperacao") || rascunho.naturezaOperacao;
+    rascunho.indicadorTomador = Number(form.get("indicadorTomador") || 0);
+    rascunho.contribuicaoTomador = Number(form.get("contribuicaoTomador") || 9);
+    rascunho.inicioCidade = texto(form, "inicioCidade");
+    rascunho.inicioUf = texto(form, "inicioUf");
+    rascunho.fimCidade = texto(form, "fimCidade");
+    rascunho.fimUf = texto(form, "fimUf");
+    rascunho.valorServico = numeroCampo(form, "valorServico");
+    rascunho.valorReceber = numeroCampo(form, "valorReceber");
+  }
+  if (secao === "atores") {
+    rascunho.remetente = atorDoFormulario(form, "remetente");
+    rascunho.destinatario = atorDoFormulario(form, "destinatario");
+    const expedidor = atorDoFormulario(form, "expedidor");
+    const recebedor = atorDoFormulario(form, "recebedor");
+    const tomador = atorDoFormulario(form, "tomador");
+    rascunho.expedidor = expedidor.nome ? expedidor : null;
+    rascunho.recebedor = recebedor.nome ? recebedor : null;
+    rascunho.tomador = tomador.nome ? tomador : null;
+  }
+  if (secao === "carga") {
+    rascunho.produtoPredominante = texto(form, "produtoPredominante") || rascunho.produtoPredominante;
+    rascunho.valorMercadoria = numeroCampo(form, "valorMercadoria");
+    rascunho.caracteristicas = texto(form, "caracteristicas");
+    rascunho.cubagemM3 = numeroCampo(form, "cubagemM3");
+    rascunho.rntrc = texto(form, "rntrc");
+  }
+  if (secao === "documentos") {
+    const chave = texto(form, "docChave");
+    const numero = texto(form, "docNumero");
+    rascunho.documentos = chave || numero ? [{ tipo: Number(form.get("docTipo") || 1), chave, numero }] : [];
+    rascunho.observacoes = texto(form, "observacoes");
+  }
+  if (secao === "tributacao") {
+    rascunho.situacaoIcms = String(form.get("situacaoIcms") || "00");
+    rascunho.regime = texto(form, "regime");
+    rascunho.reducaoBase = numeroCampo(form, "reducaoBase");
+    rascunho.baseIcms = numeroCampo(form, "baseIcms");
+    rascunho.aliquotaIcms = numeroCampo(form, "aliquotaIcms");
+    rascunho.valorIcms = numeroCampo(form, "valorIcms");
+    rascunho.creditoIcms = numeroCampo(form, "creditoIcms");
+    rascunho.beneficioFiscal = texto(form, "beneficioFiscal");
+    rascunho.partilhaIcms = form.get("partilhaIcms") === "on";
+    rascunho.ibsSituacao = texto(form, "ibsSituacao");
+    rascunho.ibsClassificacao = texto(form, "ibsClassificacao");
+    rascunho.ibsBase = numeroCampo(form, "ibsBase");
+    rascunho.ibsAliquotaEstadual = numeroCampo(form, "ibsAliquotaEstadual");
+    rascunho.ibsValorEstadual = numeroCampo(form, "ibsValorEstadual");
+    rascunho.ibsAliquotaMunicipal = numeroCampo(form, "ibsAliquotaMunicipal");
+    rascunho.ibsValorMunicipal = numeroCampo(form, "ibsValorMunicipal");
+    rascunho.cbsAliquota = numeroCampo(form, "cbsAliquota");
+    rascunho.cbsValor = numeroCampo(form, "cbsValor");
+  }
+  if (secao === "rodoviario") {
+    rascunho.rntrc = texto(form, "rntrc");
+    rascunho.veiculo = texto(form, "veiculo");
+    rascunho.motorista = texto(form, "motorista");
+    rascunho.lacres = String(form.get("lacres") || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  await atualizarRascunho(cteId, rascunho);
+  revalidatePath(`/processos/${processoId}`);
+  redirect(destinoCte(processoId, secao));
+}
+
+async function voltarComAviso(processoId: string, secao: string, executar: () => Promise<{ mensagemProvedor?: string | null }>) {
+  try {
+    const cte = await executar();
+    revalidatePath(`/processos/${processoId}`);
+    redirect(destinoCte(processoId, secao, cte.mensagemProvedor || undefined));
+  } catch (erro) {
+    unstable_rethrow(erro);
+    const mensagem = erro instanceof AppError ? erro.message : "Não foi possível concluir a ação do CT-e.";
+    redirect(destinoCte(processoId, secao, mensagem));
+  }
+}
+
 export async function emitirCteAction(form: FormData) {
   await exigirUsuario();
   const processoId = String(form.get("processoId") || "");
+  await voltarComAviso(processoId, "acoes", () => emitirCte(processoId));
+}
+
+export async function repreencherCteAction(form: FormData) {
+  await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
   try {
-    await emitirCte(processoId);
+    await repreencherCte(processoId);
   } catch (erro) {
     unstable_rethrow(erro);
-    const mensagem = erro instanceof AppError ? erro.message : "Falha ao emitir o CT-e.";
-    redirect(`/processos/${processoId}?aba=cte&aviso=${encodeURIComponent(mensagem)}`);
+    const mensagem = erro instanceof AppError ? erro.message : "Não foi possível preencher o CT-e.";
+    redirect(destinoCte(processoId, "identificacao", mensagem));
   }
   revalidatePath(`/processos/${processoId}`);
-  redirect(`/processos/${processoId}?aba=cte`);
+  redirect(destinoCte(processoId, "identificacao"));
+}
+
+export async function duplicarCteAction(form: FormData) {
+  await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
+  await duplicarCte(String(form.get("cteId") || ""));
+  revalidatePath(`/processos/${processoId}`);
+  redirect(destinoCte(processoId, "acoes", "Rascunho duplicado. A cópia é o CT-e mais recente."));
+}
+
+export async function cancelarCteAction(form: FormData) {
+  await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
+  await voltarComAviso(processoId, "acoes", () => cancelarCte(String(form.get("cteId") || ""), String(form.get("justificativa") || "")));
+}
+
+export async function corrigirCteAction(form: FormData) {
+  await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
+  await voltarComAviso(processoId, "acoes", () =>
+    corrigirCte(String(form.get("cteId") || ""), String(form.get("grupo") || ""), String(form.get("campo") || ""), String(form.get("valor") || "")),
+  );
+}
+
+export async function garantirCte(processoId: string) {
+  return obterOuPreencherCte(processoId);
 }

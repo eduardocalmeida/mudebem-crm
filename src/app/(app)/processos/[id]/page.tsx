@@ -7,7 +7,8 @@ import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, formatarDataHora, formatarNumero, localidade } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { AbaCte, AbaInventario, AbaTarefas } from "@/components/abas-operacao";
+import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
+import { AbaCte } from "@/components/cte-painel";
 import { obterProcesso } from "@/server/processos";
 import { exigirUsuario } from "@/server/session";
 
@@ -40,7 +41,7 @@ export default async function ProcessoPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ aba?: string; aviso?: string }>;
+  searchParams: Promise<{ aba?: string; aviso?: string; secao?: string }>;
 }) {
   const usuario = await exigirUsuario();
   const { id } = await params;
@@ -100,7 +101,7 @@ export default async function ProcessoPage({
       </nav>
       {aba === "inventario" ? <AbaInventario processoId={processo.id} /> : null}
       {aba === "tarefas" ? <AbaTarefas processoId={processo.id} /> : null}
-      {aba === "cte" ? <AbaCte processoId={processo.id} aviso={consulta.aviso} /> : null}
+      {aba === "cte" ? <AbaCte processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} /> : null}
       {aba === "resumo" ? (
       <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>

@@ -30,7 +30,7 @@ O funil segue o da Kommo e pode ser reordenado em **Etapas** por um administrado
 
 Ganho e Perdido fecham o processo fora dessa sequência. O time de demonstração tem oito usuários (comercial, operação, financeiro e administração), a mesma ordem de grandeza da operação atual. Não há teto de usuários: o administrador cria quantos precisar em Equipe.
 
-Cada processo tem abas: resumo, inventário, tarefas e CT-e. Em **Tarefas** há lista e calendário (dia, semana e mês), das minhas tarefas ou da equipe, com atraso em destaque. Mudar de etapa cria a tarefa configurada (acompanhar, proposta, precificar, contrato, CT-e, faturamento, recebimento, WhatsApp). O **Inventário** usa um catálogo de cerca de 90 itens de mudança com volume em m³; a soma atualiza o campo Volume. O catálogo é editável em **Catálogo**. O CT-e é um rascunho preenchido com o processo (remetente, destinatário, municípios, prestação, carga, RNTRC e documentos). A emissão chama `obterProvedorCte()` e, por enquanto, responde que nenhum provedor está configurado.
+Cada processo tem abas: resumo, inventário, tarefas e CT-e. Em **Tarefas** há lista e calendário (dia, semana e mês), das minhas tarefas ou da equipe, com atraso em destaque. Mudar de etapa cria a tarefa configurada (acompanhar, proposta, precificar, contrato, CT-e, faturamento, recebimento, WhatsApp). O **Inventário** usa um catálogo de cerca de 90 itens de mudança com volume em m³; a soma atualiza o campo Volume. O catálogo é editável em **Catálogo**. O CT-e segue as seções da tela da Martins (tipo, serviço, CFOP, tomador, carga, documentos, tributação com CBS/IBS, veículo e as ações de DACTE, cancelamento, carta de correção e duplicar). O rascunho nasce do processo: remetente e destinatário do cliente, cidades da origem e do destino, valor do serviço a partir do valor aprovado e cubagem do inventário. O adaptador WebmaniaBR monta o JSON da API v2 e não envia a requisição. O MDF-e tem o gancho `obterProvedorMdfe()`, ainda sem emissão.
 
 A API também lê o catálogo em `GET /api/v1/inventario/catalogo` e lê ou acrescenta itens em `GET` e `POST /api/v1/processos/{id}/inventario`.
 
@@ -297,6 +297,18 @@ curl -s -X POST http://localhost:3000/api/v1/whatsapp/conversas/ID/mensagens \
 ```
 
 `GET` da conversa marca como lida. Para só olhar, use `?marcarLida=nao`.
+
+## CT-e pela WebmaniaBR
+
+A aba do processo espelha a emissão da Martins: tipo do CT-e, tipo do serviço, modal, lista de CFOP, tomador, atores, carga, NF-e ou declaração, tributação (incluindo CBS/IBS) e veículo/motorista. Depois da autorização prevista ficam DACTE, cancelar, carta de correção e duplicar. Insucesso de entrega ainda não tem rota na API mapeada.
+
+O valor do serviço sai do valor aprovado (ou do total, ou do frete, nessa ordem). A cubagem sai da soma do inventário, em m³, e vai para `carga.quantidades` com `unidade_medida` 0 e `tipo_medida` `CUBAGEM`. O sistema não converte m³ em peso. O valor da mercadoria não é preenchido com o frete.
+
+`obterProvedorCte()` devolve o adaptador WebmaniaBR. Ele monta `POST https://api.webmania.com.br/2/cte/emissao` com `Authorization: Bearer` e `modelo: "cte"`. Sem `WEBMANIA_ACCESS_TOKEN` a emissão responde que o provedor não está configurado. Com o token, o pedido é guardado e não é enviado. Homologação: `WEBMANIA_AMBIENTE=2`. O retorno da Webmania entra em `POST /api/webmania/cte?token=` com o mesmo valor de `WEBMANIA_WEBHOOK_TOKEN`.
+
+O grupo `rodoviario` do JSON leva só o RNTRC de 8 dígitos. Placa, motorista e lacres permanecem no CRM. `natureza_operacao` também fica só no rascunho, porque a tabela pública não marca esse campo como aceito. As alíquotas de IBS/CBS digitadas na tela ficam no CRM; o JSON envia `impostos.ibs_cbs` com a situação e a classificação.
+
+`obterProvedorMdfe()` reserva o MDF-e. Chamar emitir, encerrar ou cancelar responde que o módulo ainda não está ligado. O modelo `Mdfe` já pode apontar para o processo.
 
 ## API
 

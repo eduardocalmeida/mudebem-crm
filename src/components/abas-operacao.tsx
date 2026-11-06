@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { COMODOS } from "@/server/catalogo-mudanca";
-import { obterOuPreencherCte } from "@/server/cte/cte";
-import { formatarBRL, formatarDataHora } from "@/lib/format";
+import { formatarDataHora } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import {
   adicionarInventarioAction,
   concluirTarefaAction,
   criarTarefaAction,
-  emitirCteAction,
   removerInventarioAction,
 } from "@/server/actions-operacao";
 import { listarCatalogo, obterInventario } from "@/server/inventario";
@@ -189,34 +187,3 @@ export async function AbaTarefas({ processoId }: { processoId: string }) {
   );
 }
 
-export async function AbaCte({ processoId, aviso }: { processoId: string; aviso?: string }) {
-  const cte = await obterOuPreencherCte(processoId);
-  return (
-    <section className="cartao">
-      <h2>CT-e</h2>
-      <p className="muted">Rascunho preenchido com os dados do processo. A emissão na SEFAZ espera o provedor.</p>
-      {aviso ? <p className="faixa-exemplo">{aviso}</p> : null}
-      <div className="fatos">
-        <article className="fato"><span>Status</span><strong>{cte.status}</strong></article>
-        <article className="fato"><span>Remetente</span><strong>{cte.remetenteNome}</strong></article>
-        <article className="fato"><span>Destinatário</span><strong>{cte.destinatarioNome}</strong></article>
-        <article className="fato"><span>Início</span><strong>{cte.municipioInicio}/{cte.ufInicio}</strong></article>
-        <article className="fato"><span>Fim</span><strong>{cte.municipioFim}/{cte.ufFim}</strong></article>
-        <article className="fato"><span>Prestação</span><strong>{formatarBRL(cte.valorPrestacao ? Number(cte.valorPrestacao) : null)}</strong></article>
-        <article className="fato"><span>CFOP</span><strong>{cte.cfop || "a definir"}</strong></article>
-        <article className="fato"><span>RNTRC</span><strong>{cte.rntrc || "—"}</strong></article>
-        <article className="fato"><span>Carga</span><strong>{cte.produtoPredominante}</strong></article>
-        <article className="fato"><span>Modal</span><strong>Rodoviário (01)</strong></article>
-        <article className="fato"><span>Tomador</span><strong>{cte.tomador}</strong></article>
-        <article className="fato"><span>Chave</span><strong>{cte.chave || "ainda não emitido"}</strong></article>
-      </div>
-      <form action={emitirCteAction}>
-        <input type="hidden" name="processoId" value={processoId} />
-        <button className="btn" type="submit">Emitir CT-e</button>
-      </form>
-      <p className="muted">
-        <Link href="/integracoes">O provedor de CT-e ainda não está ligado.</Link>
-      </p>
-    </section>
-  );
-}

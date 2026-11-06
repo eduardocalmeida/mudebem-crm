@@ -7,7 +7,8 @@ export async function middleware(req: NextRequest) {
     pathname === "/login" ||
     pathname === "/orcamento" ||
     pathname === "/formulario.js" ||
-    pathname.startsWith("/api/publico/");
+    pathname.startsWith("/api/publico/") ||
+    pathname.startsWith("/api/webmania/");
   const sessao = await lerSessao(req.cookies.get(COOKIE_SESSAO)?.value);
 
   if (!sessao && !publico) {

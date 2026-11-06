@@ -184,7 +184,8 @@ model Processo {
   conversasWhatsapp ConversaWhatsapp[]
   tarefas         Tarefa[]
   itensInventario ItemInventario[]
-  cte             Cte?
+  ctes            Cte[]
+  mdfes           Mdfe[]
 
   @@index([etapa])
   @@index([clienteId])
@@ -304,9 +305,20 @@ model ItemInventario {
 
 model Cte {
   id                      String    @id @default(cuid())
-  processoId              String    @unique
+  processoId              String
   processo                Processo  @relation(fields: [processoId], references: [id], onDelete: Cascade)
   status                  String    @default("RASCUNHO")
+  finalidade              Int       @default(0)
+  tipoServico             Int       @default(0)
+  indicadorTomador        Int       @default(0)
+  contribuicaoTomador     Int       @default(9)
+  classificacaoTributaria String?
+  regimeTributario        String?
+  partilhaIcms            Boolean   @default(false)
+  uuidProvedor            String?
+  rascunho                Json?
+  pedidoPreparado         Json?
+  mensagemProvedor        String?
   emitenteNome            String?
   emitenteDocumento       String?
   emitenteIe              String?
@@ -352,6 +364,22 @@ model Cte {
   provedor                String?
   criadoEm                DateTime  @default(now())
   atualizadoEm            DateTime  @updatedAt
+
+  @@index([processoId])
+  @@index([chave])
+}
+
+model Mdfe {
+  id          String   @id @default(cuid())
+  processoId  String
+  processo    Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  status      String   @default("PREVISTO")
+  cteChaves   Json?
+  observacao  String?
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([processoId])
 }
 
 model ConfigWhatsapp {
