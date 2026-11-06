@@ -48,18 +48,7 @@ export async function garantirPortalAtvos() {
       data: FAIXAS_ATVOS.map((faixa) => ({ contratoId: contrato.id, ...faixa })),
     });
   }
-  for (const email of [
-    ["colaborador@atvos.com.br", "Colaborador Atvos", "COLABORADOR"],
-    ["gestor@atvos.com.br", "Gestor Atvos", "GESTOR"],
-  ] as const) {
-    await prisma.usuarioPortal.upsert({
-      where: { empresaId_email: { empresaId: empresa.id, email: email[0] } },
-      update: {},
-      create: { empresaId: empresa.id, email: email[0], nome: email[1], papel: email[2] },
-    });
-  }
   const unidade = await prisma.unidadeEmpresa.findFirst({ where: { empresaId: empresa.id, nome: "Costa Rica" } });
-  const gestor = await prisma.usuarioPortal.findFirst({ where: { empresaId: empresa.id, email: "gestor@atvos.com.br" } });
   for (const pedido of PEDIDOS) {
     if (await prisma.solicitacaoPortal.findUnique({ where: { protocolo: pedido.protocolo } })) continue;
     const processo = await prisma.processo.create({
@@ -90,10 +79,9 @@ export async function garantirPortalAtvos() {
         empresaId: empresa.id,
         contratoId: contrato.id,
         unidadeId: unidade?.id,
-        usuarioId: gestor?.id,
         nome: pedido.nome,
         cpf: "00000000000",
-        email: "gestor@atvos.com.br",
+        email: `historico.${pedido.protocolo}@example.invalid`,
         telefone: "(11) 99999-9999",
         dataPrevista: new Date(`${pedido.data}T00:00:00.000Z`),
         origemCidade: "Goiânia",

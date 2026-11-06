@@ -531,7 +531,21 @@ async function main() {
   }
 
   const { garantirPortalAtvos } = await import("../src/server/portal/atvos");
-  await garantirPortalAtvos();
+  const portal = await garantirPortalAtvos();
+  if (process.env.NODE_ENV === "production") {
+    console.log("Seed de produção não cria login do portal.");
+  } else {
+    await prisma.usuarioPortal.upsert({
+      where: { empresaId_email: { empresaId: portal.empresaId, email: "colaborador@atvos.com.br" } },
+      update: {},
+      create: { empresaId: portal.empresaId, email: "colaborador@atvos.com.br", nome: "Colaborador Atvos", papel: "COLABORADOR" },
+    });
+    await prisma.usuarioPortal.upsert({
+      where: { empresaId_email: { empresaId: portal.empresaId, email: "gestor@atvos.com.br" } },
+      update: {},
+      create: { empresaId: portal.empresaId, email: "gestor@atvos.com.br", nome: "Gestor Atvos", papel: "GESTOR" },
+    });
+  }
 
   console.log("Seed concluído com 10 processos de exemplo.");
   console.log("Senha dos usuários de demonstração: MudeBem@2026");

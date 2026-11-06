@@ -174,11 +174,12 @@ Os processos `MB-EX-0001` a `MB-EX-0010` e os clientes criados pelo seed aparece
 | Comando | Efeito |
 | --- | --- |
 | `npm run dev` | Sobe o Next.js em desenvolvimento |
-| `npm run build` | Aplica as migrações e gera o build de produção |
+| `npm run build` | Gera o cliente do Prisma e o build de produção, sem acessar o banco |
 | `npm start` | Sobe o build |
 | `npm test` | Aplica as migrações no banco de teste e roda a suíte |
 | `npm run db:seed` | Recria os dados de exemplo |
 | `npm run db:migrate` | Cria uma migração nova em desenvolvimento (`prisma migrate dev`) |
+| `npm run db:deploy` | Aplica as migrações no banco apontado por `DATABASE_URL`. É o passo de baseline, fora do build |
 
 ## Testes
 
@@ -190,17 +191,22 @@ npm test
 
 ## Deploy na Vercel com Neon ou Supabase
 
-1. Crie um projeto Postgres. Na Neon, prefira a região `aws-sa-east-1` (São Paulo) se estiver disponível.
+1. Crie um projeto Postgres. No Supabase, use o plano Pro na região `sa-east-1` (São Paulo). O backup diário do plano basta; não ligue point-in-time recovery agora.
 2. Copie a connection string para `DATABASE_URL`. Se o provedor separar URL com pool e URL direta, use a URL direta nas migrações.
-3. Na Vercel, importe este repositório e defina `DATABASE_URL` e `AUTH_SECRET`.
-4. O comando de build (`prisma migrate deploy && next build`) aplica as migrações a cada deploy.
+3. Baseline, uma vez, numa máquina que alcança o banco. Num banco vazio isso cria `_prisma_migrations` e aplica o schema. O build da Vercel não faz esse passo, porque ele não pode depender dessa tabela nem de uma conexão durante a compilação:
+
+```bash
+npm run db:deploy
+```
+
+4. Na Vercel, importe este repositório. O comando de build é `prisma generate && next build`. Defina `DATABASE_URL` e `AUTH_SECRET`.
 5. Faça o deploy. Para carregar o primeiro administrador e os exemplos, rode na sua máquina, com `DATABASE_URL` apontando para o banco de produção e `SEED_CONFIRM=sim`:
 
 ```bash
 SEED_CONFIRM=sim NODE_ENV=production npm run db:seed
 ```
 
-Em seguida entre como Ana, troque as senhas criando novos usuários, desative os acessos de demonstração e revogue a chave de exemplo. O seed de produção recria os registros marcados como exemplo e redefine a senha dos e-mails de demonstração.
+Em seguida entre como Ana, troque as senhas criando novos usuários, desative os acessos de demonstração e revogue a chave de exemplo. O seed de produção recria os registros marcados como exemplo e redefine a senha dos e-mails de demonstração. Os logins do portal (`colaborador@atvos.com.br` e `gestor@atvos.com.br`) só são criados pelo seed local, nunca em produção e nunca por um caminho da aplicação.
 
 Anexos maiores que 5 MB ou com necessidade de antivírus devem ir para um bucket (S3, R2 ou equivalente) numa versão seguinte. O disco local da Vercel não é usado.
 

@@ -46,6 +46,7 @@ describe("portal de contrato", () => {
       "MB-2026-000003",
     ]);
     const processo = await prisma.processo.findUnique({ where: { codigo: "MB-2026-000001" } });
+    expect(await prisma.usuarioPortal.count({ where: { email: { in: ["colaborador@atvos.com.br", "gestor@atvos.com.br"] } } })).toBe(0);
     expect(processo?.etapa).toBe("A_EXECUTAR");
     expect(processo?.etiqueta).toBe("Contrato Atvos");
     expect(Number(processo?.valorAprovado)).toBe(22500);
