@@ -47,13 +47,11 @@ export function BarraLateral({
     }
     return caminho === href || caminho.startsWith(`${href}/`);
   };
-  const mais = [
-    { href: "/clientes", rotulo: "Listas" },
-    ...config.map((item) => ({ href: item.href, rotulo: item.rotulo })),
-  ];
+  const emConfig = config.some((item) => ativo(item.href));
+  const [configAberta, setConfigAberta] = useState(emConfig);
 
   return (
-    <aside className="barra">
+    <aside className={configAberta ? "barra config-aberta" : "barra"}>
       <Link href="/painel" className="marca" aria-label="Início">
         <Logo />
       </Link>
@@ -67,13 +65,26 @@ export function BarraLateral({
         ))}
         {config.length > 0 ? (
           <div className="menu-secao">
-            <p className="secao-rotulo"><Icone nome="engrenagem" /> Configuração</p>
-            {config.map((item) => (
-              <Link key={item.href} href={item.href} className={ativo(item.href) ? "ativo" : undefined} title={item.rotulo}>
-                <Icone nome={item.icone} />
-                <span className="rotulo">{item.rotulo}</span>
-              </Link>
-            ))}
+            <button
+              type="button"
+              className={emConfig ? "ativo" : undefined}
+              aria-expanded={configAberta}
+              title="Configurações"
+              onClick={() => setConfigAberta((valor) => !valor)}
+            >
+              <Icone nome="engrenagem" />
+              <span className="rotulo">Configurações</span>
+            </button>
+            {configAberta ? (
+              <div className="submenu-config">
+                {config.map((item) => (
+                  <Link key={item.href} href={item.href} className={ativo(item.href) ? "ativo" : undefined} title={item.rotulo}>
+                    <Icone nome={item.icone} />
+                    <span className="rotulo">{item.rotulo}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </nav>
@@ -94,9 +105,15 @@ export function BarraLateral({
       </div>
       {aberto ? <button className="cortina aberta" type="button" aria-label="Fechar menu" onClick={() => setAberto(false)} /> : null}
       <nav className={aberto ? "gaveta cartao aberta" : "gaveta"} aria-label="Mais">
-        {mais.map((item) => (
-          <Link key={item.href} href={item.href} onClick={() => setAberto(false)}>{item.rotulo}</Link>
-        ))}
+        <Link href="/clientes" onClick={() => setAberto(false)}>Listas</Link>
+        {config.length > 0 ? (
+          <>
+            <button type="button" aria-expanded={configAberta} onClick={() => setConfigAberta((valor) => !valor)}>Configurações</button>
+            {configAberta ? config.map((item) => (
+              <Link key={item.href} href={item.href} onClick={() => setAberto(false)}>{item.rotulo}</Link>
+            )) : null}
+          </>
+        ) : null}
         <form action={sairAction}><button className="btn secundario" type="submit">Sair</button></form>
       </nav>
       <button className="atalho-mais" type="button" aria-label="Mais opções" onClick={() => setAberto((valor) => !valor)}>
