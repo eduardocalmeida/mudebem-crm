@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/painel", rotulo: "Painel" },
   { href: "/processos", rotulo: "Processos" },
   { href: "/tarefas", rotulo: "Tarefas" },
+  { href: "/mdfe", rotulo: "MDF-e" },
   { href: "/whatsapp", rotulo: "WhatsApp" },
   { href: "/clientes", rotulo: "Clientes" },
 ];

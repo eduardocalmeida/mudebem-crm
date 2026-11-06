@@ -308,7 +308,13 @@ O valor do serviço sai do valor aprovado (ou do total, ou do frete, nessa ordem
 
 O grupo `rodoviario` do JSON leva só o RNTRC de 8 dígitos. Placa, motorista e lacres permanecem no CRM. `natureza_operacao` também fica só no rascunho, porque a tabela pública não marca esse campo como aceito. As alíquotas de IBS/CBS digitadas na tela ficam no CRM; o JSON envia `impostos.ibs_cbs` com a situação e a classificação.
 
-`obterProvedorMdfe()` reserva o MDF-e. Chamar emitir, encerrar ou cancelar responde que o módulo ainda não está ligado. O modelo `Mdfe` já pode apontar para o processo.
+O certificado digital A1 é carregado na empresa emitente, no painel da WebmaniaBR. Este CRM não guarda o arquivo nem a senha do certificado. A API usa só o `WEBMANIA_ACCESS_TOKEN` dessa conta.
+
+## MDF-e
+
+O manifesto rodoviário agrupa um ou mais CT-e da viagem. Ele nasce do processo com motorista, CPF, placa e ANTT, UF e municípios de origem e destino. Dá para informar RENAVAM, tara, capacidade, percurso, seguro (seguradora, apólice e averbação) e os totais. O peso não é inventado a partir do m³.
+
+`obterProvedorMdfe()` monta os endpoints publicados pela WebmaniaBR: `POST /2/mdfe/emissao`, `PUT /2/mdfe/encerrar` e `PUT /2/mdfe/cancelar`. O comportamento é o mesmo do CT-e: sem token, nada é enviado; com token, o pedido fica gravado e também não sai. O retorno entra em `POST /api/webmania/mdfe?token=`, com `WEBMANIA_MDFE_URL_NOTIFICACAO` apontando para essa rota. Status: rascunho, autorizado, encerrado, cancelado, rejeitado ou processando.
 
 ## API
 

@@ -80,7 +80,27 @@ describe("CT-e WebmaniaBR", () => {
     expect(pedido.url).toBe("https://api.webmania.com.br/2/cte/emissao");
     expect(pedido.cabecalhos.Authorization).toBe("Bearer [WEBMANIA_ACCESS_TOKEN]");
     await expect(provedor.emitir(completo())).rejects.toMatchObject({ codigo: "EMISSAO_ADIADA" });
-    await expect(obterProvedorMdfe().emitir()).rejects.toMatchObject({ codigo: "MODULO_AUSENTE" });
+    await expect(obterProvedorMdfe().emitir({
+      ufInicio: null,
+      ufFim: null,
+      percurso: [],
+      carregamento: [],
+      descarregamento: [],
+      placa: null,
+      renavam: null,
+      taraKg: null,
+      capacidadeKg: null,
+      capacidadeM3: null,
+      condutorNome: null,
+      condutorCpf: null,
+      rntrc: null,
+      seguradoraNome: null,
+      seguradoraCnpj: null,
+      apolice: null,
+      averbacoes: [],
+      valorCarga: null,
+      pesoBruto: null,
+    })).rejects.toMatchObject({ codigo: "DADOS_INVALIDOS" });
   });
 
   it("preenche cubagem pelo inventário e permite duplicar o rascunho", async () => {

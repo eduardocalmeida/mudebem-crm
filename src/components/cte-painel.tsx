@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { criarMdfeAction } from "@/server/actions-mdfe";
 import {
   cancelarCteAction,
   corrigirCteAction,
@@ -26,7 +27,7 @@ export async function AbaCte({ processoId, aviso, secao }: { processoId: string;
     <section className="cartao">
       <h2>CT-e</h2>
       <p className="muted">
-        Rascunho no formato da tela da Martins. O envio usa o JSON da WebmaniaBR e ainda não sai deste servidor.
+        Rascunho no formato da tela da Martins. O envio usa a WebmaniaBR e ainda não sai deste servidor. O certificado A1 fica no painel deles.
         Status {cte.status}
         {cte.chave ? ` · chave ${cte.chave}` : ""}. O MDF-e fica para a etapa seguinte.
       </p>
@@ -244,7 +245,11 @@ function Acoes({
         <input type="hidden" name="cteId" value={cteId} />
         <button className="btn secundario" type="submit">Duplicar</button>
       </form>
-      <p className="campo largo muted">Insucesso na entrega ainda não tem rota mapeada na API. Confirmação de entrega fica para quando o envio real existir.</p>
+      <p className="campo largo muted">Insucesso na entrega ainda não tem rota mapeada na API.</p>
+      <form action={criarMdfeAction}>
+        <input type="hidden" name="processoId" value={processoId} />
+        <button className="btn secundario" type="submit">Abrir MDF-e desta viagem</button>
+      </form>
     </div>
   );
 }

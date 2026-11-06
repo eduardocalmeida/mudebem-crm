@@ -364,22 +364,61 @@ model Cte {
   provedor                String?
   criadoEm                DateTime  @default(now())
   atualizadoEm            DateTime  @updatedAt
+  manifestos              MdfeCte[]
 
   @@index([processoId])
   @@index([chave])
 }
 
 model Mdfe {
-  id          String   @id @default(cuid())
-  processoId  String
-  processo    Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
-  status      String   @default("PREVISTO")
-  cteChaves   Json?
-  observacao  String?
-  criadoEm    DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
+  id                         String    @id @default(cuid())
+  processoId                 String
+  processo                   Processo  @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  status                     String    @default("RASCUNHO")
+  modalidade                 Int       @default(1)
+  ufInicio                   String?
+  ufFim                      String?
+  percurso                   String?
+  municipioCarregamento      String?
+  municipioDescarregamento   String?
+  placa                      String?
+  renavam                    String?
+  taraKg                     Int?
+  capacidadeKg               Int?
+  capacidadeM3               Int?
+  condutorNome               String?
+  condutorCpf                String?
+  rntrc                      String?
+  seguradoraNome             String?
+  seguradoraCnpj             String?
+  apolice                    String?
+  averbacao                  String?
+  valorCarga                 Decimal?  @db.Decimal(12, 2)
+  pesoBruto                  Decimal?  @db.Decimal(12, 4)
+  chave                      String?
+  numero                     String?
+  serie                      String?
+  uuidProvedor               String?
+  xmlUrl                     String?
+  damdfeUrl                  String?
+  pedidoPreparado            Json?
+  mensagemProvedor           String?
+  criadoEm                   DateTime  @default(now())
+  atualizadoEm               DateTime  @updatedAt
+  documentos                 MdfeCte[]
 
   @@index([processoId])
+  @@index([chave])
+}
+
+model MdfeCte {
+  id     String @id @default(cuid())
+  mdfeId String
+  mdfe   Mdfe   @relation(fields: [mdfeId], references: [id], onDelete: Cascade)
+  cteId  String
+  cte    Cte    @relation(fields: [cteId], references: [id], onDelete: Cascade)
+
+  @@unique([mdfeId, cteId])
 }
 
 model ConfigWhatsapp {

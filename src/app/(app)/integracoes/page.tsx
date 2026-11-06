@@ -42,6 +42,12 @@ export default async function IntegracoesPage() {
         </p>
         <pre className="chave-nova">{`<div id="mudebem-orcamento"></div>\n<script src="${base}/formulario.js" async></script>`}</pre>
       </section>
+      <section className="cartao bloco">
+        <h2>WebmaniaBR</h2>
+        <p className="muted">
+          CT-e e MDF-e usam a API v2 em homologação quando <code>WEBMANIA_AMBIENTE=2</code>. O certificado A1 é enviado no painel da WebmaniaBR, na empresa emitente. Aqui só entra o token de acesso, por variável de ambiente.
+        </p>
+      </section>
       <section className="ficha">
         <article className="cartao bloco">
           <h2>Nova chave</h2>
