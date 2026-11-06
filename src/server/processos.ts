@@ -223,49 +223,120 @@ export async function obterProcesso(id: string, comHistorico = false): Promise<P
   return serializarProcesso(processo, { eventos, anexos });
 }
 
-export async function listarProcessos(filtro: {
+function faixaValor(min?: number, max?: number): Prisma.DecimalFilter | undefined {
+  if (min == null && max == null) return undefined;
+  return { ...(min != null ? { gte: min } : {}), ...(max != null ? { lte: max } : {}) };
+}
+
+export function whereDaLista(filtro: {
   q?: string;
   etapa?: Etapa;
+  etapas?: Etapa[];
   canal?: DadosCriarProcesso["canal"];
   clienteId?: string;
   etiqueta?: string;
   responsavelId?: string;
+  semResponsavel?: boolean;
+  origem?: string;
+  destino?: string;
   dataColetaDe?: string;
   dataColetaAte?: string;
+  freteMin?: number;
+  freteMax?: number;
+  seguroMin?: number;
+  seguroMax?: number;
+  totalMin?: number;
+  totalMax?: number;
+}): Prisma.ProcessoWhereInput {
+  const where: Prisma.ProcessoWhereInput = {};
+  const etapas = filtro.etapas?.length ? filtro.etapas : filtro.etapa ? [filtro.etapa] : [];
+  if (etapas.length) where.etapa = { in: etapas };
+  if (filtro.canal) where.canal = filtro.canal;
+  if (filtro.clienteId) where.clienteId = filtro.clienteId;
+  if (filtro.etiqueta) where.etiqueta = filtro.etiqueta;
+  if (filtro.semResponsavel) where.responsavelId = null;
+  else if (filtro.responsavelId) where.responsavelId = filtro.responsavelId;
+  if (filtro.dataColetaDe || filtro.dataColetaAte) {
+    where.dataColeta = {};
+    if (filtro.dataColetaDe) where.dataColeta.gte = paraDataBanco(filtro.dataColetaDe) ?? undefined;
+    if (filtro.dataColetaAte) where.dataColeta.lte = paraDataBanco(filtro.dataColetaAte) ?? undefined;
+  }
+  const frete = faixaValor(filtro.freteMin, filtro.freteMax);
+  const seguro = faixaValor(filtro.seguroMin, filtro.seguroMax);
+  const total = faixaValor(filtro.totalMin, filtro.totalMax);
+  if (frete) where.valorFrete = frete;
+  if (seguro) where.valorSeguro = seguro;
+  if (total) where.valorTotal = total;
+  const and: Prisma.ProcessoWhereInput[] = [];
+  const termo = filtro.q?.trim();
+  if (termo) {
+    and.push({
+      OR: [
+        { titulo: { contains: termo, mode: "insensitive" } },
+        { codigo: { contains: termo, mode: "insensitive" } },
+        { colaborador: { contains: termo, mode: "insensitive" } },
+        { origemCidade: { contains: termo, mode: "insensitive" } },
+        { destinoCidade: { contains: termo, mode: "insensitive" } },
+        { numeroOc: { contains: termo, mode: "insensitive" } },
+        { numeroNf: { contains: termo, mode: "insensitive" } },
+        { cliente: { nome: { contains: termo, mode: "insensitive" } } },
+      ],
+    });
+  }
+  if (filtro.origem?.trim()) {
+    const texto = filtro.origem.trim();
+    and.push({
+      OR: [
+        { origemCidade: { contains: texto, mode: "insensitive" } },
+        { origemUf: { contains: texto, mode: "insensitive" } },
+        { origemEndereco: { contains: texto, mode: "insensitive" } },
+      ],
+    });
+  }
+  if (filtro.destino?.trim()) {
+    const texto = filtro.destino.trim();
+    and.push({
+      OR: [
+        { destinoCidade: { contains: texto, mode: "insensitive" } },
+        { destinoUf: { contains: texto, mode: "insensitive" } },
+        { destinoEndereco: { contains: texto, mode: "insensitive" } },
+      ],
+    });
+  }
+  if (and.length) where.AND = and;
+  return where;
+}
+
+export async function listarProcessos(filtro: {
+  q?: string;
+  etapa?: Etapa;
+  etapas?: Etapa[];
+  canal?: DadosCriarProcesso["canal"];
+  clienteId?: string;
+  etiqueta?: string;
+  responsavelId?: string;
+  semResponsavel?: boolean;
+  origem?: string;
+  destino?: string;
+  dataColetaDe?: string;
+  dataColetaAte?: string;
+  freteMin?: number;
+  freteMax?: number;
+  seguroMin?: number;
+  seguroMax?: number;
+  totalMin?: number;
+  totalMax?: number;
   pagina?: number;
   porPagina?: number;
   limite?: number;
 }) {
   const pagina = Math.max(1, filtro.pagina ?? 1);
   const porPagina = Math.min(100, Math.max(1, filtro.porPagina ?? 50));
-  const where: Prisma.ProcessoWhereInput = {};
-  if (filtro.etapa) where.etapa = filtro.etapa;
-  if (filtro.canal) where.canal = filtro.canal;
-  if (filtro.clienteId) where.clienteId = filtro.clienteId;
-  if (filtro.etiqueta) where.etiqueta = filtro.etiqueta;
-  if (filtro.responsavelId) where.responsavelId = filtro.responsavelId;
-  if (filtro.dataColetaDe || filtro.dataColetaAte) {
-    where.dataColeta = {};
-    if (filtro.dataColetaDe) where.dataColeta.gte = paraDataBanco(filtro.dataColetaDe) ?? undefined;
-    if (filtro.dataColetaAte) where.dataColeta.lte = paraDataBanco(filtro.dataColetaAte) ?? undefined;
-  }
-  const termo = filtro.q?.trim();
-  if (termo) {
-    where.OR = [
-      { titulo: { contains: termo, mode: "insensitive" } },
-      { codigo: { contains: termo, mode: "insensitive" } },
-      { colaborador: { contains: termo, mode: "insensitive" } },
-      { origemCidade: { contains: termo, mode: "insensitive" } },
-      { destinoCidade: { contains: termo, mode: "insensitive" } },
-      { numeroOc: { contains: termo, mode: "insensitive" } },
-      { numeroNf: { contains: termo, mode: "insensitive" } },
-      { cliente: { nome: { contains: termo, mode: "insensitive" } } },
-    ];
-  }
+  const where = whereDaLista(filtro);
 
   const take = filtro.limite ?? porPagina;
   const skip = filtro.limite ? 0 : (pagina - 1) * porPagina;
-  const [total, registros] = await prisma.$transaction([
+  const [total, registros, grupos] = await Promise.all([
     prisma.processo.count({ where }),
     prisma.processo.findMany({
       where,
@@ -274,11 +345,13 @@ export async function listarProcessos(filtro: {
       skip,
       take,
     }),
+    prisma.processo.groupBy({ by: ["etapa"], where, _count: { _all: true } }),
   ]);
 
   return {
     dados: registros.map((item) => serializarProcesso(item)),
     total,
+    contagem: Object.fromEntries(grupos.map((grupo) => [grupo.etapa, grupo._count._all])),
     pagina: filtro.limite ? 1 : pagina,
     porPagina: filtro.limite ?? porPagina,
   };

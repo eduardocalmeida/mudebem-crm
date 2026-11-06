@@ -22,7 +22,7 @@ export type CartaoKanban = {
   exemplo: boolean;
 };
 
-type Coluna = { id: string; rotulo: string; cor: string; cartoes: CartaoKanban[] };
+type Coluna = { id: string; rotulo: string; cor: string; total?: number; cartoes: CartaoKanban[] };
 
 export function QuadroKanban({
   colunas,
@@ -124,11 +124,11 @@ function ColunaKanban({ coluna, movendo, arrastou }: { coluna: Coluna; movendo: 
       <header>
         <span className="cor" style={{ background: coluna.cor }} />
         <h2>{coluna.rotulo}</h2>
-        <em>{coluna.cartoes.length}</em>
+        <em>{coluna.total ?? coluna.cartoes.length}</em>
       </header>
       <div className="coluna-corpo">
         {coluna.cartoes.map((cartao) => (
-          <Cartao key={cartao.id} cartao={cartao} movendo={movendo === cartao.id} arrastou={arrastou} />
+          <Cartao key={cartao.id} cartao={cartao} cor={coluna.cor} movendo={movendo === cartao.id} arrastou={arrastou} />
         ))}
         {coluna.cartoes.length === 0 ? <p className="vazio-coluna">Nenhum processo</p> : null}
       </div>
@@ -136,7 +136,7 @@ function ColunaKanban({ coluna, movendo, arrastou }: { coluna: Coluna; movendo: 
   );
 }
 
-function Cartao({ cartao, movendo, arrastou }: { cartao: CartaoKanban; movendo: boolean; arrastou: MutableRefObject<boolean> }) {
+function Cartao({ cartao, cor, movendo, arrastou }: { cartao: CartaoKanban; cor: string; movendo: boolean; arrastou: MutableRefObject<boolean> }) {
   const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: cartao.id });
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
@@ -155,6 +155,7 @@ function Cartao({ cartao, movendo, arrastou }: { cartao: CartaoKanban; movendo: 
         router.push(`/processos/${cartao.id}`);
       }}
     >
+      <span className="faixa-etapa" style={{ background: cor }} aria-hidden />
       <button type="button" className="arraste-teclado" aria-label={`Arrastar ${cartao.codigo}`} {...listeners} {...attributes}>
         Arrastar {cartao.codigo}
       </button>

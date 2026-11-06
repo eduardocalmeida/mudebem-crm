@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { BarraFiltros } from "@/components/barra-filtros";
 import { QuadroKanban } from "@/components/kanban";
 import { SeloEtapa, SeloExemplo } from "@/components/selos";
 import { lerFiltro, parametrosDe, type FiltroLista } from "@/lib/consulta";
-import { CANAIS, podeCriarProcesso, rotuloCanal } from "@/lib/domain";
+import { podeCriarProcesso, rotuloCanal } from "@/lib/domain";
 import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
 import { formatarBRL, formatarData, localidade } from "@/lib/format";
@@ -32,8 +33,7 @@ export default async function ProcessosPage({
     erro = falha instanceof AppError ? falha.message : "Filtro inválido.";
   }
 
-  const [clientes, responsaveis, lista, etapas] = await Promise.all([
-    prisma.cliente.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
+  const [responsaveis, lista, etapas] = await Promise.all([
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
     listarProcessos({
       ...filtro,
@@ -47,6 +47,7 @@ export default async function ProcessosPage({
     id: etapa.slug,
     rotulo: etapa.rotulo,
     cor: etapa.cor,
+    total: lista.contagem[etapa.slug] ?? 0,
     cartoes: lista.dados
       .filter((processo) => processo.etapa === etapa.slug)
       .map((processo) => ({
@@ -90,75 +91,7 @@ export default async function ProcessosPage({
         </div>
       </header>
       {erro ? <p className="alerta">{erro}</p> : null}
-      <form className="filtros" method="get">
-        <input type="hidden" name="visao" value={filtro.visao} />
-        <label className="campo">
-          <span>Busca</span>
-          <input name="q" defaultValue={filtro.q ?? ""} placeholder="Código, cliente, cidade, OC, NF" />
-        </label>
-        <label className="campo">
-          <span>Etapa</span>
-          <select name="etapa" defaultValue={filtro.etapa ?? ""}>
-            <option value="">Todas</option>
-            {etapasVisiveis.map((etapa) => (
-              <option key={etapa.slug} value={etapa.slug}>
-                {etapa.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Contrato</span>
-          <input name="etiqueta" defaultValue={filtro.etiqueta ?? ""} placeholder="Contrato Atvos" />
-        </label>
-        <label className="campo">
-          <span>Cliente</span>
-          <select name="clienteId" defaultValue={filtro.clienteId ?? ""}>
-            <option value="">Todos</option>
-            {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
-                {cliente.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Responsável</span>
-          <select name="responsavelId" defaultValue={filtro.responsavelId ?? ""}>
-            <option value="">Todos</option>
-            {responsaveis.map((pessoa) => (
-              <option key={pessoa.id} value={pessoa.id}>
-                {pessoa.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Canal</span>
-          <select name="canal" defaultValue={filtro.canal ?? ""}>
-            <option value="">Todos</option>
-            {CANAIS.map((canal) => (
-              <option key={canal.id} value={canal.id}>
-                {canal.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Coleta de</span>
-          <input name="de" type="text" inputMode="numeric" placeholder="dd/mm/aaaa" defaultValue={filtro.dataColetaDe ? formatarData(filtro.dataColetaDe) : ""} />
-        </label>
-        <label className="campo">
-          <span>Coleta até</span>
-          <input name="ate" type="text" inputMode="numeric" placeholder="dd/mm/aaaa" defaultValue={filtro.dataColetaAte ? formatarData(filtro.dataColetaAte) : ""} />
-        </label>
-        <button className="btn secundario" type="submit">
-          Filtrar
-        </button>
-        <Link className="btn secundario" href={`/processos?visao=${filtro.visao}`}>
-          Limpar
-        </Link>
-      </form>
+      <BarraFiltros filtro={filtro} etapas={etapasVisiveis.map((etapa) => ({ slug: etapa.slug, rotulo: etapa.rotulo }))} responsaveis={responsaveis} />
       {filtro.visao === "kanban" ? (
         <>
           {lista.total > 300 ? <p className="alerta">O quadro mostra os 300 processos mais recentes deste filtro.</p> : null}
