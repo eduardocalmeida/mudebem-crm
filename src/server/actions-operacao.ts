@@ -41,7 +41,8 @@ export async function criarTarefaAction(form: FormData) {
     if (!(erro instanceof AppError)) throw erro;
   }
   revalidatePath("/tarefas");
-  redirect(`/processos/${processoId}?aba=tarefas`);
+  const voltar = String(form.get("voltar") || "");
+  redirect(voltar.startsWith("/tarefas") ? voltar : `/processos/${processoId}?aba=tarefas`);
 }
 
 export async function concluirTarefaAction(form: FormData) {

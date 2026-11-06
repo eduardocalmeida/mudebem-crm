@@ -54,7 +54,7 @@ export async function listarTarefas(filtro: { responsavelId?: string; processoId
     include: {
       tipo: true,
       responsavel: { select: { id: true, nome: true } },
-      processo: { select: { id: true, codigo: true, titulo: true } },
+      processo: { select: { id: true, codigo: true, titulo: true, origemCidade: true, origemUf: true, destinoCidade: true, destinoUf: true } },
     },
     orderBy: { vencimento: "asc" },
     take: 400,

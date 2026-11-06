@@ -257,6 +257,48 @@ fieldset.limpo { border: 0; margin: 0; padding: 0; min-width: 0; }
 .calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .calendario section { padding: 8px; min-height: 120px; }
 .calendario .chip { display: block; margin-top: 6px; font-size: 0.85rem; text-decoration: none; }
+.agenda-topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.agenda-quadro { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; align-items: stretch; }
+.agenda-coluna { flex: 1 0 260px; max-height: calc(100vh - 230px); overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.agenda-coluna header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.agenda-coluna header h2 { font-size: 0.95rem; }
+.agenda-coluna header em { font-style: normal; color: var(--muted); }
+.agenda-coluna.atraso { box-shadow: inset 3px 0 0 var(--danger); }
+.cartao-agenda { display: flex; flex-direction: column; gap: 2px; text-decoration: none; background: rgba(255,255,255,.82); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.cartao-agenda strong { font-size: 0.92rem; }
+.cartao-agenda .tipo { font-size: 0.78rem; font-weight: 700; color: var(--gold); }
+.cartao-agenda.tipo-atraso { background: var(--danger-soft); }
+.cartao-agenda.tipo-atraso .tipo { color: var(--danger); }
+.cartao-agenda.tipo-navy .tipo, .cartao-agenda.tipo-acompanha .tipo { color: var(--ink); }
+.cartao-agenda.tipo-whats .tipo { color: #8a6238; }
+.cartao-agenda.tipo-fatura .tipo { color: #6e4c7a; }
+.cartao-agenda.tipo-recebe .tipo { color: var(--ok); }
+.agenda-lista table { background: transparent; }
+.agenda-lista tr.data-quente td:first-child { color: var(--danger); font-weight: 700; }
+.selo-tipo { display: inline-flex; border-radius: 999px; padding: 2px 8px; font-size: 0.78rem; background: var(--paper-deep); }
+.selo-tipo.tipo-atraso { background: var(--danger-soft); color: var(--danger); }
+.selo-tipo.tipo-whats { background: #f3ece4; color: #8a6238; }
+.selo-tipo.tipo-fatura { background: #f3e9f6; color: #6e4c7a; }
+.selo-tipo.tipo-recebe { background: var(--ok-soft); color: var(--ok); }
+.selo-tipo.tipo-acompanha, .selo-tipo.tipo-navy { background: #e7ebf2; color: var(--ink); }
+.agenda-semana { overflow: auto; border-radius: 1rem; }
+.semana-grade { display: grid; min-width: 860px; background: rgba(255,255,255,.55); backdrop-filter: blur(16px); border: 1px solid rgba(226,217,207,.95); border-radius: 1rem; }
+.semana-canto, .semana-topo, .semana-horas, .semana-coluna { min-width: 0; }
+.semana-canto, .semana-topo { padding: 8px; border-bottom: 1px solid var(--line); }
+.semana-topo { border-left: 1px solid var(--line); }
+.semana-todo { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.bloco-todo, .bloco-hora { display: flex; flex-direction: column; text-decoration: none; border-radius: 8px; padding: 4px 6px; font-size: 0.75rem; line-height: 1.25; background: #e7ebf2; color: var(--ink); }
+.bloco-hora { position: absolute; left: 4px; right: 4px; min-height: 34px; z-index: 1; overflow: hidden; }
+.bloco-todo.tipo-atraso, .bloco-hora.tipo-atraso { background: var(--danger-soft); color: var(--danger); }
+.bloco-todo.tipo-whats, .bloco-hora.tipo-whats { background: #f3ece4; color: #6d5314; }
+.bloco-todo.tipo-fatura, .bloco-hora.tipo-fatura { background: #f3e9f6; color: #6e4c7a; }
+.bloco-todo.tipo-recebe, .bloco-hora.tipo-recebe { background: var(--ok-soft); color: var(--ok); }
+.bloco-todo.tipo-navy, .bloco-hora.tipo-navy, .bloco-todo.tipo-acompanha, .bloco-hora.tipo-acompanha { background: var(--ink); color: #F7F4EF; }
+.semana-horas { grid-row: span 1; }
+.semana-horas div, .semana-linha { height: 48px; }
+.semana-horas div { color: var(--muted); font-size: 0.75rem; padding: 2px 6px 0 0; text-align: right; border-top: 1px solid transparent; }
+.semana-coluna { position: relative; border-left: 1px solid var(--line); }
+.semana-linha { border-top: 1px solid rgba(226, 217, 207, 0.85); }
 .check { display: flex; align-items: center; gap: 8px; }
 .topo-lead { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.7fr); gap: 14px; margin-bottom: 14px; }
 .valor-principal b { display: block; font-size: 2rem; letter-spacing: -0.03em; margin: 4px 0; }
