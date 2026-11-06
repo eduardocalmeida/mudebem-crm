@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/mdfe", rotulo: "MDF-e" },
   { href: "/whatsapp", rotulo: "WhatsApp" },
   { href: "/clientes", rotulo: "Clientes" },
+  { href: "/notificacoes", rotulo: "Avisos" },
 ];
 
 export function BarraLateral({
@@ -25,6 +26,7 @@ export function BarraLateral({
   const itens = usuario.papel === "ADMIN" ? [...LINKS, { href: "/equipe", rotulo: "Equipe" },
     { href: "/etapas", rotulo: "Etapas" },
     { href: "/inventario", rotulo: "Catálogo" },
+    { href: "/contratos", rotulo: "Contratos" },
     { href: "/importar", rotulo: "Importar" },
     { href: "/integracoes", rotulo: "Integrações" },
   ] : LINKS;

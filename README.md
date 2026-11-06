@@ -87,6 +87,12 @@ curl -s -X POST http://localhost:3000/api/publico/orcamento \
 
 A migração dos leads ativos está em **Importar**. Exporte o CSV de leads, contatos e empresas na Kommo (vence em 13/11/2026) e envie cada arquivo. O importador reconhece as colunas do funil — origem e destino com andar, elevador, imóvel e ponto de referência, modalidade, coleta, entrega, embalagem, volume, inventário, itens especiais, datas, dias para coletar e viajar, motorista, valores de frete, seguro, transporte e total, forma de pagamento, validade, links e atribuição de marketing (fonte, utm, fbclid, gclid, campanha e anúncio da Meta). Coluna que não tiver campo próprio vira campo personalizado. Importar de novo o mesmo ID da Kommo atualiza o registro.
 
+## Infraestrutura
+
+O banco é um único projeto Postgres no Supabase, plano Pro, região São Paulo (`sa-east-1`), acessado pelo Prisma com `DATABASE_URL`. Use o backup diário do plano. Point-in-time recovery fica desligado por enquanto. A aplicação sobe na Vercel. CPF, endereço e e-mail ficam só no banco: o navegador não recebe chave de serviço, os segredos ficam em variável de ambiente e cada pedido guarda quem criou e quem decidiu, com data.
+
+O portal de cada empresa fica em `/p/<slug>`. O da Atvos é `/p/atvos`. O colaborador entra por link enviado ao e-mail (sem SMTP, o link aparece só fora de produção e a mensagem fica na fila). O pedido de quatro passos grava o processo em **A executar** com a etiqueta `Contrato <Empresa>`. O gestor aprova ou recusa em `/p/atvos/gestor`; a decisão gera aviso no CRM e e-mail na fila. Contratos e a importação de faixas ficam em **Contratos**.
+
 ## Stack
 
 - Next.js (App Router) e TypeScript

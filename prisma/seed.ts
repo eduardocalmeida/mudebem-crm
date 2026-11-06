@@ -530,6 +530,9 @@ async function main() {
     }
   }
 
+  const { garantirPortalAtvos } = await import("../src/server/portal/atvos");
+  await garantirPortalAtvos();
+
   console.log("Seed concluído com 10 processos de exemplo.");
   console.log("Senha dos usuários de demonstração: MudeBem@2026");
   console.log("Chave de API de demonstração:", CHAVE_API_EXEMPLO);

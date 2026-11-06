@@ -13,6 +13,7 @@ export type FiltroLista = {
   pagina: number;
   porPagina: number;
   visao: "kanban" | "lista";
+  etiqueta?: string;
 };
 
 function dataParam(params: URLSearchParams, nome: string) {
@@ -36,6 +37,7 @@ export function lerFiltro(params: URLSearchParams): FiltroLista {
     etapa: etapa as Etapa | undefined,
     canal: canal as Canal | undefined,
     clienteId: params.get("clienteId")?.trim() || undefined,
+    etiqueta: params.get("etiqueta")?.trim() || undefined,
     responsavelId: params.get("responsavelId")?.trim() || undefined,
     dataColetaDe: dataParam(params, "de"),
     dataColetaAte: dataParam(params, "ate"),
@@ -51,6 +53,7 @@ export function parametrosDe(filtro: {
   etapa?: string;
   canal?: string;
   clienteId?: string;
+  etiqueta?: string;
   responsavelId?: string;
   dataColetaDe?: string;
   dataColetaAte?: string;
@@ -63,6 +66,7 @@ export function parametrosDe(filtro: {
     ["etapa", filtro.etapa],
     ["canal", filtro.canal],
     ["clienteId", filtro.clienteId],
+    ["etiqueta", filtro.etiqueta],
     ["responsavelId", filtro.responsavelId],
     ["de", filtro.dataColetaDe],
     ["ate", filtro.dataColetaAte],

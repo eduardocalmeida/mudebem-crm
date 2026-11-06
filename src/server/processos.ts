@@ -173,6 +173,7 @@ export async function listarProcessos(filtro: {
   etapa?: Etapa;
   canal?: DadosCriarProcesso["canal"];
   clienteId?: string;
+  etiqueta?: string;
   responsavelId?: string;
   dataColetaDe?: string;
   dataColetaAte?: string;
@@ -186,6 +187,7 @@ export async function listarProcessos(filtro: {
   if (filtro.etapa) where.etapa = filtro.etapa;
   if (filtro.canal) where.canal = filtro.canal;
   if (filtro.clienteId) where.clienteId = filtro.clienteId;
+  if (filtro.etiqueta) where.etiqueta = filtro.etiqueta;
   if (filtro.responsavelId) where.responsavelId = filtro.responsavelId;
   if (filtro.dataColetaDe || filtro.dataColetaAte) {
     where.dataColeta = {};

@@ -108,6 +108,10 @@ export default async function ProcessosPage({
           </select>
         </label>
         <label className="campo">
+          <span>Contrato</span>
+          <input name="etiqueta" defaultValue={filtro.etiqueta ?? ""} placeholder="Contrato Atvos" />
+        </label>
+        <label className="campo">
           <span>Cliente</span>
           <select name="clienteId" defaultValue={filtro.clienteId ?? ""}>
             <option value="">Todos</option>

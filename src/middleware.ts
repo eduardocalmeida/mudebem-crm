@@ -8,7 +8,8 @@ export async function middleware(req: NextRequest) {
     pathname === "/orcamento" ||
     pathname === "/formulario.js" ||
     pathname.startsWith("/api/publico/") ||
-    pathname.startsWith("/api/webmania/");
+    pathname.startsWith("/api/webmania/") ||
+    pathname.startsWith("/p/");
   const sessao = await lerSessao(req.cookies.get(COOKIE_SESSAO)?.value);
 
   if (!sessao && !publico) {
@@ -20,7 +21,7 @@ export async function middleware(req: NextRequest) {
     return resposta;
   }
 
-  if (sessao && publico) {
+  if (sessao && pathname === "/login") {
     const url = req.nextUrl.clone();
     url.pathname = "/painel";
     url.search = "";
