@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FioMensagens } from "@/components/fio-mensagens";
 import { IconeCanal } from "@/components/icone-canal";
-import { formatarDataHora } from "@/lib/format";
 import { registrarMensagemAction, statusConversaAction } from "@/server/actions-conversa";
 import { obterConversa, rotuloStatusConversa } from "@/server/conversas";
 import { exigirUsuario } from "@/server/session";
@@ -30,30 +30,15 @@ export default async function ConversaPage({ params }: { params: Promise<{ id: s
         </div>
       </header>
       <section className="cartao bloco">
-        <div className="fio">
-          {conversa.mensagens.length === 0 ? <p className="muted">Nenhuma mensagem ainda.</p> : null}
-          {conversa.mensagens.map((mensagem) => (
-            <div key={mensagem.id} className={mensagem.direcao === "SAIDA" ? "bolha saida" : "bolha"}>
-              <strong className="linha-icone"><IconeCanal canal={mensagem.canal} /> {mensagem.remetente || "Mensagem"}</strong>
-              <div>{mensagem.conteudo}</div>
-              <small className="muted">{formatarDataHora(mensagem.criadaEm)}</small>
-            </div>
-          ))}
-        </div>
-        <form action={registrarMensagemAction} className="grade-form uma">
+        <FioMensagens mensagens={conversa.mensagens} />
+        <form action={registrarMensagemAction} className="compositor">
           <input type="hidden" name="conversaId" value={conversa.id} />
+          <p className="aviso-registro">Registro no histórico. A resposta real do WhatsApp continua na caixa do canal.</p>
           <label className="campo">
-            <span>Direção</span>
-            <select name="direcao" defaultValue="SAIDA">
-              <option value="SAIDA">Saída</option>
-              <option value="ENTRADA">Entrada</option>
-            </select>
+            <span className="so-leitor">Texto para o histórico</span>
+            <textarea name="conteudo" required placeholder="Anote o que foi dito" />
           </label>
-          <label className="campo largo">
-            <span>Mensagem</span>
-            <textarea name="conteudo" required placeholder="O WhatsApp da Meta continua na caixa própria. Aqui entra telefone, e-mail e nota." />
-          </label>
-          <button className="btn primario" type="submit">Registrar</button>
+          <button className="btn primario" type="submit">Registrar no histórico</button>
         </form>
         <form action={statusConversaAction} className="linha">
           <input type="hidden" name="conversaId" value={conversa.id} />

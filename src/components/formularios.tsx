@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CANAIS, PAPEIS, type Campo, type Etapa } from "@/lib/domain";
+import { CANAIS, PAPEIS, type Campo } from "@/lib/domain";
 import { interpretarData, UFS } from "@/lib/format";
 import type { EstadoForm } from "@/lib/estado";
 import {
@@ -11,7 +11,6 @@ import {
   criarContatoAction,
   criarProcessoAction,
   criarUsuarioAction,
-  mudarEtapaAction,
   notaAction,
   removerAnexoAction,
   revogarChaveAction,
@@ -20,16 +19,18 @@ import {
   alternarUsuarioAction,
 } from "@/server/actions";
 import { FormAcao } from "@/components/form-acao";
-import { BuscaContato, type ContatoOpcao } from "@/components/busca-contato";
+import { ContatosOportunidade, type ContatoFicha } from "@/components/contatos-oportunidade";
+import { FORMAS_PAGAMENTO_FICHA, formaPagamentoDaFicha } from "@/lib/pagamento";
+import type { VinculoContato } from "@/lib/contatos-oportunidade";
 import { EnderecoFicha, type PartesEndereco } from "@/components/endereco-ficha";
 
-type ContatoOpcaoForm = ContatoOpcao;
-type ClienteOpcao = { id: string; nome: string; contatos: ContatoOpcaoForm[] };
+type ClienteOpcao = { id: string; nome: string; contatos: ContatoFicha[] };
 type UsuarioOpcao = { id: string; nome: string };
 type Valores = Partial<Record<Campo, string>> & {
   origemPartes?: PartesEndereco;
   destinoPartes?: PartesEndereco;
   dataEmbalagem?: string;
+  vinculos?: VinculoContato[];
 };
 
 export function FormProcesso({
@@ -54,7 +55,7 @@ export function FormProcesso({
   const acao = modo === "criar" ? criarProcessoAction : salvarProcessoAction;
 
   const algum = (...lista: Campo[]) => lista.some(mostra);
-  const comercial = ["modalidade", "volume", "validadeProposta", "valorCotado", "valorAprovado", "valorFrete", "valorSeguro", "formaPagamento", "fonte"] as const;
+  const comercial = ["modalidade", "volume", "validadeProposta", "valorFrete", "valorSeguro", "valorTotal", "formaPagamento"] as const;
   const financeiro = ["numeroOc", "numeroNf", "dataEmissao", "dataVencimento", "dataRecebimento"] as const;
 
   return (
@@ -68,12 +69,10 @@ export function FormProcesso({
       {mostra("modalidade") ? <CampoModalidade valor={valores?.modalidade} /> : null}
       {mostra("volume") ? <Campo nome="volume" rotulo="Volume" valor={valores?.volume} /> : null}
       {mostra("validadeProposta") ? <Campo nome="validadeProposta" rotulo="Validade da proposta" tipo="date" valor={valores?.validadeProposta} /> : null}
-      {mostra("valorAprovado") ? <Campo nome="valorAprovado" rotulo="Valor aprovado (R$)" valor={valores?.valorAprovado} /> : null}
-      {mostra("valorCotado") ? <Campo nome="valorCotado" rotulo="Valor cotado (R$)" valor={valores?.valorCotado} /> : null}
       {mostra("valorFrete") ? <Campo nome="valorFrete" rotulo="Frete (R$)" valor={valores?.valorFrete} /> : null}
       {mostra("valorSeguro") ? <Campo nome="valorSeguro" rotulo="Seguro (R$)" valor={valores?.valorSeguro} /> : null}
-      {mostra("formaPagamento") ? <Campo nome="formaPagamento" rotulo="Forma de pagamento" valor={valores?.formaPagamento} /> : null}
-      {mostra("fonte") ? <Campo nome="fonte" rotulo="Fonte" valor={valores?.fonte} /> : null}
+      {mostra("valorTotal") ? <Campo nome="valorTotal" rotulo="Valor total (R$)" valor={valores?.valorTotal} /> : null}
+      {mostra("formaPagamento") ? <CampoFormaPagamento valor={valores?.formaPagamento} /> : null}
         </div>
       </fieldset>
       </article>
@@ -108,7 +107,12 @@ export function FormProcesso({
         </label>
       ) : null}
       {mostra("contatoId") ? (
-        <BuscaContato key={clienteId} contatos={contatos} contatoId={valores?.contatoId || ""} podeCadastrar />
+        <ContatosOportunidade
+          key={`${clienteId}:${(valores?.vinculos ?? []).map((item) => item.contatoId + item.papel).join("|")}:${valores?.contatoId ?? ""}`}
+          contatos={contatos}
+          vinculos={!valores?.clienteId || clienteId === valores.clienteId ? valores?.vinculos ?? [] : []}
+          principalId={!valores?.clienteId || clienteId === valores.clienteId ? valores?.contatoId || "" : ""}
+        />
       ) : null}
       {mostra("colaborador") ? <Campo nome="colaborador" rotulo="Colaborador em mudança" valor={valores?.colaborador} /> : null}
       {mostra("responsavelId") && modo === "editar" ? (
@@ -208,6 +212,26 @@ const MODALIDADES = [
   "Internacional",
 ];
 
+function CampoFormaPagamento({ valor }: { valor?: string }) {
+  const atual = (valor || "").trim();
+  const conhecida = formaPagamentoDaFicha(atual);
+  const [escolha, setEscolha] = useState(conhecida ? atual : "");
+  return (
+    <label className="campo">
+      <span>Forma de pagamento</span>
+      {atual && !conhecida ? <small className="muted">Atual: {atual}</small> : null}
+      <select name={escolha ? "formaPagamento" : undefined} value={escolha} onChange={(evento) => setEscolha(evento.target.value)}>
+        <option value="">Selecione</option>
+        {FORMAS_PAGAMENTO_FICHA.map((item) => (
+          <option key={item} value={item}>
+            {item}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function CampoModalidade({ valor }: { valor?: string }) {
   const atual = valor || "";
   const conhecida = !atual || MODALIDADES.includes(atual);
@@ -268,37 +292,6 @@ function Uf({ nome, rotulo, valor }: { nome: string; rotulo: string; valor?: str
         ))}
       </select>
     </label>
-  );
-}
-
-export function FormEtapa({ processoId, destinos }: { processoId: string; destinos: { id: Etapa; rotulo: string }[] }) {
-  if (destinos.length === 0) {
-    return <p className="muted">Seu papel não move este processo a partir da etapa atual. Um administrador pode corrigir.</p>;
-  }
-  return (
-    <FormAcao acao={mudarEtapaAction}>
-      <input type="hidden" name="processoId" value={processoId} />
-      <label className="campo">
-        <span>Nova etapa</span>
-        <select name="etapa" defaultValue="" required>
-          <option value="" disabled>
-            Escolha a etapa
-          </option>
-          {destinos.map((etapa) => (
-            <option key={etapa.id} value={etapa.id}>
-              {etapa.rotulo}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="campo">
-        <span>Observação da mudança</span>
-        <textarea name="observacao" placeholder="Opcional" />
-      </label>
-      <button className="btn primario" type="submit">
-        Mover etapa
-      </button>
-    </FormAcao>
   );
 }
 

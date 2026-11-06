@@ -6,12 +6,48 @@ export const UFS = [
 ] as const;
 
 export function hojeSaoPaulo(agora = new Date()): string {
+  return diaSaoPaulo(agora);
+}
+
+export function diaSaoPaulo(valor: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: FUSO,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(agora);
+  }).format(valor);
+}
+
+export function horaSaoPaulo(valor: Date): string {
+  const partes = new Intl.DateTimeFormat("en-GB", {
+    timeZone: FUSO,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(valor);
+  const ler = (tipo: string) => partes.find((parte) => parte.type === tipo)?.value ?? "00";
+  return `${ler("hour")}:${ler("minute")}`;
+}
+
+export function vencimentoParaCampo(valor: Date): string {
+  return `${diaSaoPaulo(valor)}T${horaSaoPaulo(valor)}`;
+}
+
+export function interpretarVencimento(valor: string): Date | null {
+  const texto = valor.trim();
+  if (!texto) return null;
+  const brasileiro = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[ T](\d{2}):(\d{2}))?$/);
+  if (brasileiro) {
+    const data = new Date(`${brasileiro[3]}-${brasileiro[2]}-${brasileiro[1]}T${brasileiro[4] ?? "09"}:${brasileiro[5] ?? "00"}:00-03:00`);
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+  const local = texto.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (local) {
+    const data = new Date(`${local[1]}T${local[2]}:${local[3]}:${local[4] ?? "00"}-03:00`);
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+  const data = new Date(texto);
+  return Number.isNaN(data.getTime()) ? null : data;
 }
 
 export function adicionarDias(iso: string, dias: number): string {

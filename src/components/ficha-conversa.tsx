@@ -1,23 +1,19 @@
 import Link from "next/link";
 import type { CanalConversa } from "@prisma/client";
+import { FioMensagens } from "@/components/fio-mensagens";
 import { IconeCanal } from "@/components/icone-canal";
-import { formatarDataHora } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { abrirConversaAction, registrarMensagemAction } from "@/server/actions-conversa";
 import { rotuloStatusConversa } from "@/server/conversas";
-import { listarTarefas, tarefaAtrasada } from "@/server/tarefas";
 
 const CANAIS_LEAD: CanalConversa[] = ["WHATSAPP", "INSTAGRAM", "EMAIL"];
 
 export async function FichaConversa({ processoId, usuarioId, fio }: { processoId: string; usuarioId: string; fio?: string }) {
-  const [conversas, tarefas] = await Promise.all([
-    prisma.conversa.findMany({
-      where: { processoId },
-      orderBy: [{ status: "asc" }, { ultimaMensagemEm: "desc" }],
-      include: { mensagens: { orderBy: { criadaEm: "asc" }, take: 40 }, whatsapp: { select: { id: true } } },
-    }),
-    listarTarefas({ processoId }),
-  ]);
+  const conversas = await prisma.conversa.findMany({
+    where: { processoId },
+    orderBy: [{ status: "asc" }, { ultimaMensagemEm: "desc" }],
+    include: { mensagens: { orderBy: { criadaEm: "asc" }, take: 80 }, whatsapp: { select: { id: true } } },
+  });
   const aberta = conversas.find((conversa) => conversa.id === fio) ?? conversas.find((conversa) => conversa.status !== "FECHADA") ?? conversas[0];
   const faltam = CANAIS_LEAD.filter((canal) => !conversas.some((conversa) => conversa.canal === canal && conversa.status !== "FECHADA"));
 
@@ -36,6 +32,7 @@ export async function FichaConversa({ processoId, usuarioId, fio }: { processoId
               {faltam.map((canal) => (
                 <form key={canal} action={abrirConversaAction}>
                   <input type="hidden" name="processoId" value={processoId} />
+                  <input type="hidden" name="responsavelId" value={usuarioId} />
                   <button className="canal-novo" type="submit" name="canal" value={canal} aria-label={`Abrir ${canal}`}>
                     <IconeCanal canal={canal} />
                   </button>
@@ -46,36 +43,18 @@ export async function FichaConversa({ processoId, usuarioId, fio }: { processoId
               <IconeCanal canal={aberta.canal} /> {aberta.numero} · {rotuloStatusConversa(aberta.status)}
               {" · "}
               <Link href={`/comunicacao/${aberta.id}`}>Abrir o fio</Link>
-              {aberta.whatsapp ? <> · <Link href={`/whatsapp/${aberta.whatsapp.id}`}>Responder</Link></> : null}
+              {aberta.whatsapp ? <> · <Link href={`/whatsapp/${aberta.whatsapp.id}`}>Responder no WhatsApp</Link></> : null}
             </p>
-            <div className="fio fio-curto" aria-label="Mensagens da conversa">
-              {aberta.mensagens.length === 0 ? <p className="muted">Nenhuma mensagem ainda.</p> : null}
-              {aberta.mensagens.map((mensagem) => (
-                <div key={mensagem.id} className={mensagem.direcao === "SAIDA" ? "bolha saida" : "bolha"}>
-                  <div className="bolha-meta">
-                    <strong className="linha-icone"><IconeCanal canal={mensagem.canal} /> {mensagem.remetente || (mensagem.direcao === "SAIDA" ? "Saída" : "Entrada")}</strong>
-                    <span className="muted">{mensagem.direcao === "SAIDA" ? "Saída" : "Entrada"}</span>
-                    <time className="muted" dateTime={mensagem.criadaEm.toISOString()}>{formatarDataHora(mensagem.criadaEm)}</time>
-                  </div>
-                  <p>{mensagem.conteudo}</p>
-                </div>
-              ))}
-            </div>
+            <FioMensagens mensagens={aberta.mensagens} curto />
             <form action={registrarMensagemAction} className="compositor">
               <input type="hidden" name="conversaId" value={aberta.id} />
               <input type="hidden" name="processoId" value={processoId} />
+              <p className="aviso-registro">Registro no histórico. Não envia pelo canal e não marca entrega ou leitura.</p>
               <label className="campo">
-                <span>Direção</span>
-                <select name="direcao" defaultValue="SAIDA" aria-label="Direção da mensagem">
-                  <option value="SAIDA">Saída</option>
-                  <option value="ENTRADA">Entrada</option>
-                </select>
+                <span className="so-leitor">Texto para o histórico</span>
+                <textarea name="conteudo" required placeholder="Anote o que foi dito" />
               </label>
-              <label className="campo">
-                <span>Mensagem</span>
-                <textarea name="conteudo" required placeholder="Escreva a mensagem" />
-              </label>
-              <button className="btn primario" type="submit">Registrar</button>
+              <button className="btn primario" type="submit">Registrar no histórico</button>
             </form>
           </>
         ) : (
@@ -94,21 +73,6 @@ export async function FichaConversa({ processoId, usuarioId, fio }: { processoId
             </div>
           </>
         )}
-      </article>
-      <article className="cartao bloco">
-        <h2>Tarefas</h2>
-        <ul className="lista-tarefas">
-          {tarefas.length === 0 ? <li className="muted">Nenhuma tarefa neste lead.</li> : null}
-          {tarefas.slice(0, 6).map((tarefa) => (
-            <li key={tarefa.id} className={tarefaAtrasada(tarefa.vencimento, tarefa.concluidaEm) ? "atrasada" : ""}>
-              <div>
-                <strong>{tarefa.titulo}</strong>
-                <div className="muted">{tarefa.tipo.rotulo} · {formatarDataHora(tarefa.vencimento)}{tarefa.concluidaEm ? " · concluída" : ""}</div>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <p><Link href={`/processos/${processoId}?aba=tarefas`}>Ver tarefas</Link></p>
       </article>
     </section>
   );

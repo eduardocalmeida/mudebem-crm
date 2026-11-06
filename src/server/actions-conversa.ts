@@ -22,7 +22,8 @@ export async function registrarMensagemAction(form: FormData) {
   const usuario = await exigirUsuario();
   const conversaId = String(form.get("conversaId") || "");
   const conteudo = String(form.get("conteudo") || "");
-  const direcao = form.get("direcao") === "ENTRADA" ? "ENTRADA" : "SAIDA";
+  const informado = form.get("direcao");
+  const direcao = informado === "ENTRADA" ? "ENTRADA" : "SAIDA";
   const canalInformado = canalDe(String(form.get("canal") || ""));
   const atual = canalInformado ? null : await prisma.conversa.findUnique({ where: { id: conversaId }, select: { canal: true } });
   await registrarMensagem({

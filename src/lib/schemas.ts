@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PAPEL_CONTATO_IDS } from "@/lib/contatos-oportunidade";
 import { CANAL_IDS, PAPEL_IDS, type Canal, type Papel } from "@/lib/domain";
 import { digitosCnpjValidos, interpretarData, UFS } from "@/lib/format";
 
@@ -115,6 +116,57 @@ const booleanoOpcional = z.union([z.boolean(), z.string(), z.null(), z.undefined
   return null;
 });
 
+const itemVinculo = z
+  .object({
+    contatoId: z.string().trim().min(1).optional(),
+    papel: z.enum(PAPEL_CONTATO_IDS),
+    principal: z.boolean().optional(),
+    novo: z
+      .object({
+        nome: z.string().trim().min(2).max(120),
+        email: z.string().trim().max(180).optional(),
+        telefone: z.string().trim().max(40).optional(),
+        cargo: z.string().trim().max(80).optional(),
+        cpf: z.string().trim().max(14).optional(),
+        documento: z.string().trim().max(40).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+  .superRefine((item, ctx) => {
+    if (Boolean(item.contatoId) === Boolean(item.novo)) {
+      ctx.addIssue({ code: "custom", message: "Informe o contato uma vez só." });
+    }
+  });
+
+const contatosVinculoCampo = z.union([z.string(), z.array(z.unknown()), z.undefined(), z.null()]).transform((valor, ctx) => {
+  if (valor === undefined || valor === null || valor === "") return undefined;
+  let bruto: unknown = valor;
+  if (typeof valor === "string") {
+    try {
+      bruto = JSON.parse(valor);
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Lista de contatos inválida." });
+      return z.NEVER;
+    }
+  }
+  const resultado = z
+    .array(itemVinculo)
+    .max(20)
+    .superRefine((itens, contexto) => {
+      if (itens.filter((item) => item.principal).length > 1) {
+        contexto.addIssue({ code: "custom", message: "Marque apenas um contato principal." });
+      }
+    })
+    .safeParse(bruto);
+  if (!resultado.success) {
+    ctx.addIssue({ code: "custom", message: resultado.error.issues[0]?.message || "Lista de contatos inválida." });
+    return z.NEVER;
+  }
+  return resultado.data;
+});
+
 const contatoNovo = z
   .object({
     nome: z.string().trim().min(2, "O nome do contato precisa de ao menos 2 caracteres.").max(120),
@@ -219,6 +271,8 @@ const camposProcesso = {
   responsavelId: idOpcional,
   contatoId: idOpcional,
   contato: contatoNovo,
+  contatoPrincipalId: idOpcional,
+  contatosVinculo: contatosVinculoCampo,
 };
 
 export const esquemaCriarProcesso = z

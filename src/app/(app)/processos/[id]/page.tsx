@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormAcao } from "@/components/form-acao";
-import { FormAnexo, FormEtapa, FormNota, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
+import { FormAnexo, FormNota, FormProcesso, FormRemoverAnexo } from "@/components/formularios";
+import { RolarPara, SeletorEtapa } from "@/components/seletor-etapa";
+import { lerVinculos } from "@/lib/contatos-oportunidade";
 import { SeloCanal, SeloEtapa, SeloExemplo } from "@/components/selos";
 import { camposDoPapel, destinosPossiveis, etapaPorId, rotuloEtapa } from "@/lib/domain";
 import { carregarEtapas } from "@/server/etapas";
 import { AppError } from "@/lib/errors";
-import { formatarBRL, formatarData, formatarDataHora, formatarNumero, localidade } from "@/lib/format";
+import { formatarBRL, formatarData, formatarDataHora, formatarNumero } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { AbaInventario, AbaTarefas } from "@/components/abas-operacao";
 import { FichaConversa } from "@/components/ficha-conversa";
@@ -31,7 +33,8 @@ export default async function ProcessoPage({
   const usuario = await exigirUsuario();
   const { id } = await params;
   const consulta = await searchParams;
-  const aba = consulta.aba || "resumo";
+  const abaPedida = consulta.aba || "resumo";
+  const aba = abaPedida === "tarefas" ? "resumo" : abaPedida;
   const processo = await obterProcesso(id, true).catch((erro: unknown) => {
     if (erro instanceof AppError && erro.status === 404) return null;
     throw erro;
@@ -41,7 +44,7 @@ export default async function ProcessoPage({
   const [clientes, usuarios] = await Promise.all([
     prisma.cliente.findMany({
       orderBy: { nome: "asc" },
-      include: { contatos: { orderBy: { nome: "asc" }, select: { id: true, nome: true } } },
+      include: { contatos: { orderBy: { nome: "asc" }, select: { id: true, nome: true, email: true, telefone: true, cargo: true, cpf: true, documento: true } } },
     }),
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
   ]);
@@ -75,7 +78,6 @@ export default async function ProcessoPage({
         {[
           ["resumo", "Resumo"],
           ["inventario", "Inventário"],
-          ["tarefas", "Tarefas"],
           ["fiscal", "Fiscal"],
         ].map(([idAba, rotulo]) => (
           <Link key={idAba} className={aba === idAba || (idAba === "fiscal" && (aba === "cte" || aba === "nfse")) ? "ativa" : ""} href={`/processos/${processo.id}?aba=${idAba}`}>
@@ -84,7 +86,6 @@ export default async function ProcessoPage({
         ))}
       </nav>
       {aba === "inventario" ? <AbaInventario processoId={processo.id} /> : null}
-      {aba === "tarefas" ? <AbaTarefas processoId={processo.id} /> : null}
       {aba === "fiscal" || aba === "cte" || aba === "nfse" ? (
         <AbaFiscal processoId={processo.id} aviso={consulta.aviso} secao={consulta.secao} admin={usuario.papel === "ADMIN"} />
       ) : null}
@@ -92,19 +93,6 @@ export default async function ProcessoPage({
       <>
       <p className="muted">{etapaPorId(processo.etapa, etapas).resumo}</p>
       <section className="topo-lead">
-        <article className="cartao bloco rota-grande">
-          <div>
-            <span className="muted">Origem</span>
-            <strong>{localidade(processo.origem.cidade, processo.origem.uf)}</strong>
-            <div>{processo.origem.endereco || "Endereço não informado"}</div>
-          </div>
-          <div aria-hidden>→</div>
-          <div>
-            <span className="muted">Destino</span>
-            <strong>{localidade(processo.destino.cidade, processo.destino.uf)}</strong>
-            <div>{processo.destino.endereco || "Endereço não informado"}</div>
-          </div>
-        </article>
         <article className="cartao bloco valor-principal">
           <span className="muted">Valor</span>
           <b>{formatarBRL(processo.valorAprovado ?? processo.valorCotado)}</b>
@@ -134,6 +122,7 @@ export default async function ProcessoPage({
       ) : null}
       <section className="ficha">
         <div>
+          <SeletorEtapa processoId={processo.id} atual={processo.etapa} rotuloAtual={rotuloEtapa(processo.etapa, etapas)} destinos={destinos} />
           <article className="cartao bloco">
             <h2>Dados do processo</h2>
             <p className="muted">Responsável: {processo.responsavel?.nome ?? "não definido"}.</p>
@@ -184,7 +173,9 @@ export default async function ProcessoPage({
                 valorAprovado: formatarNumero(processo.valorAprovado),
                 valorFrete: formatarNumero(processo.valorFrete),
                 valorSeguro: formatarNumero(processo.valorSeguro),
+                valorTotal: formatarNumero(processo.valorTotal),
                 formaPagamento: processo.formaPagamento ?? "",
+                vinculos: lerVinculos(processo.extras),
                 validadeProposta: processo.validadeProposta ? formatarData(processo.validadeProposta) : "",
                 fonte: processo.marketing.fonte ?? "",
                 numeroOc: processo.numeroOc ?? "",
@@ -213,13 +204,11 @@ export default async function ProcessoPage({
             </div>
             <FormAnexo processoId={processo.id} />
           </article>
+          <RolarPara id="tarefas-oportunidade" ativo={abaPedida === "tarefas"} />
+          <AbaTarefas processoId={processo.id} />
         </div>
         <aside>
           <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
-          <article className="cartao bloco">
-            <h2>Mover etapa</h2>
-            <FormEtapa processoId={processo.id} destinos={destinos} />
-          </article>
           <article className="cartao bloco">
             <h2>Nota</h2>
             <FormNota processoId={processo.id} />

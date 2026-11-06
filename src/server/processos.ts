@@ -10,6 +10,7 @@ import {
   type Campo,
   type Etapa,
 } from "@/lib/domain";
+import { lerVinculos } from "@/lib/contatos-oportunidade";
 import { carregarEtapas } from "@/server/etapas";
 import { criarTarefasDaEtapa } from "@/server/tarefas";
 import { AppError } from "@/lib/errors";
@@ -29,7 +30,9 @@ const ROTULOS_EVENTO = {
 } as const;
 
 function campoPermissao(chave: string): Campo {
-  return (chave === "contato" ? "contatoId" : chave) as Campo;
+  if (chave === "contato" || chave === "contatosVinculo" || chave === "contatoPrincipalId") return "contatoId";
+  if (chave === "dataEmbalagem") return "dataColeta";
+  return chave as Campo;
 }
 
 function camposProibidos(ator: Ator, campos: string[]): Campo[] {
@@ -127,6 +130,26 @@ async function resolverContato(
     },
   });
   return criado.id;
+}
+
+async function contatoDoCliente(tx: Tx, clienteId: string, contatoId: string) {
+  const contato = await tx.contato.findUnique({ where: { id: contatoId } });
+  if (!contato || contato.clienteId !== clienteId) {
+    throw new AppError("Contato não encontrado neste cliente.", 400, "DADOS_INVALIDOS");
+  }
+}
+
+async function resolverVinculos(tx: Tx, clienteId: string, itens: NonNullable<DadosCriarProcesso["contatosVinculo"]>) {
+  const vistos = new Set<string>();
+  const saida: { contatoId: string; papel: (typeof itens)[number]["papel"]; principal: boolean }[] = [];
+  for (const item of itens) {
+    const contatoId = await resolverContato(tx, clienteId, item.contatoId ?? null, item.novo ?? null);
+    if (!contatoId) throw new AppError("Informe o contato.", 400, "DADOS_INVALIDOS");
+    if (vistos.has(contatoId)) throw new AppError("Este contato já está na oportunidade.", 409, "CONFLITO");
+    vistos.add(contatoId);
+    saida.push({ contatoId, papel: item.papel, principal: Boolean(item.principal) });
+  }
+  return saida;
 }
 
 export function responsavelNaCriacao(
@@ -279,7 +302,19 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
 
   const id = await prisma.$transaction(async (tx) => {
     const clienteId = await resolverCliente(tx, dados.clienteId, dados.cliente);
-    const contatoId = await resolverContato(tx, clienteId, dados.contatoId, dados.contato);
+    let contatoId = await resolverContato(tx, clienteId, dados.contatoId, dados.contato);
+    const extrasCriacao: Record<string, unknown> = {};
+    if (dados.contatosVinculo) {
+      const vinculos = await resolverVinculos(tx, clienteId, dados.contatosVinculo);
+      extrasCriacao.contatosOportunidade = vinculos.map(({ contatoId: id, papel }) => ({ contatoId: id, papel }));
+      const marcado = vinculos.find((item) => item.principal);
+      if (marcado) contatoId = marcado.contatoId;
+    }
+    if (dados.contatoPrincipalId) {
+      await contatoDoCliente(tx, clienteId, dados.contatoPrincipalId);
+      contatoId = dados.contatoPrincipalId;
+    }
+    if (dados.dataEmbalagem !== undefined) extrasCriacao.fichaDatas = { dataEmbalagem: dados.dataEmbalagem };
     const codigo = await proximoCodigo(tx);
     const responsavelId = responsavelNaCriacao(ator, dados);
     await exigirResponsavel(tx, responsavelId);
@@ -356,7 +391,7 @@ export async function criarProcesso(ator: Ator, entrada: DadosCriarProcesso): Pr
         dataVencimento: paraDataBanco(dados.dataVencimento),
         dataRecebimento: paraDataBanco(dados.dataRecebimento),
         responsavelId,
-        ...(dados.dataEmbalagem !== undefined ? { extras: { fichaDatas: { dataEmbalagem: dados.dataEmbalagem } } } : {}),
+        ...(Object.keys(extrasCriacao).length ? { extras: extrasCriacao as Prisma.InputJsonValue } : {}),
       },
     });
     await tx.evento.create({
@@ -395,6 +430,7 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
     if (!atual) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
 
     const data: Prisma.ProcessoUpdateInput = {};
+    const notas: string[] = [];
     const escalar = data as Record<string, unknown>;
     const alterados: Campo[] = [];
 
@@ -506,7 +542,36 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
     if (patch.dataEmbalagem !== undefined) {
       const extras = patchExtras(atual.extras);
       const datas = patchExtras(extras.fichaDatas);
-      data.extras = { ...extras, fichaDatas: { ...datas, dataEmbalagem: patch.dataEmbalagem } };
+      const antes = typeof datas.dataEmbalagem === "string" ? datas.dataEmbalagem : "";
+      if (antes !== (patch.dataEmbalagem ?? "")) {
+        data.extras = { ...extras, fichaDatas: { ...datas, dataEmbalagem: patch.dataEmbalagem } };
+        notas.push("data de embalagem");
+      }
+    }
+    if (patch.contatosVinculo !== undefined || patch.contatoPrincipalId !== undefined) {
+      const extras = patchExtras(data.extras ?? atual.extras);
+      let principalEfetivo: string | null | undefined;
+      if (patch.contatosVinculo !== undefined) {
+        const vinculos = await resolverVinculos(tx, clienteId, patch.contatosVinculo);
+        const gravados = vinculos.map(({ contatoId: id, papel }) => ({ contatoId: id, papel }));
+        if (JSON.stringify(lerVinculos(atual.extras)) !== JSON.stringify(gravados)) {
+          extras.contatosOportunidade = gravados;
+          notas.push("contatos");
+        }
+        const marcado = vinculos.find((item) => item.principal);
+        if (marcado) principalEfetivo = marcado.contatoId;
+      }
+      if (patch.contatoPrincipalId) {
+        await contatoDoCliente(tx, clienteId, patch.contatoPrincipalId);
+        principalEfetivo = patch.contatoPrincipalId;
+      } else if (patch.contatoPrincipalId === null && principalEfetivo === undefined) {
+        principalEfetivo = null;
+      }
+      if (principalEfetivo !== undefined && principalEfetivo !== atual.contatoId) {
+        data.contato = principalEfetivo ? { connect: { id: principalEfetivo } } : { disconnect: true };
+        if (!alterados.includes("contatoId")) alterados.push("contatoId");
+      }
+      if (notas.includes("contatos") || data.extras) data.extras = extras as Prisma.InputJsonValue;
     }
     dataCampo("dataEmissao");
     dataCampo("validadeProposta");
@@ -534,14 +599,15 @@ export async function atualizarProcesso(ator: Ator, id: string, entrada: DadosPa
       alterados.push("responsavelId");
     }
 
-    if (alterados.length === 0) return;
+    const partes = [...alterados.map((campo) => rotuloCampo(campo)), ...notas];
+    if (partes.length === 0) return;
 
     await tx.processo.update({ where: { id }, data });
     await tx.evento.create({
       data: {
         processoId: id,
         tipo: "ATUALIZACAO",
-        mensagem: `Campos atualizados: ${alterados.map((campo) => rotuloCampo(campo)).join(", ")}.`,
+        mensagem: `Campos atualizados: ${partes.join(", ")}.`,
         usuarioId: ator.tipo === "usuario" ? ator.id : null,
         origem: nomeAtor(ator),
       },

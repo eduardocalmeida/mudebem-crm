@@ -65,6 +65,13 @@ export function tarefaAtrasada(vencimento: Date, concluidaEm: Date | null, agora
   return !concluidaEm && vencimento.getTime() < agora.getTime();
 }
 
+export async function atualizarVencimentoTarefa(id: string, vencimento: Date) {
+  const tarefa = await prisma.tarefa.findUnique({ where: { id }, select: { id: true, vencimento: true } });
+  if (!tarefa) throw new AppError("Tarefa não encontrada.", 404, "NAO_ENCONTRADO");
+  if (tarefa.vencimento.getTime() === vencimento.getTime()) return tarefa;
+  return prisma.tarefa.update({ where: { id }, data: { vencimento } });
+}
+
 export async function criarTarefa(dados: {
   processoId: string;
   tipoId: string;

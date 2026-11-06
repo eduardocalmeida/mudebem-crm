@@ -1,5 +1,6 @@
 import type { ZodError } from "zod";
 import { camposDoPapel, CAMPOS, type Papel } from "@/lib/domain";
+import { formaPagamentoDaFicha } from "@/lib/pagamento";
 import { AppError, mensagemZod } from "@/lib/errors";
 import { montarEndereco } from "@/server/formulario-publico";
 import {
@@ -54,6 +55,17 @@ function completarFicha(form: FormData, papel: Papel, bruto: Record<string, stri
         bruto[`${lado}Endereco`] = montarEndereco({ endereco: bruto[`${lado}Endereco`], ...partes }) ?? "";
       }
     }
+  }
+  if (bruto.formaPagamento !== undefined) {
+    const pagamento = bruto.formaPagamento.trim();
+    if (!pagamento) delete bruto.formaPagamento;
+    else if (!formaPagamentoDaFicha(pagamento)) throw new AppError("Escolha uma forma de pagamento da lista.", 400, "DADOS_INVALIDOS");
+  }
+  if (papel === "ADMIN" || camposDoPapel(papel).includes("contatoId")) {
+    const vinculos = texto(form, "contatosVinculo");
+    if (vinculos !== undefined) bruto.contatosVinculo = vinculos;
+    const principal = texto(form, "contatoPrincipalId");
+    if (principal !== undefined) bruto.contatoPrincipalId = principal;
   }
   if (papel === "ADMIN" || camposDoPapel(papel).includes("dataColeta")) {
     const embalagem = texto(form, "dataEmbalagem");

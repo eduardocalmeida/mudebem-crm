@@ -136,6 +136,77 @@ export async function adicionarItens(processoId: string, itens: EntradaItem[]) {
   return { ...totais, inventario: await obterInventario(processoId) };
 }
 
+const COMODO_CATEGORIA: Record<string, string> = {
+  Sala: "SALA",
+  Quarto: "QUARTO",
+  Cozinha: "COZINHA",
+  "Área de serviço": "AREA_SERVICO",
+  Escritório: "ESCRITORIO",
+  Varanda: "VARANDA",
+};
+
+function comodoDaCategoria(categoria: string) {
+  return COMODO_CATEGORIA[categoria] ?? "OUTROS";
+}
+
+export async function ajustarQuantidade(processoId: string, alvo: { catalogoId?: string | null; itemId?: string | null }, delta: number) {
+  if (delta !== 1 && delta !== -1) throw new AppError("A quantidade muda de um em um.", 400, "DADOS_INVALIDOS");
+  const processo = await prisma.processo.findUnique({ where: { id: processoId }, select: { id: true } });
+  if (!processo) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
+  if (alvo.catalogoId) {
+    const catalogo = await prisma.itemCatalogo.findUnique({ where: { id: alvo.catalogoId } });
+    if (!catalogo || !catalogo.ativo) throw new AppError("Item do catálogo não encontrado.", 404, "NAO_ENCONTRADO");
+    const itens = await prisma.itemInventario.findMany({ where: { processoId, catalogoId: catalogo.id }, orderBy: { criadoEm: "asc" } });
+    const soma = itens.reduce((total, item) => total + item.quantidade, 0);
+    if (delta < 0) {
+      const ultimo = [...itens].reverse().find((item) => item.quantidade > 0);
+      if (!ultimo || soma <= 0) return atualizarVolumeDoProcesso(processoId);
+      if (ultimo.quantidade <= 1) await prisma.itemInventario.delete({ where: { id: ultimo.id } });
+      else await prisma.itemInventario.update({ where: { id: ultimo.id }, data: { quantidade: ultimo.quantidade - 1 } });
+    } else if (itens[0]) {
+      await prisma.itemInventario.update({ where: { id: itens[0].id }, data: { quantidade: itens[0].quantidade + 1 } });
+    } else {
+      await prisma.itemInventario.create({
+        data: {
+          processoId,
+          catalogoId: catalogo.id,
+          nome: catalogo.nome,
+          comodo: comodoDaCategoria(catalogo.categoria),
+          quantidade: 1,
+          volumeUnitario: catalogo.volumeM3,
+        },
+      });
+    }
+  } else if (alvo.itemId) {
+    const item = await prisma.itemInventario.findUnique({ where: { id: alvo.itemId } });
+    if (!item || item.processoId !== processoId) throw new AppError("Item não encontrado.", 404, "NAO_ENCONTRADO");
+    if (delta < 0) {
+      if (item.quantidade <= 1) await prisma.itemInventario.delete({ where: { id: item.id } });
+      else await prisma.itemInventario.update({ where: { id: item.id }, data: { quantidade: item.quantidade - 1 } });
+    } else {
+      await prisma.itemInventario.update({ where: { id: item.id }, data: { quantidade: item.quantidade + 1 } });
+    }
+  } else {
+    throw new AppError("Informe o item.", 400, "DADOS_INVALIDOS");
+  }
+  return atualizarVolumeDoProcesso(processoId);
+}
+
+export async function definirValorDeclarado(processoId: string, chave: string, valor: number | null) {
+  if (!/^(catalogo|item):[A-Za-z0-9_-]+$/.test(chave)) throw new AppError("Item inválido.", 400, "DADOS_INVALIDOS");
+  if (valor != null && (!Number.isFinite(valor) || valor < 0 || valor > 9_999_999_999.99)) {
+    throw new AppError("Informe um valor declarado em reais.", 400, "DADOS_INVALIDOS");
+  }
+  const processo = await prisma.processo.findUnique({ where: { id: processoId }, select: { extras: true } });
+  if (!processo) throw new AppError("Processo não encontrado.", 404, "NAO_ENCONTRADO");
+  const extras = processo.extras && typeof processo.extras === "object" && !Array.isArray(processo.extras) ? { ...processo.extras } : {};
+  const atuais = extras.inventarioValores && typeof extras.inventarioValores === "object" && !Array.isArray(extras.inventarioValores) ? { ...extras.inventarioValores } : {};
+  if (valor == null) delete atuais[chave];
+  else atuais[chave] = Math.round(valor * 100) / 100;
+  extras.inventarioValores = atuais;
+  await prisma.processo.update({ where: { id: processoId }, data: { extras } });
+}
+
 export async function removerItem(processoId: string, itemId: string) {
   const item = await prisma.itemInventario.findUnique({ where: { id: itemId } });
   if (!item || item.processoId !== processoId) throw new AppError("Item não encontrado.", 404, "NAO_ENCONTRADO");

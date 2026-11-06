@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { criarTarefaAction } from "@/server/actions-operacao";
-import { formatarData, formatarDataHora } from "@/lib/format";
+import { CampoVencimento } from "@/components/campo-vencimento";
+import { atualizarVencimentoAction, criarTarefaAction } from "@/server/actions-operacao";
+import { formatarData, formatarDataHora, vencimentoParaCampo } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { garantirTarefasPadrao, listarTarefas, tarefaAtrasada } from "@/server/tarefas";
 import { exigirUsuario } from "@/server/session";
@@ -137,10 +138,7 @@ export default async function TarefasPage({
               {tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.rotulo}</option>)}
             </select>
           </label>
-          <label className="campo">
-            <span>Vencimento</span>
-            <input name="vencimento" required placeholder="dd/mm/aaaa hh:mm" defaultValue={`${ancora.split("-").reverse().join("/")} 09:00`} />
-          </label>
+          <CampoVencimento valor={`${ancora}T09:00`} obrigatorio />
           <label className="campo largo">
             <span>Comentário</span>
             <input name="titulo" required placeholder="O que precisa ser feito" />
@@ -150,7 +148,7 @@ export default async function TarefasPage({
       ) : null}
 
       {visao === "quadro" ? <Quadro tarefas={abertas} ancora={ancora} /> : null}
-      {visao === "lista" ? <Lista tarefas={tarefas} ancora={ancora} /> : null}
+      {visao === "lista" ? <Lista tarefas={tarefas} ancora={ancora} voltar={base({ nova: "" })} /> : null}
       {visao === "semana" || visao === "dia" ? <Semana tarefas={tarefas} inicio={inicioSem} somente={visao === "dia" ? ancora : null} /> : null}
       {visao === "mes" ? <Mes tarefas={tarefas} ancora={ancora} /> : null}
     </>
@@ -197,7 +195,7 @@ function Quadro({ tarefas, ancora }: { tarefas: TarefaCard[]; ancora: string }) 
   );
 }
 
-function Lista({ tarefas, ancora }: { tarefas: TarefaCard[]; ancora: string }) {
+function Lista({ tarefas, ancora, voltar }: { tarefas: TarefaCard[]; ancora: string; voltar: string }) {
   return (
     <div className="tabela-wrap cartao agenda-lista">
       <table>
@@ -217,7 +215,15 @@ function Lista({ tarefas, ancora }: { tarefas: TarefaCard[]; ancora: string }) {
             const destaque = !tarefa.concluidaEm && dia <= ancora;
             return (
               <tr key={tarefa.id} className={destaque ? "data-quente" : undefined}>
-                <td>{formatarDataHora(tarefa.vencimento)}</td>
+                <td>
+                  <form action={atualizarVencimentoAction} className="linha">
+                    <input type="hidden" name="id" value={tarefa.id} />
+                    <input type="hidden" name="processoId" value={tarefa.processo.id} />
+                    <input type="hidden" name="voltar" value={voltar} />
+                    <CampoVencimento valor={vencimentoParaCampo(tarefa.vencimento)} />
+                    <button className="btn secundario" type="submit">Salvar</button>
+                  </form>
+                </td>
                 <td>{tarefa.responsavel?.nome || "—"}</td>
                 <td><Link href={`/processos/${tarefa.processo.id}`}>{tarefa.processo.codigo} · {rota(tarefa.processo)}</Link></td>
                 <td><span className={`selo-tipo ${classeTipo(tarefa.tipo.slug, destaque && dia < ancora)}`}>{tarefa.tipo.rotulo}</span></td>

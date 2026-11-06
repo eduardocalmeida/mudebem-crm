@@ -1,25 +1,19 @@
 "use server";
 
+import { interpretarVencimento } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { adicionarItens, removerItem } from "@/server/inventario";
+import { adicionarItens, ajustarQuantidade, definirValorDeclarado, removerItem } from "@/server/inventario";
+import { atualizarVencimentoTarefa } from "@/server/tarefas";
 import { cancelarCte, corrigirCte, duplicarCte, emitirCte, obterOuPreencherCte, repreencherCte, atualizarRascunho } from "@/server/cte/cte";
 import { lerRascunho, type AtorCte } from "@/server/cte/rascunho";
 import { criarTarefa } from "@/server/tarefas";
 import { exigirUsuario } from "@/server/session";
 
 function instante(valor: string) {
-  const texto = valor.trim();
-  const brasileiro = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?$/);
-  if (brasileiro) {
-    return new Date(
-      `${brasileiro[3]}-${brasileiro[2]}-${brasileiro[1]}T${brasileiro[4] ?? "09"}:${brasileiro[5] ?? "00"}:00-03:00`,
-    );
-  }
-  const data = new Date(texto);
-  return Number.isNaN(data.getTime()) ? null : data;
+  return interpretarVencimento(valor);
 }
 
 export async function criarTarefaAction(form: FormData) {
@@ -80,6 +74,48 @@ export async function adicionarInventarioAction(form: FormData) {
   }
   revalidatePath(`/processos/${processoId}`);
   redirect(`/processos/${processoId}?aba=inventario`);
+}
+
+export async function ajustarInventarioAction(form: FormData) {
+  await exigirUsuario();
+  const processoId = String(form.get("processoId") || "");
+  const delta = Number(form.get("delta"));
+  try {
+    await ajustarQuantidade(processoId, { catalogoId: String(form.get("catalogoId") || "") || null, itemId: String(form.get("itemId") || "") || null }, delta);
+  } catch (erro) {
+    unstable_rethrow(erro);
+    if (!(erro instanceof AppError)) throw erro;
+  }
+  revalidatePath(`/processos/${processoId}`);
+  redirect(`/processos/${processoId}?aba=inventario`);
+}
+
+export async function salvarValorInventarioAction(processoId: string, chave: string, texto: string) {
+  await exigirUsuario();
+  const bruto = texto.trim();
+  const normalizado = bruto.includes(",") ? bruto.replace(/\./g, "").replace(",", ".") : bruto;
+  const valor = bruto ? Number(normalizado) : null;
+  await definirValorDeclarado(processoId, chave, valor != null && Number.isFinite(valor) ? valor : null);
+  revalidatePath(`/processos/${processoId}`);
+}
+
+export async function atualizarVencimentoAction(form: FormData) {
+  await exigirUsuario();
+  const id = String(form.get("id") || "");
+  const processoId = String(form.get("processoId") || "");
+  const vencimento = instante(String(form.get("vencimento") || ""));
+  if (vencimento) {
+    try {
+      await atualizarVencimentoTarefa(id, vencimento);
+    } catch (erro) {
+      unstable_rethrow(erro);
+      if (!(erro instanceof AppError)) throw erro;
+    }
+  }
+  revalidatePath("/tarefas");
+  revalidatePath(`/processos/${processoId}`);
+  const voltar = String(form.get("voltar") || "");
+  redirect(voltar.startsWith("/tarefas") || voltar.startsWith("/processos/") ? voltar : `/processos/${processoId}?aba=resumo#tarefas-oportunidade`);
 }
 
 export async function removerInventarioAction(form: FormData) {

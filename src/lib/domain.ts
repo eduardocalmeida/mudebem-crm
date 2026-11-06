@@ -177,6 +177,7 @@ const CAMPOS_COMERCIAL: Campo[] = [
   "diasParaViagem",
   "valorFrete",
   "valorSeguro",
+  "valorTotal",
   "formaPagamento",
   "validadeProposta",
   "fonte",
@@ -231,6 +232,7 @@ const CAMPOS_FINANCEIRO: Campo[] = [
   "dataRecebimento",
   "valorFrete",
   "valorSeguro",
+  "valorTotal",
   "formaPagamento",
   "dataEmissao",
 ];
@@ -361,7 +363,6 @@ const FORA_DA_FICHA = new Set<Campo>([
   "linkOs",
   "linkRecibo",
   "valorTransporte",
-  "valorTotal",
   "titulo",
 ]);
 

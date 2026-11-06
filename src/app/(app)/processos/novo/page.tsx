@@ -19,7 +19,7 @@ export default async function NovoProcessoPage() {
   const [clientes, usuarios] = await Promise.all([
     prisma.cliente.findMany({
       orderBy: { nome: "asc" },
-      include: { contatos: { orderBy: { nome: "asc" }, select: { id: true, nome: true } } },
+      include: { contatos: { orderBy: { nome: "asc" }, select: { id: true, nome: true, email: true, telefone: true, cargo: true, cpf: true, documento: true } } },
     }),
     prisma.usuario.findMany({ where: { ativo: true }, orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
   ]);

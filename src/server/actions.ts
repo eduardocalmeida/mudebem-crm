@@ -9,7 +9,9 @@ import type { EstadoForm } from "@/lib/estado";
 import { AppError, mensagemZod } from "@/lib/errors";
 import { hashSenha, verificarSenha } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { destinosPossiveis, rotuloEtapa } from "@/lib/domain";
 import { esquemaEtapa } from "@/lib/schemas";
+import { carregarEtapas } from "@/server/etapas";
 import { COOKIE_SESSAO, assinarSessao, opcoesCookie } from "@/lib/token";
 import { atualizarCliente, criarCliente, criarContato } from "@/server/clientes";
 import {
@@ -93,14 +95,21 @@ export async function salvarProcessoAction(_estado: EstadoForm, form: FormData):
 export async function moverEtapaAction(
   processoId: string,
   etapa: string,
-): Promise<{ ok: true } | { ok: false; erro: string }> {
+): Promise<{ ok: true; etapa: string; rotulo: string; destinos: { id: string; rotulo: string }[] } | { ok: false; erro: string }> {
   try {
     const usuario = await exigirUsuario();
     const resultado = esquemaEtapa.safeParse({ etapa });
     if (!resultado.success) throw new AppError(mensagemZod(resultado.error), 400, "DADOS_INVALIDOS");
     await moverEtapa(atorDoUsuario(usuario), processoId, resultado.data.etapa);
     atualizarTelas(processoId);
-    return { ok: true };
+    const etapas = await carregarEtapas();
+    const atual = resultado.data.etapa;
+    return {
+      ok: true as const,
+      etapa: atual,
+      rotulo: rotuloEtapa(atual, etapas),
+      destinos: destinosPossiveis(usuario.papel, atual, etapas).map((id) => ({ id, rotulo: rotuloEtapa(id, etapas) })),
+    };
   } catch (erro) {
     unstable_rethrow(erro);
     if (erro instanceof AppError) return { ok: false, erro: erro.message };
