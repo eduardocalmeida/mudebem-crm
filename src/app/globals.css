@@ -100,16 +100,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-sair span { display: inline-block; max-width: 0; opacity: 0; overflow: hidden; }
 .quem-texto { max-width: 0; opacity: 0; overflow: hidden; }
 @media (min-width: 801px) {
-  .barra:hover, .barra:focus-within, .barra.config-aberta {
+  .barra:hover, .barra:has(:focus-visible) {
     width: 268px;
     background: rgba(247, 244, 239, 0.94);
     box-shadow: 18px 0 40px -28px rgba(16, 24, 40, 0.45);
   }
-  .barra:hover .marca, .barra:focus-within .marca, .barra.config-aberta .marca { width: 210px; }
-  .barra:hover .quem-texto, .barra:focus-within .quem-texto, .barra.config-aberta .quem-texto,
-  .barra:hover .menu .rotulo, .barra:focus-within .menu .rotulo, .barra.config-aberta .menu .rotulo { max-width: 180px; opacity: 1; }
-  .barra:hover .btn-sair, .barra:focus-within .btn-sair, .barra.config-aberta .btn-sair { width: 100%; max-width: none; }
-  .barra:hover .btn-sair span, .barra:focus-within .btn-sair span, .barra.config-aberta .btn-sair span { max-width: 80px; opacity: 1; }
+  .barra:hover .marca, .barra:has(:focus-visible) .marca { width: 210px; }
+  .barra:hover .quem-texto, .barra:has(:focus-visible) .quem-texto,
+  .barra:hover .menu .rotulo, .barra:has(:focus-visible) .menu .rotulo { max-width: 180px; opacity: 1; }
+  .barra:hover .btn-sair, .barra:has(:focus-visible) .btn-sair { width: 100%; max-width: none; }
+  .barra:hover .btn-sair span, .barra:has(:focus-visible) .btn-sair span { max-width: 80px; opacity: 1; }
 }
 .nav-base, .gaveta, .cortina, .atalho-mais { display: none; }
 .fato small { display: block; overflow-wrap: anywhere; }

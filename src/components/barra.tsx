@@ -52,7 +52,7 @@ export function BarraLateral({
     setConfigAberta(emConfig);
   }, [caminho, emConfig]);
   return (
-    <aside className={configAberta ? "barra config-aberta" : "barra"}>
+    <aside className="barra">
       <Link href="/painel" className="marca" aria-label="Início">
         <Logo />
       </Link>
