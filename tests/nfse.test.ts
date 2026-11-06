@@ -54,6 +54,9 @@ describe("NFS-e", () => {
     expect(nota.tomadorNome).toBe("Casa Azul Ltda");
     expect(nota.tomadorDocumento).toBe("11222333000181");
     expect(nota.municipioPrestacao).toBe("Curitiba");
+    expect(nota.prestadorMunicipio).toBe("Goiânia");
+    expect(nota.prestadorUf).toBe("GO");
+    expect(nota.prestadorIbge).toBe("5208707");
     expect(nota.codigoServico).toBe("16.02");
     expect(Number(nota.valorServicos)).toBe(1800);
     expect(nota.discriminacao).toContain("mesmo município".replace("mesmo município", "município de Curitiba") || "Curitiba");
@@ -92,6 +95,23 @@ describe("NFS-e", () => {
     expect(manual.documentoFiscalManual).toBe(true);
     const preenchida = await preencherNfse(processo.id);
     expect(preenchida.codigoServico).toBe("16.02");
+    const { salvarEmpresa, obterEmpresa } = await import("@/server/empresa");
+    await salvarEmpresa({ nome: "Mude Bem", cnpj: null, ie: null, municipio: "Aparecida de Goiânia", uf: "GO", codigoIbge: "5201405" });
+    const outra = await prisma.processo.create({
+      data: {
+        codigo: "MB-NFSE-3",
+        titulo: "Outra sede",
+        canal: "SITE",
+        clienteId: cliente.id,
+        origemCidade: "Curitiba",
+        origemUf: "PR",
+        destinoCidade: "Curitiba",
+        destinoUf: "PR",
+      },
+    });
+    expect((await preencherNfse(outra.id)).prestadorIbge).toBe("5201405");
+    await salvarEmpresa({ nome: null, cnpj: null, ie: null, municipio: "Goiânia", uf: "GO", codigoIbge: "5208707" });
+    expect((await obterEmpresa()).municipio).toBe("Goiânia");
   });
 
   it("grava número e código de verificação pelo webhook", async () => {

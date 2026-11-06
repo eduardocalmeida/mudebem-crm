@@ -441,6 +441,9 @@ model Nfse {
   status              String    @default("RASCUNHO")
   prestadorNome       String?
   prestadorDocumento  String?
+  prestadorMunicipio  String?
+  prestadorUf         String?
+  prestadorIbge       String?
   tomadorNome         String?
   tomadorDocumento    String?
   tomadorEmail        String?
@@ -481,6 +484,17 @@ model Nfse {
 
   @@index([processoId])
   @@index([uuidProvedor])
+}
+
+model Empresa {
+  id           String   @id @default("padrao")
+  nome         String?
+  cnpj         String?
+  ie           String?
+  municipio    String   @default("Goiânia")
+  uf           String   @default("GO")
+  codigoIbge   String   @default("5208707")
+  atualizadoEm DateTime @updatedAt
 }
 
 model ConfigWhatsapp {

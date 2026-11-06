@@ -61,7 +61,9 @@ async function Nota({ processoId, admin }: { processoId: string; admin: boolean 
     <section className="cartao">
       <h2>NFS-e · {nfse.status}</h2>
       <p className="muted">
-        Prestador: {nfse.prestadorNome || "cadastro da conta WebmaniaBR"}.
+        Prestador: {nfse.prestadorNome || "cadastro da conta WebmaniaBR"}
+        {nfse.prestadorMunicipio ? ` · ${nfse.prestadorMunicipio}/${nfse.prestadorUf || ""}` : ""}
+        {nfse.prestadorIbge ? ` · IBGE ${nfse.prestadorIbge}` : ""}. O município do prestador vem das configurações da empresa.
         {nfse.numero ? ` Número ${nfse.numero}.` : ""}
         {nfse.codigoVerificacao ? ` Verificação ${nfse.codigoVerificacao}.` : ""}
       </p>
@@ -78,6 +80,9 @@ async function Nota({ processoId, admin }: { processoId: string; admin: boolean 
         <label className="campo"><span>Cidade</span><input name="tomadorCidade" defaultValue={nfse.tomadorCidade || ""} /></label>
         <label className="campo"><span>UF</span><select name="tomadorUf" defaultValue={nfse.tomadorUf || ""}><option value="">—</option>{UFS.map((uf) => <option key={uf}>{uf}</option>)}</select></label>
         <label className="campo"><span>CEP</span><input name="tomadorCep" defaultValue={nfse.tomadorCep || ""} /></label>
+        <label className="campo"><span>Município do prestador</span><input name="prestadorMunicipio" defaultValue={nfse.prestadorMunicipio || "Goiânia"} /></label>
+        <label className="campo"><span>UF do prestador</span><input name="prestadorUf" defaultValue={nfse.prestadorUf || "GO"} /></label>
+        <label className="campo"><span>IBGE do prestador</span><input name="prestadorIbge" defaultValue={nfse.prestadorIbge || "5208707"} /></label>
         <label className="campo"><span>Município da prestação</span><input name="municipioPrestacao" defaultValue={nfse.municipioPrestacao || ""} /></label>
         <label className="campo"><span>Código do serviço</span>
           <select name="codigoServico" defaultValue={nfse.codigoServico || ""}>

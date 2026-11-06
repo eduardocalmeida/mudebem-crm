@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { obterEmpresa } from "@/server/empresa";
 import { documentoEfetivo, sugerirDocumentoFiscal, type DocumentoFiscal } from "@/server/nfse/regra";
 import { obterProvedorNfse, type RascunhoNfse } from "@/server/nfse/webmania";
 
@@ -82,9 +83,13 @@ export async function preencherNfse(processoId: string) {
   const valor = numero(processo.valorAprovado) ?? numero(processo.valorTotal) ?? numero(processo.valorFrete);
   const aliquotaIss = numero(padrao?.aliquotaIss);
   const cidade = processo.origemCidade;
+  const empresa = await obterEmpresa();
   return {
-    prestadorNome: process.env.WEBMANIA_EMITENTE_NOME || null,
-    prestadorDocumento: process.env.WEBMANIA_EMITENTE_CNPJ || null,
+    prestadorNome: empresa.nome || process.env.WEBMANIA_EMITENTE_NOME || null,
+    prestadorDocumento: empresa.cnpj || process.env.WEBMANIA_EMITENTE_CNPJ || null,
+    prestadorMunicipio: empresa.municipio,
+    prestadorUf: empresa.uf,
+    prestadorIbge: empresa.codigoIbge,
     tomadorNome: processo.cliente.nome,
     tomadorDocumento: documento || null,
     tomadorEmail: processo.contato?.email || processo.cliente.email,
@@ -122,6 +127,9 @@ export async function obterOuPreencherNfse(processoId: string) {
 }
 
 export function rascunhoDe(nfse: {
+  prestadorMunicipio: string | null;
+  prestadorUf: string | null;
+  prestadorIbge: string | null;
   tomadorNome: string | null;
   tomadorDocumento: string | null;
   tomadorEmail: string | null;
@@ -148,6 +156,9 @@ export function rascunhoDe(nfse: {
   ibsClassificacao: string | null;
 }): RascunhoNfse {
   return {
+    prestadorMunicipio: nfse.prestadorMunicipio,
+    prestadorUf: nfse.prestadorUf,
+    prestadorIbge: nfse.prestadorIbge,
     tomadorNome: nfse.tomadorNome,
     tomadorDocumento: nfse.tomadorDocumento,
     tomadorEmail: nfse.tomadorEmail,

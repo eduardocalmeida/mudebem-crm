@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { obterEmpresa } from "@/server/empresa";
 import { AppError } from "@/lib/errors";
 import { obterProvedorCte } from "@/server/cte/provedor";
 import { atorVazio, lerRascunho, type AtorCte, type RascunhoCte } from "@/server/cte/rascunho";
@@ -46,6 +47,8 @@ export async function montarRascunhoDoProcesso(processoId: string): Promise<Rasc
   const ie = processo.cliente.inscricaoEstadual?.trim() || null;
   const contribuicao = ie && ie.toUpperCase() !== "ISENTO" ? 1 : ie?.toUpperCase() === "ISENTO" ? 2 : 9;
   const documento = processo.cliente.cnpj;
+  const empresa = await obterEmpresa();
+  const ufOrigem = processo.origemUf || empresa.uf;
   const remetente: AtorCte = {
     ...atorVazio(processo.cliente.nome),
     documento,
@@ -55,7 +58,7 @@ export async function montarRascunhoDoProcesso(processoId: string): Promise<Rasc
     endereco: origem.endereco,
     numero: origem.numero,
     cidade: processo.origemCidade,
-    uf: processo.origemUf,
+    uf: ufOrigem,
   };
   const destinatario: AtorCte = {
     ...atorVazio(processo.contato?.nome || processo.cliente.nome),
@@ -74,7 +77,7 @@ export async function montarRascunhoDoProcesso(processoId: string): Promise<Rasc
     ...base,
     contribuicaoTomador: contribuicao,
     inicioCidade: processo.origemCidade,
-    inicioUf: processo.origemUf,
+    inicioUf: ufOrigem,
     fimCidade: processo.destinoCidade,
     fimUf: processo.destinoUf,
     remetente,
@@ -94,7 +97,7 @@ export async function montarRascunhoDoProcesso(processoId: string): Promise<Rasc
   };
 }
 
-function colunas(rascunho: RascunhoCte) {
+function colunas(rascunho: RascunhoCte, empresa: { nome: string | null; cnpj: string | null; ie: string | null; municipio: string; uf: string }) {
   return {
     finalidade: rascunho.finalidade,
     tipoServico: rascunho.tipoServico,
@@ -132,9 +135,11 @@ function colunas(rascunho: RascunhoCte) {
     icmsBase: rascunho.baseIcms,
     icmsAliquota: rascunho.aliquotaIcms,
     icmsValor: rascunho.valorIcms,
-    emitenteNome: process.env.WEBMANIA_EMITENTE_NOME || null,
-    emitenteDocumento: process.env.WEBMANIA_EMITENTE_CNPJ || null,
-    emitenteIe: process.env.WEBMANIA_EMITENTE_IE || null,
+    emitenteNome: empresa.nome || process.env.WEBMANIA_EMITENTE_NOME || null,
+    emitenteDocumento: empresa.cnpj || process.env.WEBMANIA_EMITENTE_CNPJ || null,
+    emitenteIe: empresa.ie || process.env.WEBMANIA_EMITENTE_IE || null,
+    emitenteMunicipio: empresa.municipio,
+    emitenteUf: empresa.uf,
   };
 }
 
@@ -142,11 +147,11 @@ export async function obterOuPreencherCte(processoId: string) {
   const existente = await prisma.cte.findFirst({ where: { processoId }, orderBy: { criadoEm: "desc" } });
   if (existente) return existente;
   const rascunho = await montarRascunhoDoProcesso(processoId);
-  return prisma.cte.create({ data: { processoId, status: "RASCUNHO", ...colunas(rascunho) } });
+  return prisma.cte.create({ data: { processoId, status: "RASCUNHO", ...colunas(rascunho, await obterEmpresa()) } });
 }
 
 export async function atualizarRascunho(cteId: string, rascunho: RascunhoCte) {
-  return prisma.cte.update({ where: { id: cteId }, data: colunas(rascunho) });
+  return prisma.cte.update({ where: { id: cteId }, data: colunas(rascunho, await obterEmpresa()) });
 }
 
 export async function repreencherCte(processoId: string) {
@@ -166,7 +171,7 @@ export async function duplicarCte(cteId: string) {
     data: {
       processoId: atual.processoId,
       status: "RASCUNHO",
-      ...colunas({ ...rascunho, finalidade: 0 }),
+      ...colunas({ ...rascunho, finalidade: 0 }, await obterEmpresa()),
       mensagemProvedor: `Cópia do CT-e ${atual.numero || atual.id}.`,
     },
   });

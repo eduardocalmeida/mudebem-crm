@@ -5,6 +5,9 @@ import { ambienteWebmania, tokenConfigurado } from "@/server/cte/webmania";
 const URL_BASE = () => (process.env.WEBMANIA_URL_BASE || "https://api.webmania.com.br").replace(/\/$/, "");
 
 export type RascunhoNfse = {
+  prestadorMunicipio: string | null;
+  prestadorUf: string | null;
+  prestadorIbge: string | null;
   tomadorNome: string | null;
   tomadorDocumento: string | null;
   tomadorEmail: string | null;

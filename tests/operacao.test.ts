@@ -84,6 +84,9 @@ describe("tarefas, inventário e CT-e", () => {
     });
     const cte = await obterOuPreencherCte(processo.id);
     expect(cte.municipioInicio).toBe("Londrina");
+    expect(cte.ufInicio).toBe("PR");
+    expect(cte.emitenteMunicipio).toBe("Goiânia");
+    expect(cte.emitenteUf).toBe("GO");
     expect(cte.municipioFim).toBe("Maringá");
     expect(cte.modal).toBe("01");
     expect(cte.status).toBe("RASCUNHO");
@@ -93,5 +96,12 @@ describe("tarefas, inventário e CT-e", () => {
     expect(rascunho.remetente.nome).toBe("Remetente LTDA");
     expect(rascunho.destinatario.cidade).toBe("Maringá");
     await expect(emitirCte(processo.id)).rejects.toMatchObject({ status: 501, codigo: "PROVEDOR_AUSENTE" });
+
+    const semUf = await prisma.processo.create({
+      data: { codigo: "MB-OP-4", titulo: "Sem UF", canal: "EMAIL", clienteId: cliente.id, origemCidade: "Anápolis" },
+    });
+    const cteGo = await obterOuPreencherCte(semUf.id);
+    expect(cteGo.ufInicio).toBe("GO");
+    expect(lerRascunho(cteGo.rascunho).remetente.uf).toBe("GO");
   });
 });

@@ -39,6 +39,9 @@ export async function salvarNfseAction(form: FormData) {
   const processoId = String(form.get("processoId") || "");
   const id = String(form.get("id") || "");
   const rascunho: RascunhoNfse = {
+    prestadorMunicipio: texto(form, "prestadorMunicipio"),
+    prestadorUf: texto(form, "prestadorUf"),
+    prestadorIbge: texto(form, "prestadorIbge"),
     tomadorNome: texto(form, "tomadorNome"),
     tomadorDocumento: texto(form, "tomadorDocumento"),
     tomadorEmail: texto(form, "tomadorEmail"),

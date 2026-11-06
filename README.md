@@ -314,7 +314,7 @@ O certificado digital A1 é carregado na empresa emitente, no painel da Webmania
 
 Mudança dentro do mesmo município sugere NFS-e. Municípios diferentes sugerem CT-e. A escolha fica na aba **Fiscal** e pode ser trocada. Sem escolha manual, a sugestão vale de novo.
 
-A NFS-e guarda prestador, tomador (CPF ou CNPJ, endereço e e-mail), município da prestação, discriminação, código da LC 116, CNAE, ISS, retenções de PIS, COFINS, CSLL, IR e INSS, valor dos serviços, deduções e IBS/CBS. Os códigos `16.02` e `26.01` nascem no cadastro e o administrador ajusta descrição, CNAE, alíquota e qual é o padrão. O valor do serviço sai do valor aprovado.
+A NFS-e guarda prestador, tomador (CPF ou CNPJ, endereço e e-mail), município da prestação, discriminação, código da LC 116, CNAE, ISS, retenções de PIS, COFINS, CSLL, IR e INSS, valor dos serviços, deduções e IBS/CBS. O município do prestador nasce como Goiânia/GO, código IBGE 5208707, e o administrador troca isso em **Integrações**. No CT-e, a UF de início fica GO quando o processo não traz UF de origem. Os códigos `16.02` e `26.01` nascem no cadastro e o administrador ajusta descrição, CNAE, alíquota e qual é o padrão. O valor do serviço sai do valor aprovado.
 
 `obterProvedorNfse()` monta `POST /2/nfse/emissao` e `PUT /2/nfse/cancelar`. Sem token, nada é enviado. Com token, o pedido fica gravado. O retorno entra em `POST /api/webmania/nfse?token=`. Para município do Padrão Nacional, defina `WEBMANIA_NFSE_MODELO=padrao_nacional` para não enviar `impostos.iss`.
 

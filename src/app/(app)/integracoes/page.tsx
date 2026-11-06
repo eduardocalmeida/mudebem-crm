@@ -4,6 +4,8 @@ import { SeloExemplo } from "@/components/selos";
 import { CHAVE_API_EXEMPLO } from "@/lib/api-key";
 import { formatarDataHora } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { salvarEmpresaAction } from "@/server/actions-empresa";
+import { obterEmpresa } from "@/server/empresa";
 import { exigirUsuario } from "@/server/session";
 
 export const metadata = { title: "Integrações" };
@@ -15,6 +17,7 @@ export default async function IntegracoesPage() {
   const host = cabecalhos.get("x-forwarded-host") || cabecalhos.get("host") || "";
   const protocolo = cabecalhos.get("x-forwarded-proto") || "https";
   const base = host ? `${protocolo}://${host}` : "";
+  const empresa = await obterEmpresa();
   const chaves = await prisma.chaveApi.findMany({
     orderBy: { criadaEm: "desc" },
     include: { criadaPor: { select: { nome: true } } },
@@ -41,6 +44,19 @@ export default async function IntegracoesPage() {
           <a href="/orcamento">{base}/orcamento</a>
         </p>
         <pre className="chave-nova">{`<div id="mudebem-orcamento"></div>\n<script src="${base}/formulario.js" async></script>`}</pre>
+      </section>
+      <section className="cartao bloco">
+        <h2>Empresa</h2>
+        <p className="muted">Município do prestador usado nas NFS-e novas. A sede padrão é Goiânia/GO, IBGE 5208707.</p>
+        <form action={salvarEmpresaAction} className="grade-form">
+          <label className="campo"><span>Nome</span><input name="nome" defaultValue={empresa.nome || ""} /></label>
+          <label className="campo"><span>CNPJ</span><input name="cnpj" defaultValue={empresa.cnpj || ""} /></label>
+          <label className="campo"><span>Inscrição estadual</span><input name="ie" defaultValue={empresa.ie || ""} /></label>
+          <label className="campo"><span>Município</span><input name="municipio" defaultValue={empresa.municipio} /></label>
+          <label className="campo"><span>UF</span><input name="uf" defaultValue={empresa.uf} /></label>
+          <label className="campo"><span>Código IBGE</span><input name="codigoIbge" defaultValue={empresa.codigoIbge} /></label>
+          <button className="btn" type="submit">Salvar empresa</button>
+        </form>
       </section>
       <section className="cartao bloco">
         <h2>WebmaniaBR</h2>

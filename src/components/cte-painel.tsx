@@ -80,7 +80,7 @@ function Identificacao({ rascunho, emitente }: { rascunho: ReturnType<typeof ler
       <Lista nome="indicadorTomador" rotulo="Tomador" valor={rascunho.indicadorTomador} opcoes={TOMADORES} />
       <Lista nome="contribuicaoTomador" rotulo="Tipo de cliente do tomador" valor={rascunho.contribuicaoTomador} opcoes={CONTRIBUICOES} />
       <Campo nome="inicioCidade" rotulo="Cidade de início" valor={rascunho.inicioCidade} />
-      <Uf nome="inicioUf" valor={rascunho.inicioUf} rotulo="UF de início" />
+      <Uf nome="inicioUf" valor={rascunho.inicioUf || "GO"} rotulo="UF de início" />
       <Campo nome="fimCidade" rotulo="Cidade de término" valor={rascunho.fimCidade} />
       <Uf nome="fimUf" valor={rascunho.fimUf} rotulo="UF de término" />
       <Campo nome="valorServico" rotulo="Valor do serviço" valor={moeda(rascunho.valorServico)} />
@@ -118,7 +118,7 @@ function Ator({ prefixo, titulo, ator }: { prefixo: string; titulo: string; ator
         <Campo nome={`${prefixo}Complemento`} rotulo="Complemento" valor={pessoa?.complemento} />
         <Campo nome={`${prefixo}Bairro`} rotulo="Bairro" valor={pessoa?.bairro} />
         <Campo nome={`${prefixo}Cidade`} rotulo="Cidade" valor={pessoa?.cidade} />
-        <Uf nome={`${prefixo}Uf`} valor={pessoa?.uf} rotulo="UF" />
+        <Uf nome={`${prefixo}Uf`} valor={pessoa?.uf || (prefixo === "remetente" ? "GO" : "")} rotulo="UF" />
       </div>
     </fieldset>
   );
