@@ -75,18 +75,22 @@ export default async function ProcessoPage({
       <header className="pagina-cabeca">
         <div>
           <h1>{processo.codigo}</h1>
-          <p className="linha" style={{ justifyContent: "flex-start", marginTop: 8 }}>
+          <p className="linha meta-ficha" style={{ justifyContent: "flex-start", marginTop: 8 }}>
             <SeloCanal canal={processo.canal} />
             {processo.modalidade ? <span className="selo">{processo.modalidade}</span> : null}
             <Link href={`/clientes/${processo.cliente.id}`}>{processo.cliente.nome}</Link>
           </p>
         </div>
-        <Link className="btn secundario" href="/processos">
-          Voltar ao quadro
+        <Link className="btn secundario voltar-quadro" href="/processos">
+          <span className="voltar-longo">Voltar ao quadro</span>
+          <span className="voltar-curto">Voltar</span>
         </Link>
       </header>
       {processo.exemplo ? (
-        <p className="faixa-exemplo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</p>
+        <p className="faixa-exemplo" aria-label="Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.">
+          <span className="exemplo-longo">Dado de exemplo gerado pelo seed. Pode ser editado para demonstração.</span>
+          <span className="exemplo-curto">Exemplo</span>
+        </p>
       ) : null}
       <FichaColunas
         inicial={aba}
@@ -117,7 +121,8 @@ export default async function ProcessoPage({
         conversa={
           <>
             <FichaConversa processoId={processo.id} usuarioId={usuario.id} fio={consulta.fio} />
-            <article className="cartao bloco">
+            <SecaoMovel titulo="Histórico">
+            <article className="cartao bloco historico-ficha">
               <h2>Histórico</h2>
               <div className="timeline">
                 {(processo.eventos ?? []).map((evento) => (
@@ -129,6 +134,7 @@ export default async function ProcessoPage({
                 ))}
               </div>
             </article>
+            </SecaoMovel>
           </>
         }
         rodape={
