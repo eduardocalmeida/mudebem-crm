@@ -1,0 +1,39 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { COOKIE_SESSAO, lerSessao } from "@/lib/token";
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (pathname.startsWith("/brand/") || /\.(?:png|jpe?g|gif|webp|svg|ico|txt|xml|webmanifest|woff2?)$/i.test(pathname)) {
+    return NextResponse.next();
+  }
+  const publico =
+    pathname === "/login" ||
+    pathname === "/orcamento" ||
+    pathname === "/formulario.js" ||
+    pathname.startsWith("/api/publico/") ||
+    pathname.startsWith("/api/webmania/") ||
+    pathname.startsWith("/p/");
+  const sessao = await lerSessao(req.cookies.get(COOKIE_SESSAO)?.value);
+
+  if (!sessao && !publico) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    const resposta = NextResponse.redirect(url);
+    resposta.cookies.delete(COOKIE_SESSAO);
+    return resposta;
+  }
+
+  if (sessao && pathname === "/login") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/painel";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|brand/|api/v1|api/health|api/whatsapp/webhook|.*\\.(?:png|jpe?g|gif|webp|svg|ico|txt|xml|webmanifest|woff2?)$).*)"],
+};

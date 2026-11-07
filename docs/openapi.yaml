@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: Mude Bem CRM API
+  version: "1"
+  description: |
+    API para agentes criarem e acompanharem processos comerciais da Mude Bem.
+    Autentique com Authorization: Bearer ou X-API-Key.
+    Datas em aaaa-mm-dd. Valores em reais. A etapa muda apenas em /etapa.
+servers:
+  - url: /api/v1
+components:
+  securitySchemes:
+    ApiKey:
+      type: http
+      scheme: bearer
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Erro:
+      type: object
+      properties:
+        erro: { type: string }
+        codigo: { type: string }
+    ClienteNovo:
+      type: object
+      required: [nome]
+      properties:
+        nome: { type: string }
+        cnpj: { type: string }
+        email: { type: string }
+        telefone: { type: string }
+        endereco: { type: string }
+        cidade: { type: string }
+        uf: { type: string }
+    ContatoNovo:
+      type: object
+      required: [nome]
+      properties:
+        nome: { type: string }
+        email: { type: string }
+        telefone: { type: string }
+        cargo: { type: string }
+        principal: { type: boolean }
+    ProcessoEntrada:
+      type: object
+      required: [titulo, canal]
+      properties:
+        titulo: { type: string }
+        canal: { type: string, enum: [EMAIL, SITE, WHATSAPP, INDICACAO] }
+        etapa: { type: string }
+        clienteId: { type: string }
+        cliente: { $ref: "#/components/schemas/ClienteNovo" }
+        contatoId: { type: string, nullable: true }
+        contato: { $ref: "#/components/schemas/ContatoNovo" }
+        colaborador: { type: string, nullable: true }
+        origemEndereco: { type: string, nullable: true }
+        origemCidade: { type: string, nullable: true }
+        origemUf: { type: string, nullable: true }
+        destinoEndereco: { type: string, nullable: true }
+        destinoCidade: { type: string, nullable: true }
+        destinoUf: { type: string, nullable: true }
+        dataColeta: { type: string, nullable: true, example: "2026-12-10" }
+        dataEntrega: { type: string, nullable: true }
+        inventario: { type: string, nullable: true }
+        valorCotado: { type: number, nullable: true }
+        valorAprovado: { type: number, nullable: true }
+        numeroOc: { type: string, nullable: true }
+        numeroCte: { type: string, nullable: true }
+        numeroNf: { type: string, nullable: true }
+        dataVencimento: { type: string, nullable: true }
+        dataRecebimento: { type: string, nullable: true }
+        responsavelId: { type: string, nullable: true }
+security:
+  - ApiKey: []
+  - ApiKeyHeader: []
+paths:
+  /:
+    get:
+      summary: Índice da API
+      responses:
+        "200": { description: Recursos disponíveis }
+        "401": { description: Não autorizado }
+  /etapas:
+    get:
+      summary: Pipeline, estado terminal e canais
+      responses:
+        "200": { description: Catálogo }
+  /processos:
+    get:
+      summary: Lista processos
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: etapa
+          schema: { type: string }
+        - in: query
+          name: canal
+          schema: { type: string }
+        - in: query
+          name: clienteId
+          schema: { type: string }
+        - in: query
+          name: responsavelId
+          schema: { type: string }
+        - in: query
+          name: de
+          schema: { type: string }
+          description: Coleta a partir de aaaa-mm-dd
+        - in: query
+          name: ate
+          schema: { type: string }
+        - in: query
+          name: pagina
+          schema: { type: integer }
+        - in: query
+          name: porPagina
+          schema: { type: integer, maximum: 100 }
+      responses:
+        "200": { description: Lista paginada em dados, total, pagina e porPagina }
+    post:
+      summary: Cria um processo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcessoEntrada" }
+      responses:
+        "201": { description: Processo criado }
+        "400": { description: Dados inválidos }
+  /processos/{id}:
+    get:
+      summary: Detalhe com histórico e metadados dos anexos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Processo }
+        "404": { description: Não encontrado }
+    patch:
+      summary: Atualiza campos sem mudar a etapa
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcessoEntrada" }
+      responses:
+        "200": { description: Processo atualizado }
+  /processos/{id}/notas:
+    post:
+      summary: Adiciona uma nota ao histórico
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texto]
+              properties:
+                texto: { type: string }
+      responses:
+        "201": { description: Nota criada }
+  /processos/{id}/etapa:
+    post:
+      summary: Move o processo de etapa
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [etapa]
+              properties:
+                etapa: { type: string }
+                observacao: { type: string, nullable: true }
+      responses:
+        "200": { description: Etapa alterada }
+  /clientes:
+    get:
+      summary: Lista clientes
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        "200": { description: Lista em dados }
+    post:
+      summary: Cria cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClienteNovo" }
+      responses:
+        "201": { description: Cliente criado }
+        "409": { description: CNPJ já cadastrado }
+  /clientes/{id}:
+    get:
+      summary: Detalhe do cliente com contatos e processos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Cliente }
+    patch:
+      summary: Atualiza o cliente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClienteNovo" }
+      responses:
+        "200": { description: Cliente atualizado }
+  /clientes/{id}/contatos:
+    post:
+      summary: Adiciona contato ao cliente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContatoNovo" }
+      responses:
+        "201": { description: Contato criado }
+  /whatsapp/conversas:
+    get:
+      summary: Lista conversas de WhatsApp
+      parameters:
+        - in: query
+          name: naoLidas
+          schema: { type: string, enum: ["sim", "true"] }
+        - in: query
+          name: numeroId
+          schema: { type: string }
+      responses:
+        "200": { description: Conversas em dados }
+  /whatsapp/conversas/{id}:
+    get:
+      summary: Lê a conversa e marca como lida
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: marcarLida
+          schema: { type: string, enum: ["nao"] }
+          description: Use nao para não marcar a conversa como lida
+      responses:
+        "200": { description: Conversa com mensagens }
+  /whatsapp/conversas/{id}/mensagens:
+    post:
+      summary: Envia texto dentro da janela de 24h ou um modelo aprovado
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                texto: { type: string }
+                modelo:
+                  type: object
+                  required: [nome]
+                  properties:
+                    nome: { type: string }
+                    idioma: { type: string, example: pt_BR }
+                    parametros:
+                      type: array
+                      items: { type: string }
+      responses:
+        "201": { description: Mensagem enviada }
+        "409": { description: Janela de 24 horas encerrada }
